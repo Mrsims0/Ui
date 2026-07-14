@@ -8,28 +8,21 @@ local function createInstance(class, props)
 	for i, v in pairs(props) do
 		inst[i] = v
 	end
-
 	return inst
 end
 
 local function intersects (p, edge)
 	local x1, y1 = edge.a.x, edge.a.y
 	local x2, y2 = edge.b.x, edge.b.y
-
 	local x3, y3 = p.x, p.y
 	local x4, y4 = p.x + 2147483647, p.y
-
 	local den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-
 	if den == 0 then return false end
-
 	local t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den
 	local u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den
-
 	if t and u and t > 0 and t < 1 and u > 0 then
 		return true
 	end
- 
 	return false
 end
 
@@ -37,59 +30,33 @@ local function getCorners(guiObject0)
 	local pos = guiObject0.AbsolutePosition
 	local size = guiObject0.AbsoluteSize
 	local rotation = guiObject0.Rotation
-
 	local a = pos + size/2 - math.sqrt((size.X/2)^2 + (size.Y/2)^2) * Vector2.new(math.cos(math.rad(rotation) + math.atan2(size.Y, size.X)), math.sin(math.rad(rotation) + math.atan2(size.Y, size.X)))
 	local b = pos + size/2-math.sqrt((size.X/2)^2 + (size.Y/2)^2) * Vector2.new(math.cos(math.rad(rotation) - math.atan2(size.Y, size.X)), math.sin(math.rad(rotation) - math.atan2(size.Y, size.X)))
 	local c = pos + size/2+math.sqrt((size.X/2)^2 + (size.Y/2)^2) * Vector2.new(math.cos(math.rad(rotation) + math.atan2(size.Y, size.X)), math.sin(math.rad(rotation) + math.atan2(size.Y, size.X)))
 	local d = pos + size/2+math.sqrt((size.X/2)^2 + (size.Y/2)^2) * Vector2.new(math.cos(math.rad(rotation) - math.atan2(size.Y, size.X)), math.sin(math.rad(rotation) - math.atan2(size.Y, size.X)))
-
-	return { 
-		topleft = a, 
-		bottomleft = b, 
-		topright = d, 
-		bottomright = c 
-	}
+	return { topleft = a, bottomleft = b, topright = d, bottomright = c }
 end
-
 
 function isColliding(guiObject0, guiObject1)		
 	if not typeof(guiObject0) == "Instance" or not typeof(guiObject1) == "Instance" then 
 		error("argument must be an instance") 
 		return 
 	end
-
 	local ap1 = guiObject0.AbsolutePosition
 	local as1 = guiObject0.AbsoluteSize
 	local sum = ap1 + as1
-
 	local ap2 = guiObject1.AbsolutePosition
 	local as2 = guiObject1.AbsoluteSize
 	local sum2 = ap2 + as2
-
 	local corners0 = getCorners(guiObject0)
 	local corners1 = getCorners(guiObject1)
-
 	local edges = {
-		{
-			a = corners1.topleft,
-			b = corners1.bottomleft
-		},
-		{
-			a = corners1.topleft,
-			b = corners1.topright
-		},
-		{
-			a = corners1.bottomleft,
-			b = corners1.bottomright
-		},
-		{
-			a = corners1.topright,
-			b = corners1.bottomright
-		}
+		{a = corners1.topleft, b = corners1.bottomleft},
+		{a = corners1.topleft, b = corners1.topright},
+		{a = corners1.bottomleft, b = corners1.bottomright},
+		{a = corners1.topright, b = corners1.bottomright}
 	}
-
 	local collisions = 0
-
 	for _, corner in pairs(corners0) do
 		for _, edge in pairs(edges) do			
 			if intersects(corner, edge) then
@@ -97,20 +64,12 @@ function isColliding(guiObject0, guiObject1)
 			end			
 		end
 	end
-
-	if collisions%2 ~= 0 then
-		return true
-	end
-
+	if collisions%2 ~= 0 then return true end
 	if (ap1.x < sum2.x and sum.x > ap2.x) and (ap1.y < sum2.y and sum.y > ap2.y) then
 		return true
 	end
-
 	return false
 end
-
-
-
 
 local souid = false;
 local index = 0;
@@ -121,17 +80,13 @@ local function draggable(obj,extern,parented)
 	globals.uiorigin=nil
 	globals.morigin=nil
 	obj.InputBegan:Connect(function(input)
-
 		if input.UserInputType == Enum.UserInputType.MouseButton1 and souid == false and obj.ZIndex >= index then
 			souid = true
-
 			index = obj.ZIndex				
 			obj.Parent = PCR_1
-
 			globals.dragging = true
 			globals.uiorigin = obj.Position
 			globals.morigin = input.Position
-
 			local connection 
 			connection = input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
@@ -142,7 +97,6 @@ local function draggable(obj,extern,parented)
 						if isColliding(parented,obj)  then
 							obj.Position = UDim2.new(0.5,0,0.5,0)
 							obj.Parent = parented
-
 						end
 					end
 				end
@@ -184,12 +138,7 @@ local function draggable(obj,extern,parented)
 	end)
 end
 
-
-
-
-
 function OpenedColor(text,ColourDisplay,Action,def)
-
 	local COLORPALLETE = Instance.new("Frame")
 	local ANIMATEFRAME01 = Instance.new("Frame")
 	local Holder = Instance.new("Frame")
@@ -358,7 +307,6 @@ function OpenedColor(text,ColourDisplay,Action,def)
 
 	UIAspectRatioConstraint_3.Parent = ColourDisplayBIG
 
-
 	SETCOLOR.Name = "SETCOLOR"
 	SETCOLOR.Parent = S13
 	SETCOLOR.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -437,11 +385,9 @@ function OpenedColor(text,ColourDisplay,Action,def)
 		ANIMATEFRAME01.Visible = false
 		ColourDisplay.ImageColor3 = ColourDisplayBIG.ImageColor3
 		COLORPALLETE.Visible = false
-
 		pcall(function()
-            Action( Color3.fromRGB(ColourDisplayBIG.ImageColor3.R * 200 ,ColourDisplayBIG.ImageColor3.G * 200 ,ColourDisplayBIG.ImageColor3.B* 200) )
-        end)
-
+			Action( Color3.fromRGB(ColourDisplayBIG.ImageColor3.R * 200 ,ColourDisplayBIG.ImageColor3.G * 200 ,ColourDisplayBIG.ImageColor3.B* 200) )
+		end)
 	end)
 
 	RESETALL.MouseButton1Click:Connect(function()
@@ -452,38 +398,26 @@ function OpenedColor(text,ColourDisplay,Action,def)
 		ANIMATEFRAME01:TweenPosition(UDim2.new(1.077,0,-0.007,0),'Out','Quint',0.2,true);
 		wait(.2)
 		COLORPALLETE.Visible = false
-
 		ANIMATEFRAME01.Visible = false
-
 	end)
 	local buttonDown = false
 	local movingSlider = false
 
-
 	local function updateColour(centreOfWheel)
-
 		local colourPickerCentre = Vector2.new(
 			Picker.AbsolutePosition.X + (Picker.AbsoluteSize.X/2),
 			Picker.AbsolutePosition.Y + (Picker.AbsoluteSize.Y/2)
 		)
 		local h = (math.pi - math.atan2(colourPickerCentre.Y - centreOfWheel.Y, colourPickerCentre.X - centreOfWheel.X)) / (math.pi * 2)
-
 		local s = (centreOfWheel - colourPickerCentre).Magnitude / (ColourWheel.AbsoluteSize.X/2)
-
 		local v = math.abs((Slider.AbsolutePosition.Y - DarknessPicker.AbsolutePosition.Y) / DarknessPicker.AbsoluteSize.Y - 1)
-
-
 		hsv = Color3.fromHSV(math.clamp(h, 0, 1), math.clamp(s, 0, 1), math.clamp(v, 0, 1))
-
-
 		ColourDisplayBIG.ImageColor3 = hsv
 		UIGradient.Color = ColorSequence.new{
 			ColorSequenceKeypoint.new(0, hsv), 
 			ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
 		}
-
 	end
-
 
 	ColourWheel.MouseButton1Down:Connect(function()
 		buttonDown = true
@@ -493,45 +427,25 @@ function OpenedColor(text,ColourDisplay,Action,def)
 		movingSlider = true
 	end)
 
-
 	uis.InputEnded:Connect(function(input)
-
 		if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-
 		buttonDown = false
 		movingSlider = false
 	end)
 
-
 	uis.InputChanged:Connect(function(input)
-
 		if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-
-
 		local mousePos = uis:GetMouseLocation() - Vector2.new(0, game:GetService("GuiService"):GetGuiInset().Y)
-
 		local centreOfWheel = Vector2.new(ColourWheel.AbsolutePosition.X + (ColourWheel.AbsoluteSize.X/2), ColourWheel.AbsolutePosition.Y + (ColourWheel.AbsoluteSize.Y/2))
-
 		local distanceFromWheel = (mousePos - centreOfWheel).Magnitude
-
-
 		if distanceFromWheel <= ColourWheel.AbsoluteSize.X/2 and buttonDown then
-
 			Picker.Position = UDim2.new(0, mousePos.X - ColourWheel.AbsolutePosition.X, 0, mousePos.Y - ColourWheel.AbsolutePosition.Y)
-
-
 		elseif movingSlider then
-
 			Slider.Position = UDim2.new(Slider.Position.X.Scale, 0, 0, 
-				math.clamp(
-					mousePos.Y - DarknessPicker.AbsolutePosition.Y, 
-					0, 
-					DarknessPicker.AbsoluteSize.Y)
+				math.clamp(mousePos.Y - DarknessPicker.AbsolutePosition.Y, 0, DarknessPicker.AbsoluteSize.Y)
 			)	
 		end
-
 		updateColour(centreOfWheel)
-
 	end)
 	draggable(COLORPALLETE)
 end
@@ -548,10 +462,6 @@ local LABEL2 = Instance.new("TextLabel")
 local linedecoDOWNER = Instance.new("Frame")
 local UPPERLABEL = Instance.new("TextLabel")
 local limit1 = Instance.new("Frame")
-
-
-
---Properties:
 
 PCR_1.Name = "PCR_1"
 PCR_1.Parent = game:GetService("CoreGui")
@@ -584,7 +494,6 @@ Upper.BorderColor3 = Color3.fromRGB(91, 133, 197)
 Upper.BorderSizePixel = 0
 Upper.Size = UDim2.new(0, 600, 0, 23)
 Upper.ZIndex = 2
-
 
 UIListLayout.Parent = Upper
 UIListLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -673,11 +582,7 @@ limit1.Position = UDim2.new(0, 0, 0.0615355708, 0)
 limit1.Size = UDim2.new(0, 588, 0, 364)
 limit1.ZIndex = 5
 
-
 repeat wait() until game.Players.LocalPlayer
-
-
-
 
 local library = {};
 library.sections = {};
@@ -690,13 +595,54 @@ function library:ChangeGame(gamee)
 	LABEL2.Text = gamee
 end
 
+-- ============ NEW: MENU TOGGLE FUNCTIONS ============
+library.MenuVisible = true
+library.MenuKey = Enum.KeyCode.RightShift
+
+function library:ToggleMenu()
+	library.MenuVisible = not library.MenuVisible
+	MAIN.Visible = library.MenuVisible
+end
+
+function library:ShowMenu()
+	library.MenuVisible = true
+	MAIN.Visible = true
+end
+
+function library:HideMenu()
+	library.MenuVisible = false
+	MAIN.Visible = false
+end
+
+function library:SetMenuKey(keyCode)
+	if typeof(keyCode) == "EnumItem" then
+		library.MenuKey = keyCode
+	elseif typeof(keyCode) == "string" then
+		library.MenuKey = Enum.KeyCode[keyCode]
+	end
+end
+
+-- Global menu key handler (rebindable via library.MenuKey)
+uis.InputBegan:Connect(function(input, gp)
+	if gp then return end
+	if input.KeyCode == library.MenuKey then
+		library:ToggleMenu()
+	end
+end)
+
+function library:AddMenuKeybind(defaultKey)
+	-- Sets the default menu toggle key
+	defaultKey = defaultKey or Enum.KeyCode.RightShift
+	library.MenuKey = defaultKey
+end
+-- ============ END NEW ============
+
 local tweenTime = 0.25
 local tweenInfo = TweenInfo.new(
 	tweenTime,
 	Enum.EasingStyle.Linear,
 	Enum.EasingDirection.Out
 )
-
 
 function AddRipple(button,ael,ayo)
 	ayo = ayo or Color3.fromRGB(56, 56, 56)
@@ -756,9 +702,7 @@ function AddRipple(button,ael,ayo)
 	CornerRadius.Parent = Background
 
 	local mouse = game.Players.LocalPlayer:GetMouse()
-
 	local background = button:WaitForChild("Background")
-
 	local active = false
 	local hovering = false
 
@@ -766,29 +710,19 @@ function AddRipple(button,ael,ayo)
 		local backgroundFadeIn = TweenService:Create(ael, tweenInfo, { TextColor3 =  ayo})
 		backgroundFadeIn:Play()
 	end
-
 	local function OnMouseButton1Up()
 		local backgroundFadeIn = TweenService:Create(ael, tweenInfo, { TextColor3 = Color3.fromRGB(152, 152, 152) })
 		backgroundFadeIn:Play()
 	end
-
 	local function OnMouseEnter()
 		hovering = true
-
 		local backgroundFadeIn = TweenService:Create(ael, tweenInfo, { TextColor3 = Color3.fromRGB(152, 152, 152) })
-
 		backgroundFadeIn:Play()
-
 		backgroundFadeIn.Completed:Wait()
-
 		local backgroundFadeOut = TweenService:Create(ael, tweenInfo, {TextColor3 = Color3.fromRGB(197, 197, 197)})
-
 		repeat wait() until not hovering
-
 		backgroundFadeOut:Play()
 	end
-
-
 	local function OnMouseLeave()
 		hovering = false
 		active = false
@@ -799,22 +733,17 @@ function AddRipple(button,ael,ayo)
 	button.MouseLeave:Connect(OnMouseLeave)
 	button.MouseButton1Click:Connect(Ripple)
 end
+
 local function getsize(frame)
 	local size = 0;
 	for i=1,#frame do
 		local s = frame:sub(i,i)
 		if string.upper(s) == s then
-			if s == 'I' then
-				size+=4
-			else
-				size+=12;
-			end
+			if s == 'I' then size+=4
+			else size+=12; end
 		else
-			if s == 'i' then
-				size+= 4
-			else
-				size += 10
-			end
+			if s == 'i' then size+= 4
+			else size += 10 end
 		end
 	end
 	return size
@@ -836,15 +765,11 @@ else
 	end)
 end
 
-
-
 function library:AddWatermark(Text)
 	local intern = {}
 	local size
-
 	size=(#Text) * 7
 
-	--[MAIN]--
 	local obj1 = Instance.new("Frame")
 	obj1.AnchorPoint = Vector2.new(0, 0.5)
 	obj1.BackgroundColor3 = Color3.new(0.0862745, 0.0862745, 0.0862745)
@@ -856,11 +781,8 @@ function library:AddWatermark(Text)
 	obj1.Visible = true
 	obj1.ClipsDescendants = true
 	obj1.Parent = PCR_1
-	--[UIStroke]--
 	local obj2 = Instance.new("UIStroke", obj1)
 	obj2.Color = Color3.new(0.309804, 0.458824, 0.67451)
-
-	--[MAIN]--
 	local obj3 = Instance.new("Frame", obj1)
 	obj3.AnchorPoint = Vector2.new(0.5, 0.5)
 	obj3.BackgroundColor3 = Color3.new(0.113725, 0.113725, 0.113725)
@@ -869,8 +791,6 @@ function library:AddWatermark(Text)
 	obj3.Size = UDim2.new(1, -6, 1, -6)
 	obj3.ZIndex = 7
 	obj3.Name = [[MAIN]]
-
-	--[TextLabel]--
 	local obj4 = Instance.new("TextLabel", obj3)
 	obj4.BackgroundColor3 = Color3.new(1, 1, 1)
 	obj4.BackgroundTransparency = 1
@@ -903,36 +823,34 @@ function library:AddWatermark(Text)
 				can = not can
 			else
 				can = not can
-
 				obj1.Visible =false
 				wait(.5)
 				can = not can
 			end
 		end
-
 	end
 	return intern
 end
 
 function library:Init(name)
-    for i,v in pairs(Upper:GetChildren()) do
-        if v:IsA('TextButton') then
-            if v.Name == name then
-                TweenService:Create(v , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(210, 210, 210)}):Play()	
-            else
-                TweenService:Create(v , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(138, 138, 138)}):Play()	
-            end
-        end
-    end
-    for i,v in pairs(limit1:GetChildren()) do
-        if v:IsA('Frame') or v:IsA('ScrollingFrame') then
-            if v.Name == name then
-                v.Visible = true
-            else
-                v.Visible = false
-            end
-        end
-    end
+	for i,v in pairs(Upper:GetChildren()) do
+		if v:IsA('TextButton') then
+			if v.Name == name then
+				TweenService:Create(v , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(210, 210, 210)}):Play()	
+			else
+				TweenService:Create(v , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(138, 138, 138)}):Play()	
+			end
+		end
+	end
+	for i,v in pairs(limit1:GetChildren()) do
+		if v:IsA('Frame') or v:IsA('ScrollingFrame') then
+			if v.Name == name then
+				v.Visible = true
+			else
+				v.Visible = false
+			end
+		end
+	end
 end
 
 function library:AddWindow(text)
@@ -959,7 +877,6 @@ function library:AddWindow(text)
 	TEMPLATE_TEXT.TextColor3 = Color3.fromRGB(138, 138, 138)
 	TEMPLATE_TEXT.TextSize = 16.000
 	TEMPLATE_TEXT.Size = UDim2.new(0,getsize(text),0,13)
-
 
 	HOLDER.Name = text
 	HOLDER.Parent = limit1
@@ -1035,30 +952,20 @@ function library:AddWindow(text)
 		local LeftSize =  LUIL.AbsoluteContentSize.Y
 		local RightSize =  RUIL.AbsoluteContentSize.Y
 		if num == 1 then
-			if LeftSize > RightSize then
-				return 'l'    
-			elseif LeftSize < RightSize then
-				return 'r'
-			elseif LeftSize == RightSize then
-				return 'r'
-			end
-		elseif num == 2 then
-			return {l=LeftSize,r=RightSize}
-		else
-			return ''
-		end
+			if LeftSize > RightSize then return 'l'    
+			elseif LeftSize < RightSize then return 'r'
+			elseif LeftSize == RightSize then return 'r' end
+		elseif num == 2 then return {l=LeftSize,r=RightSize}
+		else return '' end
 	end
 	local function UpdateMainSize(f,anim)
 		HOLDER.ClipsDescendants = true
-
 		if getlarger(1) == 'l' then
 			if anim then
 				TweenService:Create(HOLDER, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {CanvasSize = UDim2.fromOffset(0, getlarger(2).l + 15)}):Play()
 			else   
 				HOLDER.CanvasSize = UDim2.fromOffset(0, getlarger(2).l + 15)
-
 			end
-
 		elseif getlarger(1) == 'r' then
 			if anim then
 				TweenService:Create(HOLDER, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {CanvasSize = UDim2.fromOffset(0, getlarger(2).r + 15)}):Play()
@@ -1067,7 +974,6 @@ function library:AddWindow(text)
 				HOLDER.CanvasSize = UDim2.fromOffset(0, getlarger(2).r + 15)
 			end
 		end
-
 	end
 
 	local function GetSide(typ,input)   
@@ -1084,24 +990,14 @@ function library:AddWindow(text)
 			return parented,s
 		elseif typ == 2 and input then
 			if tonumber(input) == nil then   
-				if input == 'Right' or input == 'R' or input == 'r' then
-					return _RIGHT,RUIL
-				end
-				if input == 'Left' or input == 'L' or input == 'l' then
-					return _LEFT,LUIL
-				end
+				if input == 'Right' or input == 'R' or input == 'r' then return _RIGHT,RUIL end
+				if input == 'Left' or input == 'L' or input == 'l' then return _LEFT,LUIL end
 			else
-				if input == 1 then
-					return _LEFT,LUIL
-				elseif input == 2 then
-					return _RIGHT,RUIL   
-				else
-					return GetSide(1);
-				end
+				if input == 1 then return _LEFT,LUIL
+				elseif input == 2 then return _RIGHT,RUIL   
+				else return GetSide(1); end
 			end
-		else
-			return GetSide(1);
-		end
+		else return GetSide(1); end
 	end
 	local section_info = {};
 	function sec:UpdateSize()
@@ -1113,10 +1009,8 @@ function library:AddWindow(text)
 			local lefts,ls = 0,{};
 			local rights,rs = 0,{};
 			section.Size = UDim2.fromOffset(x,  y + 8) + UDim2.new(0,0,0,23)
-
 			UpdateMainSize()
 		end
-
 	end
 
 	function sec:AddSection(Texto,side)
@@ -1221,42 +1115,26 @@ function library:AddWindow(text)
 		_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
 
 		AutoFit()
-		--TweenService:Create(closeSection , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Rotation = 0}):Play()	
 		UpdateMainSize()
 
 		function inside:AddTextBox(Text,placeholder, CTOF, Type, Action)
-
 			Text=Text or 'Not Defined'
 			placeholder = placeholder or 'Input Here'
 			CTOF = CTOF or false
 			Type = Type or 2
-
 			local filter = '%W+' 
 			local filter2 = '%p+'
 			local onlunum = '%D+'   
 			local onlychars = '%A+'
-
 			local function colador(str,type)
 				local str =str
-				if type == 1 then
-					str= str:gsub(onlunum, ''); -- exclude a-Z
-				end
-				if type == 2 then
-					str= str:gsub(filter2, ''); -- exclude special characters (~!@#$%^&*()_+.,<>?:"}{-=`")
-				end
-				if type == 3 then
-					str= str:gsub(filter, ''); -- exclude special characters + space bar (~!@#$%^&*()_+.,<>?:"}{-=`"  )
-				end
-				if type == 4 then
-					str= str:gsub(onlychars, ''); -- exclude special characters + numbers + space bar (~!@#$%^&*()_+.,<>?:"}{-=`"  0-9) 
-				end
-				if type == 5 then
-					str = str   
-				end
+				if type == 1 then str= str:gsub(onlunum, ''); end
+				if type == 2 then str= str:gsub(filter2, ''); end
+				if type == 3 then str= str:gsub(filter, ''); end
+				if type == 4 then str= str:gsub(onlychars, ''); end
+				if type == 5 then str = str end
 				return str
 			end
-
-			--[TemplateTexstbox]--
 			local obj1 = Instance.new("Frame")
 			obj1.BackgroundColor3 = Color3.new(1, 1, 1)
 			obj1.BackgroundTransparency = 1
@@ -1266,7 +1144,6 @@ function library:AddWindow(text)
 			obj1.ZIndex = 14
 			obj1.Name = [[TemplateTexstbox]]
 			obj1.Parent = HOLDER_2
-			--[color]--
 			local obj2 = Instance.new("Frame", obj1)   
 			obj2.AnchorPoint = Vector2.new(1, 0.5)
 			obj2.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
@@ -1275,16 +1152,10 @@ function library:AddWindow(text)
 			obj2.Size = UDim2.new(0, 70, 0, 16)
 			obj2.ZIndex = 25
 			obj2.Name = [[color]]
-
-			--[UIStroke]--
 			local obj3 = Instance.new("UIStroke", obj2)
 			obj3.Color = Color3.new(0.203922, 0.203922, 0.203922)
-
-			--[UIGradient]--   
 			local obj4 = Instance.new("UIGradient", obj3)
 			obj4.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.705882, 0.705882, 0.705882))})
-
-			--[TextBox]--
 			local obj5 = Instance.new("TextBox", obj2)
 			obj5.BackgroundColor3 = Color3.new(1, 1, 1)
 			obj5.BackgroundTransparency = 1
@@ -1299,14 +1170,11 @@ function library:AddWindow(text)
 			obj5.TextColor3 = Color3.new(1, 1, 1)   
 			obj5.TextSize = 10
 			obj5.TextStrokeColor3 = Color3.new(0.639216, 0.639216, 0.639216)
-
 			if #obj5.Text <= 5 then
 				obj2:TweenSize(UDim2.new(0,#obj5.PlaceholderText*6,0,16),'Out','Quint',0,true);
 			else
 				obj2:TweenSize(UDim2.new(0,#obj5.PlaceholderText*6,0,16),'Out','Quint',0,true);
-
 			end
-			--[TextLabel]--
 			local obj6 = Instance.new("TextLabel", obj1)
 			obj6.BackgroundColor3 = Color3.new(0.772549, 0.772549, 0.772549)
 			obj6.BackgroundTransparency = 1
@@ -1319,31 +1187,23 @@ function library:AddWindow(text)
 			obj6.TextColor3 = Color3.new(0.772549, 0.772549, 0.772549)
 			obj6.TextSize = 14
 			obj6.TextXAlignment = Enum.TextXAlignment.Left  
-
 			local AC = function(PassBox)
 				PassBox.Text=colador(obj5.Text,Type)
-
 				if PassBox.Text == nil or PassBox.Text == '' then
-   
 					if #PassBox.Text <= 5 then
 						obj2:TweenSize(UDim2.new(0,#PassBox.PlaceholderText*10,0,16),'Out','Quint',0.4,true);
 					else
 						obj2:TweenSize(UDim2.new(0,#PassBox.PlaceholderText*6,0,16),'Out','Quint',0.4,true);
-
 					end
-
 				else
 					obj2:TweenSize(UDim2.new(0,#PassBox.Text*7,0,16),'Out','Quint',0.4,true);
 				end
 				if #PassBox.Text >= 21 then
 					PassBox.Text = string.sub(PassBox.Text,0,21)
 				end
-				spawn(
-					function()
-						pcall(function()
-							Action(obj5.Text)
-						end)  
-					end)
+				spawn(function()
+					pcall(function() Action(obj5.Text) end)  
+				end)
 			end
 			local text = ''
 			obj5.Changed:Connect(function()
@@ -1356,17 +1216,14 @@ function library:AddWindow(text)
 					AC(obj5)
 				end
 			end)
-
 			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
 			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
-
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
-
 		end
- 
+
 		function inside:AddSlider(Text,Max,Min,def,Action)
 			Text = Text or 'Not Defined'
 			Max = Max or 100
@@ -1377,8 +1234,6 @@ function library:AddWindow(text)
 			local DefaultScale =  (SliderDef - Min) / (Max - Min)
 			Action = Action or function() end
 			local Value;
-
-			--[Slider]--
 			local obj1 = Instance.new("Frame")
 			obj1.BackgroundColor3 = Color3.new(0.117647, 0.117647, 0.113725)
 			obj1.BackgroundTransparency = 1
@@ -1388,7 +1243,6 @@ function library:AddWindow(text)
 			obj1.ZIndex = 20
 			obj1.Name = [[Slider]]
 			obj1.Parent = HOLDER_2
-			--[TextLabel]--
 			local obj2 = Instance.new("TextLabel", obj1)
 			obj2.BackgroundColor3 = Color3.new(1, 1, 1)
 			obj2.BackgroundTransparency = 1
@@ -1401,8 +1255,6 @@ function library:AddWindow(text)
 			obj2.TextColor3 = Color3.new(0.772549, 0.772549, 0.772549)
 			obj2.TextSize = 16
 			obj2.TextXAlignment = Enum.TextXAlignment.Left
-
-			--[sbt]--
 			local obj3 = Instance.new("TextButton", obj1)
 			obj3.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
 			obj3.BackgroundTransparency = 1
@@ -1417,11 +1269,7 @@ function library:AddWindow(text)
 			obj3.TextSize = 1
 			obj3.AutoButtonColor = false
 			obj3.Name = [[sbt]]
-
-			--[pcntage]--
 			local obj4 = Instance.new("TextBox")
-
-
 			obj4.Name = "pcntage"
 			obj4.Parent = obj1
 			obj4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1437,8 +1285,6 @@ function library:AddWindow(text)
 			obj4.TextColor3 = Color3.fromRGB(90, 90, 90)
 			obj4.TextSize = 14.000
 			obj4.TextXAlignment = Enum.TextXAlignment.Right
-
-			--[HOLDER_3]--
 			local obj5 = Instance.new("Frame", obj1)
 			obj5.BackgroundColor3 = Color3.new(0.0980392, 0.0980392, 0.0980392)
 			obj5.BorderSizePixel = 0
@@ -1446,8 +1292,6 @@ function library:AddWindow(text)
 			obj5.Size = UDim2.new(0, 243, 0, 13)
 			obj5.ZIndex = 23
 			obj5.Name = [[HOLDER_3]]
-
-			--[SFrame]--
 			local obj6 = Instance.new("Frame", obj5)
 			obj6.BackgroundColor3 = Color3.new(1, 1, 1)
 			obj6.BorderSizePixel = 0
@@ -1455,19 +1299,12 @@ function library:AddWindow(text)
 			obj6.Size = UDim2.fromScale(DefaultScale,1)
 			obj6.ZIndex = 23
 			obj6.Name = [[SFrame]]
-
-			--[UIGradient]--
 			local obj7 = Instance.new("UIGradient", obj6)
 			obj7.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(0.345098, 0.509804, 0.752941)), ColorSequenceKeypoint.new(1, Color3.new(0.270588, 0.4, 0.592157))})
-
-			--[UIStroke]--
 			local obj8 = Instance.new("UIStroke", obj5)
 			obj8.Color = Color3.new(0.203922, 0.203922, 0.203922)
-
-			--[UIGradient]--
 			local obj9 = Instance.new("UIGradient", obj8)
 			obj9.Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)), ColorSequenceKeypoint.new(1, Color3.new(0.533333, 0.533333, 0.533333))})
-
 			local st = def or Max/2
 			obj4.FocusLost:Connect(function(n)
 				if n then
@@ -1477,35 +1314,27 @@ function library:AddWindow(text)
 						local SliderDef = math.clamp(tonumber(obj4.Text), Min, Max) or math.clamp(50, Min, Max)
 						local DefaultScale =  (SliderDef - Min) / (Max - Min)
 						obj6.Size = UDim2.fromScale(DefaultScale,1)
-						pcall(function()
-							Action(Value)
-						end)
+						pcall(function() Action(Value) end)
 						return
 					end
 					if tonumber(obj4.Text) > Max then
 						obj4.Text = Max
 						st = obj4.Text
-
 						Value = tonumber(obj4.Text)
 						local SliderDef = math.clamp(tonumber(obj4.Text), Min, Max) or math.clamp(50, Min, Max)
 						local DefaultScale =  (SliderDef - Min) / (Max - Min)
 						obj6.Size = UDim2.fromScale(DefaultScale,1)
-						pcall(function()
-							Action(Value)
-						end)
+						pcall(function() Action(Value) end)
 						return
 					end
 					if tonumber(obj4.Text) < Min then
 						obj4.Text = Min
 						st = obj4.Text
-
 						Value = tonumber(obj4.Text)
 						local SliderDef = math.clamp(tonumber(obj4.Text), Min, Max) or math.clamp(50, Min, Max)
 						local DefaultScale =  (SliderDef - Min) / (Max - Min)
 						obj6.Size = UDim2.fromScale(DefaultScale,1)
-						pcall(function()
-							Action(Value)
-						end)
+						pcall(function() Action(Value) end)
 						return
 					end
 					st = obj4.Text
@@ -1513,9 +1342,7 @@ function library:AddWindow(text)
 					local SliderDef = math.clamp(tonumber(obj4.Text), Min, Max) or math.clamp(50, Min, Max)
 					local DefaultScale =  (SliderDef - Min) / (Max - Min)
 					obj6.Size = UDim2.fromScale(DefaultScale,1)
-					pcall(function()
-						Action(Value)
-					end)
+					pcall(function() Action(Value) end)
 				else
 					obj4.Text = st 
 					Value = tonumber(obj4.Text)
@@ -1538,28 +1365,22 @@ function library:AddWindow(text)
 			obj3.MouseButton1Down:Connect(function()
 				TweenService:Create(obj8 , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(115, 115, 115)}):Play()
 				obj4.TextXAlignment = Enum.TextXAlignment.Right
-
 				Value = ((((tonumber(Max) - tonumber(Min)) / 244) * obj6.AbsoluteSize.X) + tonumber(Min)) or 0
 				Value = (Value)
 				TweenService:Create(obj4, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-
 				obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
 				moveconnection = mouse.Move:Connect(function()
 					obj4.Text = ('%0.2f'):format(Value)
 					Value = ((((tonumber(Max) - tonumber(Min)) / 244) * obj6.AbsoluteSize.X) + tonumber(Min))
 					Value = (Value)
-					pcall(function()
-						Action(Value)
-					end)
+					pcall(function() Action(Value) end)
 					obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
 				end)
 				releaseconnection = uis.InputEnded:Connect(function(Mouse)
 					if Mouse.UserInputType == Enum.UserInputType.MouseButton1 then
 						Value = ((((tonumber(Max) - tonumber(Min)) / 244) * obj6.AbsoluteSize.X) + tonumber(Min))
 						Value =(Value)
-						pcall(function()
-							Action(Value)
-						end)
+						pcall(function() Action(Value) end)
 						obj6.Size = UDim2.new(0, math.clamp(mouse.X - obj6.AbsolutePosition.X, 0, 244), 0, 13)
 						moveconnection:Disconnect()
 						releaseconnection:Disconnect()
@@ -1567,7 +1388,6 @@ function library:AddWindow(text)
 				end)
 				obj4.Text = ('%0.2f'):format(Value)
 			end)
-
 			obj3.MouseButton1Up:Connect(function()
 				TweenService:Create(obj8 , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(52, 52, 52)}):Play()
 				TweenService:Create(obj4, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {TextColor3 = Color3.fromRGB(126, 126, 126)}):Play()
@@ -1582,16 +1402,13 @@ function library:AddWindow(text)
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
-
 		end
 
 		function inside:AddLabel(Text)
 			Text=Text or 'Not Defined'
 			local TextLabel = Instance.new("TextLabel")
-
 			TextLabel.Parent = HOLDER_2
 			TextLabel.AutomaticSize =Enum.AutomaticSize.Y
-
 			TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			TextLabel.BackgroundTransparency = 1.000
 			TextLabel.BorderSizePixel = 0
@@ -1605,84 +1422,58 @@ function library:AddWindow(text)
 			TextLabel.TextWrapped = true
 			TextLabel.TextXAlignment = Enum.TextXAlignment.Left
 			TextLabel.TextYAlignment = Enum.TextYAlignment.Top
-			
 			TextLabel.AutomaticSize = Enum.AutomaticSize.Y
-
-
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
 		end
+
 		local function getsize(str)
 			local r = 0;
-			for i=1,#str do
-				r+=1
-			end
+			for i=1,#str do r+=1 end
 			if r <= 5 then
-				if r == 1 then
-					return r * 50
-				end
-				if r ==2 then
-					return r * 25
-				end
-				if r ==3 then
-					return r * 16
-				end
-				if r == 4 then
-					return r * 12
-				end
-				if r == 5 then
-					return r * 10
-				end
+				if r == 1 then return r * 50 end
+				if r ==2 then return r * 25 end
+				if r ==3 then return r * 16 end
+				if r == 4 then return r * 12 end
+				if r == 5 then return r * 10 end
 			end
 			return r * 7.5
 		end
+
 		function inside:AddToggle(Text,Enabled,keybind,Callback)
 			Callback = Callback or function() end
 			Text=Text or 'Not Defined'
 			local activated = Enabled or false;
 			local y = {};
-
 			local TemplateToggle = Instance.new("Frame")
 			local TextLabel = Instance.new("TextLabel")
 			local Interactive = Instance.new("TextButton")
 			local color = Instance.new("Frame")
 			local UIGradient = Instance.new("UIGradient");
 			local UIStroke = Instance.new('UIStroke');
-
 			UIStroke.Parent= color;
 			UIStroke.Color = Color3.fromRGB(52,52,52);
 			UIStroke.LineJoinMode = Enum.LineJoinMode.Round;
 			UIStroke.Thickness = 1;
 			UIStroke.Transparency = 0;
 			UIStroke.Name = 'UIStroke';
-
 			UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(180, 180, 180))}
 			UIGradient.Parent = UIStroke
-
 			local function Update()
 				if activated == false then
 					TweenService:Create(color , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(84, 122, 181)}):Play()
 					TweenService:Create(TextLabel, tweenInfo, { TextColor3 = Color3.fromRGB(152, 152, 152) }):Play()
-					spawn(function()
-						pcall(function()
-							Callback(activated)
-						end)
-					end)
+					spawn(function() pcall(function() Callback(activated) end) end)
 					activated = true
 				elseif activated == true then
 					TweenService:Create(color , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(25,25,25)}):Play()
 					TweenService:Create(TextLabel, tweenInfo, { TextColor3 = Color3.fromRGB(84, 84, 84) }):Play()
-					spawn(function()
-						pcall(function()
-							Callback(activated)
-						end)
-					end)
+					spawn(function() pcall(function() Callback(activated) end) end)
 					activated = false
 				end
 			end
-
 			TemplateToggle.Name = "TemplateToggle"
 			TemplateToggle.Parent = HOLDER_2
 			TemplateToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1691,7 +1482,6 @@ function library:AddWindow(text)
 			TemplateToggle.Position = UDim2.new(0.155858055, 0, 0.392140955, 0)
 			TemplateToggle.Size = UDim2.new(0, 239, 0, 22)
 			TemplateToggle.ZIndex = 14
-
 			TextLabel.Parent = TemplateToggle
 			TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			TextLabel.BackgroundTransparency = 1.000
@@ -1704,7 +1494,6 @@ function library:AddWindow(text)
 			TextLabel.TextColor3 = Color3.fromRGB(84, 84, 84)
 			TextLabel.TextSize = 14.000
 			TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-
 			Interactive.Name = "Interactive"
 			Interactive.Parent = TemplateToggle
 			Interactive.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1717,7 +1506,6 @@ function library:AddWindow(text)
 			Interactive.Text = ""
 			Interactive.TextColor3 = Color3.fromRGB(0, 0, 0)
 			Interactive.TextSize = 20.000
-
 			color.Name = "color"
 			color.Parent = TemplateToggle
 			color.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1726,11 +1514,8 @@ function library:AddWindow(text)
 			color.Position = UDim2.new(0.0192536544, 0, 0.386994779, 0)
 			color.Size = UDim2.new(0, 15, 0, 15)
 			color.ZIndex = 15
-
 			local KeyButton = Instance.new("TextButton")
 			local h5 = Instance.new("UICorner")
-
-
 			KeyButton.Name = "KeyButton"
 			KeyButton.Parent = TemplateToggle
 			KeyButton.AnchorPoint = Vector2.new(1, 0.5)
@@ -1750,38 +1535,28 @@ function library:AddWindow(text)
 			KeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 			KeyButton.TextSize = 10.000
 			KeyButton.TextStrokeColor3 = Color3.fromRGB(45, 45, 45)
-
 			h5.CornerRadius = UDim.new(0, 3)
 			h5.Name = "h5"
 			h5.Parent = KeyButton
 			KeyButton:TweenSize(UDim2.new(0,getsize(KeyButton.Text),0,15),'InOut','Quint',0.2,true)
-
 			if keybind then
 				local ischanging = false;
 				local KeyCode = keybind
 				game:GetService("UserInputService").InputBegan:connect(function(a, gp) 
 					if not gp then 
 						if (a.KeyCode.Name == KeyCode or a.KeyCode.Name == KeyCode.Name) and ischanging == false then 
-							pcall(function()
-								Update()
-							end)
+							pcall(function() Update() end)
 						end
 					end
 				end)
-
 				KeyButton.MouseButton1Click:connect(function() 
-					game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-						BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-					}):Play()
+					game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(34, 34, 34)}):Play()
 					KeyButton.Text = ". . ."
 					KeyButton:TweenSize(UDim2.new(0,getsize(KeyButton.Text),0,13), "InOut", "Quint", 0.2, true)
-
 					local v1, v2 = game:GetService('UserInputService').InputBegan:wait();
 					if v1.KeyCode.Name ~= "Unknown" then
 						ischanging = true
-						game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-							BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-						}):Play()
+						game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
 						KeyButton:TweenSize(UDim2.new(0,getsize( v1.KeyCode.Name),0,13), "Out", "Quint", 0.3, true)
 						KeyButton.Text = v1.KeyCode.Name
 						KeyCode = v1.KeyCode.Name;
@@ -1801,22 +1576,20 @@ function library:AddWindow(text)
 				Update(a)
 			end
 			Update(a)
-
 			Interactive.MouseButton1Click:Connect(Update)
 			Interactive.MouseEnter:Connect(function()
 				TweenService:Create(UIStroke , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(115, 115, 115)}):Play()
 			end)
 			Interactive.MouseLeave:Connect(function()
 				TweenService:Create(UIStroke , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {Color = Color3.fromRGB(52, 52, 52)}):Play()
-
 			end)
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
 			return y
-
 		end
+
 		function inside:AddSeparateBar()
 			local obj1 = Instance.new("Frame")
 			obj1.BackgroundColor3 = Color3.new(0.196078, 0.196078, 0.196078)
@@ -1828,26 +1601,21 @@ function library:AddWindow(text)
 			obj2.CornerRadius = UDim.new(1, 10)
 			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
 			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
-
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
-
-
 		end
+
 		function inside:AddColorPallete(Text,Color,Action)
 			Text = Text or 'Not defined'
 			Color = Color or Color3.fromRGB(255,255,255)
 			Action = Action or function() end
 			local SECTIONCOLOUR = Instance.new("Frame")
 			local CCCC3 = Instance.new("UICorner")
-
 			local OPENCLOSE = Instance.new("TextButton")
 			local UICorner = Instance.new("UICorner")
 			local ColourDisplay = Instance.new("ImageLabel")
-
-
 			SECTIONCOLOUR.Name = "SECTIONCOLOUR"
 			SECTIONCOLOUR.Parent = HOLDER_2
 			SECTIONCOLOUR.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -1856,11 +1624,9 @@ function library:AddWindow(text)
 			SECTIONCOLOUR.Position = UDim2.new(0.0251945332, 0, 0.517914712, 0)
 			SECTIONCOLOUR.Size = UDim2.new(0, 258, 0, 22)
 			SECTIONCOLOUR.ZIndex = 22
-
 			CCCC3.CornerRadius = UDim.new(0, 6)
 			CCCC3.Name = "CCCC3"
 			CCCC3.Parent = SECTIONCOLOUR
-
 			OPENCLOSE.Name = "OPENCLOSE"
 			OPENCLOSE.Parent = SECTIONCOLOUR
 			OPENCLOSE.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
@@ -1876,10 +1642,8 @@ function library:AddWindow(text)
 			OPENCLOSE.TextColor3 = Color3.fromRGB(255, 255, 255)
 			OPENCLOSE.TextSize = 16.000
 			OPENCLOSE.TextXAlignment = Enum.TextXAlignment.Left
-
 			UICorner.CornerRadius = UDim.new(0, 5)
 			UICorner.Parent = OPENCLOSE
-
 			ColourDisplay.Name = "ColourDisplay"
 			ColourDisplay.Parent = SECTIONCOLOUR
 			ColourDisplay.BackgroundColor3 = Color
@@ -1901,22 +1665,20 @@ function library:AddWindow(text)
 			UpdateMainSize(nil,true)
 			AutoFit(SECTIONHOLDER,SECTION2UILIB)
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
-
 			OPENCLOSE.MouseButton1Click:Connect(function()
 				OpenedColor(Text,ColourDisplay,Action,Color)
 			end)
 		end
+
 		function inside:AddKeyBind(Text,KeyCode,Action)
 			Text = Text or 'Not Defined'
 			KeyCode = KeyCode or Enum.KeyCode.RightAlt
 			Action = Action or function() end
-
 			local TemplateKBIND = Instance.new("Frame")
 			local TextLabel = Instance.new("TextLabel")
 			local Interactive = Instance.new("TextButton")
 			local KeyButton = Instance.new("TextButton")
 			local h5 = Instance.new("UICorner")
-
 			TemplateKBIND.Name = "TemplateKBIND"
 			TemplateKBIND.Parent = HOLDER_2
 			TemplateKBIND.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1925,7 +1687,6 @@ function library:AddWindow(text)
 			TemplateKBIND.Position = UDim2.new(0.155858055, 0, 0.392140955, 0)
 			TemplateKBIND.Size = UDim2.new(0, 239, 0, 22)
 			TemplateKBIND.ZIndex = 14
-
 			TextLabel.Parent = TemplateKBIND
 			TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 			TextLabel.BackgroundTransparency = 1.000
@@ -1938,7 +1699,6 @@ function library:AddWindow(text)
 			TextLabel.TextColor3 = Color3.fromRGB(197, 197, 197)
 			TextLabel.TextSize = 14.000
 			TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-
 			Interactive.Name = "Interactive"
 			Interactive.Parent = TemplateKBIND
 			Interactive.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1951,7 +1711,6 @@ function library:AddWindow(text)
 			Interactive.Text = ""
 			Interactive.TextColor3 = Color3.fromRGB(0, 0, 0)
 			Interactive.TextSize = 20.000
-
 			KeyButton.Name = "KeyButton"
 			KeyButton.Parent = TemplateKBIND
 			KeyButton.AnchorPoint = Vector2.new(1, 0.5)
@@ -1967,36 +1726,25 @@ function library:AddWindow(text)
 			KeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 			KeyButton.TextSize = 10.000
 			KeyButton.TextStrokeColor3 = Color3.fromRGB(45, 45, 45)
-
 			h5.CornerRadius = UDim.new(0, 3)
 			h5.Name = "h5"
 			h5.Parent = KeyButton
-
-
 			local ischanging = false;
 			game:GetService("UserInputService").InputBegan:connect(function(a, gp) 
 				if not gp then 
 					if (a.KeyCode.Name == KeyCode or a.KeyCode.Name == KeyCode.Name) and ischanging == false then 
-						pcall(function()
-							Action(a.KeyCode)
-						end)
+						pcall(function() Action(a.KeyCode) end)
 					end
 				end
 			end)
-
 			KeyButton.MouseButton1Click:connect(function() 
-				game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-					BackgroundColor3 = Color3.fromRGB(34, 34, 34)
-				}):Play()
+				game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(34, 34, 34)}):Play()
 				KeyButton.Text = ". . ."
 				KeyButton:TweenSize(UDim2.new(0,getsize(KeyButton.Text),0,13), "InOut", "Quint", 0.2, true)
-
 				local v1, v2 = game:GetService('UserInputService').InputBegan:wait();
 				if v1.KeyCode.Name ~= "Unknown" then
 					ischanging = true
-					game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {
-						BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-					}):Play()
+					game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
 					KeyButton:TweenSize(UDim2.new(0,getsize( v1.KeyCode.Name),0,13), "Out", "Quint", 0.3, true)
 					KeyButton.Text = v1.KeyCode.Name
 					KeyCode = v1.KeyCode.Name;
@@ -2004,7 +1752,6 @@ function library:AddWindow(text)
 					ischanging = false
 				end
 			end)
-
 			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
 			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
@@ -2012,16 +1759,87 @@ function library:AddWindow(text)
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
 		end
+
+		-- ============ NEW: MENU BINDER ELEMENT ============
+		function inside:AddMenuBinder(Text, DefaultKey)
+			-- Special keybind that rebinds the menu toggle key
+			Text = Text or 'Menu Key'
+			DefaultKey = DefaultKey or Enum.KeyCode.RightShift
+			library.MenuKey = DefaultKey
+			
+			local TemplateKBIND = Instance.new("Frame")
+			local TextLabel = Instance.new("TextLabel")
+			local KeyButton = Instance.new("TextButton")
+			local h5 = Instance.new("UICorner")
+			
+			TemplateKBIND.Name = "MenuBinder"
+			TemplateKBIND.Parent = HOLDER_2
+			TemplateKBIND.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			TemplateKBIND.BackgroundTransparency = 1.000
+			TemplateKBIND.BorderSizePixel = 0
+			TemplateKBIND.Size = UDim2.new(0, 239, 0, 22)
+			TemplateKBIND.ZIndex = 14
+			
+			TextLabel.Parent = TemplateKBIND
+			TextLabel.BackgroundTransparency = 1.000
+			TextLabel.Position = UDim2.new(-0.0121270986, 0, 0.0133694736, 0)
+			TextLabel.Size = UDim2.new(0, 242, 0, 15)
+			TextLabel.ZIndex = 15
+			TextLabel.Font = Enum.Font.SourceSansBold
+			TextLabel.Text = Text
+			TextLabel.TextColor3 = Color3.fromRGB(197, 197, 197)
+			TextLabel.TextSize = 14.000
+			TextLabel.TextXAlignment = Enum.TextXAlignment.Left
+			
+			KeyButton.Name = "KeyButton"
+			KeyButton.Parent = TemplateKBIND
+			KeyButton.AnchorPoint = Vector2.new(1, 0.5)
+			KeyButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+			KeyButton.BorderSizePixel = 0
+			KeyButton.ClipsDescendants = true
+			KeyButton.Position = UDim2.new(1.00271928, 0, 0.366679788, 0)
+			KeyButton.Size = UDim2.new(0, 45, 0, 15)
+			KeyButton.ZIndex = 55
+			KeyButton.AutoButtonColor = false
+			KeyButton.Font = Enum.Font.ArialBold
+			KeyButton.Text = DefaultKey.Name
+			KeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			KeyButton.TextSize = 10.000
+			KeyButton.TextStrokeColor3 = Color3.fromRGB(45, 45, 45)
+			
+			h5.CornerRadius = UDim.new(0, 3)
+			h5.Parent = KeyButton
+			
+			KeyButton.MouseButton1Click:connect(function() 
+				game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(34, 34, 34)}):Play()
+				KeyButton.Text = ". . ."
+				KeyButton:TweenSize(UDim2.new(0,getsize(KeyButton.Text),0,13), "InOut", "Quint", 0.2, true)
+				local v1, v2 = game:GetService('UserInputService').InputBegan:wait();
+				if v1.KeyCode.Name ~= "Unknown" then
+					game.TweenService:Create(KeyButton, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {BackgroundColor3 = Color3.fromRGB(25, 25, 25)}):Play()
+					KeyButton:TweenSize(UDim2.new(0,getsize(v1.KeyCode.Name),0,13), "Out", "Quint", 0.3, true)
+					KeyButton.Text = v1.KeyCode.Name
+					library.MenuKey = v1.KeyCode
+					wait(.2)
+				end
+			end)
+			
+			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X, SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
+			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset, 0, LIST.AbsoluteContentSize.Y + 15);
+			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X, SECTION2UILIB.AbsoluteContentSize.Y + 42), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
+			wait()
+			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X, LIST.AbsoluteContentSize.Y + 15), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
+			UpdateMainSize(nil, true)
+		end
+		-- ============ END NEW ============
+
 		function inside:AddDropdown(Text,tbl,sel,Action)
 			Text = Text or 'Not Defined'
 			tbl = tbl or {'Not','Defined','Option'}
 			sel = sel or tbl[2] or '.-. bruh dude like fr, put one valid SIMPLE table.'
 			Action = Action or function() end
-
 			local K  =false
 			local s =nil
-
-
 			local DRPDOWN = Instance.new("Frame")
 			local UICorner = Instance.new("UICorner")
 			local Toggle = Instance.new("TextButton")
@@ -2029,10 +1847,6 @@ function library:AddWindow(text)
 			local TextLabel = Instance.new("TextLabel")
 			local TextLabel_2 = Instance.new("TextLabel")
 			local UIListLayout = Instance.new("UIListLayout")
-
-
-			--Properties:
-
 			DRPDOWN.Name = "DRPDOWN"
 			DRPDOWN.Parent = HOLDER_2
 			DRPDOWN.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
@@ -2041,10 +1855,8 @@ function library:AddWindow(text)
 			DRPDOWN.Position = UDim2.new(0.0362365209, 0, 0.69055295, 0)
 			DRPDOWN.Size = UDim2.new(0, 252, 0, 25)
 			DRPDOWN.ZIndex = 27
-
 			UICorner.CornerRadius = UDim.new(0, 4)
 			UICorner.Parent = DRPDOWN
-
 			Toggle.Name = "Toggle"
 			Toggle.Parent = DRPDOWN
 			Toggle.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -2056,11 +1868,9 @@ function library:AddWindow(text)
 			Toggle.Text = "  "
 			Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
 			Toggle.TextSize = 16.000
-
 			_456fg.CornerRadius = UDim.new(0, 4)
 			_456fg.Name = "456fg"
 			_456fg.Parent = Toggle
-
 			TextLabel.Parent = Toggle
 			TextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
 			TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2074,7 +1884,6 @@ function library:AddWindow(text)
 			TextLabel.TextColor3 = Color3.fromRGB(197, 197, 197)
 			TextLabel.TextSize = 16.000
 			TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-
 			TextLabel_2.Parent = Toggle
 			TextLabel_2.AnchorPoint = Vector2.new(0.5, 0.5)
 			TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2088,12 +1897,10 @@ function library:AddWindow(text)
 			TextLabel_2.TextColor3 = Color3.fromRGB(255, 255, 255)
 			TextLabel_2.TextSize = 16.000
 			TextLabel_2.TextXAlignment = Enum.TextXAlignment.Right
-
 			UIListLayout.Parent = DRPDOWN
 			UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 			UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 			UIListLayout.Padding = UDim.new(0, 3)
-
 			for i,v in pairs(tbl) do
 				local OPTION = Instance.new("TextButton")
 				local _456fg_2 = Instance.new("UICorner")
@@ -2111,11 +1918,9 @@ function library:AddWindow(text)
 				OPTION.Text = ''
 				OPTION.TextColor3 = Color3.fromRGB(255, 255, 255)
 				OPTION.TextSize = 16.000
-
 				_456fg_2.CornerRadius = UDim.new(0, 4)
 				_456fg_2.Name = "456fg"
 				_456fg_2.Parent = OPTION
-
 				TextLabel_3.Parent = OPTION
 				TextLabel_3.AnchorPoint = Vector2.new(0.5, 0.5)
 				TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2127,14 +1932,12 @@ function library:AddWindow(text)
 				TextLabel_3.Text = v
 				TextLabel_3.TextColor3 = Color3.fromRGB(255, 255, 255)
 				TextLabel_3.TextSize = 15.000
-
 				if sel == v and v ~= Toggle.Text then
 					TweenService:Create(OPTION , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(28,28,28)}):Play()	
 					s = sel;
 				else
 					TweenService:Create(OPTION , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(37,37,37)}):Play()	
 				end
-
 				OPTION.MouseButton1Click:Connect(function()
 					for i,v in pairs(DRPDOWN:GetChildren()) do
 						if v:IsA("TextButton") and v ~= Toggle then
@@ -2143,20 +1946,15 @@ function library:AddWindow(text)
 					end
 					s=TextLabel_3.Text
 					TweenService:Create(OPTION , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.InOut), {BackgroundColor3 = Color3.fromRGB(28, 28, 28)}):Play()	
-					pcall(function()
-						Action(s)
-					end)
+					pcall(function() Action(s) end)
 				end)
-
 				SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 				task.wait()
 				_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 				task.wait()
 				UpdateMainSize(nil,true)
-
 				AddRipple(OPTION,TextLabel_3)
 			end
-
 			Toggle.MouseButton1Click:Connect(function()
 				if not K then
 					TweenService:Create(TextLabel_2 , TweenInfo.new(0.26, Enum.EasingStyle.Quad , Enum.EasingDirection.Out), {Rotation = 180}):Play()	
@@ -2173,21 +1971,16 @@ function library:AddWindow(text)
 				_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true) 
 				wait(.2)
 				UpdateMainSize(nil,true)
-
 			end)
-
-
-
-
 			AddRipple(Toggle,TextLabel_2,Color3.fromRGB(180, 180, 180))
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
-
 			SECTIONHOLDER:TweenSize(UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 42),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			wait()
 			_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
 			UpdateMainSize(nil,true)
 		end
+
 		function inside:AddButton(Text,Callback)
 			Callback = Callback or function() end
 			Text=Text or 'Not Defined'
@@ -2195,7 +1988,6 @@ function library:AddWindow(text)
 			local TextLabel = Instance.new("TextLabel")
 			local Interactive = Instance.new("TextButton")
 			local UICorner = Instance.new("UICorner")
-
 			TemplateButton.Name = "TemplateButton"
 			TemplateButton.Parent = HOLDER_2
 			TemplateButton.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -2211,11 +2003,10 @@ function library:AddWindow(text)
 			TextLabel.Position = UDim2.new(0, 0, 0, 0)
 			TextLabel.Size = UDim2.new(0,243,0,19)
 			TextLabel.ZIndex = 15
-            TextLabel.Text=Text
+			TextLabel.Text=Text
 			TextLabel.Font = Enum.Font.SourceSansBold
 			TextLabel.TextColor3 = Color3.fromRGB(84, 84, 84)
 			TextLabel.TextSize = 17.000
-
 			Interactive.Name = "Interactive"
 			Interactive.Parent = TemplateButton
 			Interactive.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2228,28 +2019,20 @@ function library:AddWindow(text)
 			Interactive.Text = ""
 			Interactive.TextColor3 = Color3.fromRGB(0, 0, 0)
 			Interactive.TextSize = 18.000
-			--Interactive.ClipsDescendants = true
 			UICorner.CornerRadius = UDim.new(0, 4)
 			UICorner.Parent = TemplateButton
 			local UIGradient = Instance.new("UIGradient");
 			local UIStroke = Instance.new('UIStroke');
-
 			UIStroke.Parent= TemplateButton;
 			UIStroke.Color = Color3.fromRGB(52,52,52);
 			UIStroke.LineJoinMode = Enum.LineJoinMode.Round;
 			UIStroke.Thickness = 1;
 			UIStroke.Transparency = 0;
 			UIStroke.Name = 'UIStroke';
-
 			UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 255, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(180, 180, 180))}
 			UIGradient.Parent = UIStroke
-
 			Interactive.MouseButton1Click:Connect(function()
-				spawn(function()
-					pcall(function()
-						Callback()
-					end)
-				end)
+				spawn(function() pcall(function() Callback() end) end)
 			end)
 			SECTIONHOLDER.Size = UDim2.fromOffset(SECTIONHOLDER.AbsoluteSize.X,  SECTION2UILIB.AbsoluteContentSize.Y + 8) + UDim2.new(0,0,0,23)
 			_PARENT.Size = UDim2.new(_PARENT.Size.X.Scale, _PARENT.Size.X.Offset , 0 ,LIST.AbsoluteContentSize.Y + 15);
@@ -2260,19 +2043,14 @@ function library:AddWindow(text)
 		end			
 		AutoFit(SECTIONHOLDER,SECTION2UILIB)
 		_PARENT:TweenSize(UDim2.fromOffset(_PARENT.AbsoluteSize.X,  LIST.AbsoluteContentSize.Y + 15),Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0, true) 
-
 		return inside
 	end
-
 	return sec
 end
 
-
-
-
 draggable(MAIN)
 
--- to check fps (not mine function so yeah) --
+-- HeartbeatUpdate = FPS counter for the top-right label of the menu
 spawn(function()
 	local TimeFunction = RunService:IsRunning() and time or os.clock
 	local LastIteration, Start
@@ -2282,15 +2060,14 @@ spawn(function()
 		for Index = #FrameUpdateTable, 1, -1 do
 			FrameUpdateTable[Index + 1] = FrameUpdateTable[Index] >= LastIteration - 1 and FrameUpdateTable[Index] or nil
 		end
-
 		FrameUpdateTable[1] = LastIteration
 		library.fps = tostring(math.floor(TimeFunction() - Start >= 1 and #FrameUpdateTable or #FrameUpdateTable / (TimeFunction() - Start))) .. " FPS"
 		UPPERLABEL.Text = library.fps
 	end
-
 	Start = TimeFunction()
 	RunService.Heartbeat:Connect(HeartbeatUpdate)
 end)
+
 library.GUI = PCR_1 
 
 return library
