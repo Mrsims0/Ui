@@ -3342,9 +3342,9 @@ function Library:CreateWindow(...)
         LogoImage = Library:Create('ImageLabel', {
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
-            Position = UDim2.new(0.5, 0, 0, 6);
+            Position = UDim2.new(0.5, 0, 0, 10);
             AnchorPoint = Vector2.new(0.5, 0);
-            Size = Config.LogoSize or UDim2.new(1, -20, 0, 44);
+            Size = Config.LogoSize or UDim2.new(1, -16, 0, 62);
             Image = (logoAsset and logoAsset ~= '') and logoAsset or '';
             ImageColor3 = Config.LogoColor or Color3.fromRGB(255, 255, 255);
             ScaleType = Enum.ScaleType.Fit;
@@ -3373,14 +3373,14 @@ function Library:CreateWindow(...)
 
         TabArea = Library:Create('Frame', {
             BackgroundTransparency = 1;
-            Position = UDim2.new(0, 8, 0, 58);
-            Size = UDim2.new(1, -16, 1, -66);
+            Position = UDim2.new(0, 8, 0, 92);
+            Size = UDim2.new(1, -16, 1, -100);
             ZIndex = 3;
             Parent = Sidebar;
         });
 
         TabListLayout = Library:Create('UIListLayout', {
-            Padding = UDim.new(0, Config.TabPadding or 4);
+            Padding = UDim.new(0, Config.TabPadding or 6);
             FillDirection = Enum.FillDirection.Vertical;
             SortOrder = Enum.SortOrder.LayoutOrder;
             Parent = TabArea;
