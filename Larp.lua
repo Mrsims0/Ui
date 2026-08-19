@@ -3139,6 +3139,9 @@ function Library:CreateWindow(...)
 
     local Window = {
         Tabs = {};
+        TabOrder = {};
+        CurrentTab = nil;
+        CurrentTabIndex = 1;
     };
 
     local Outer = Library:Create('Frame', {
@@ -3256,6 +3259,7 @@ function Library:CreateWindow(...)
             BorderColor3 = Library.OutlineColor;
             Position = UDim2.new(0, SidebarWidth + 16, 0, 28);
             Size = UDim2.new(1, -(SidebarWidth + 24), 1, -36);
+            ClipsDescendants = true;
             ZIndex = 2;
             Parent = Inner;
         });
@@ -3322,6 +3326,7 @@ function Library:CreateWindow(...)
             BorderColor3 = Library.OutlineColor;
             Position = UDim2.new(0, 8, 0, 30);
             Size = UDim2.new(1, -16, 1, -38);
+            ClipsDescendants = true;
             ZIndex = 2;
             Parent = MainSectionInner;
         });
@@ -3352,6 +3357,10 @@ function Library:CreateWindow(...)
             Groupboxes = {};
             Tabboxes = {};
         };
+
+        local TabIndex = #Window.TabOrder + 1;
+        Tab.Index = TabIndex;
+        table.insert(Window.TabOrder, Tab);
 
         local TabButton, TabButtonLabel, Blocker, TabGlow;
 
@@ -3457,6 +3466,8 @@ function Library:CreateWindow(...)
             Parent = TabContainer;
         });
 
+        Tab.TabFrame = TabFrame;
+
         local LeftSide = Library:Create('ScrollingFrame', {
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
@@ -3505,9 +3516,37 @@ function Library:CreateWindow(...)
             end);
         end;
 
+        function Tab:HideButton()
+            if isSidebar then
+                TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+                TabButtonLabel.Position = UDim2.new(0, 8, 0, 0);
+                if TabGlow then TabGlow.Visible = false; end
+            else
+                if Blocker then Blocker.BackgroundTransparency = 1; end
+                TabButton.BackgroundColor3 = Library.BackgroundColor;
+                if Library.RegistryMap[TabButton] then
+                    Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'BackgroundColor';
+                end
+            end
+        end;
+
         function Tab:ShowTab()
+            if Window.CurrentTab == Tab then
+                return;
+            end;
+
+            local OldTab = Window.CurrentTab;
+            local OldIndex = Window.CurrentTabIndex or 1;
+            local NewIndex = Tab.Index or 1;
+            local isForward = NewIndex > OldIndex;
+
+            Window.CurrentTab = Tab;
+            Window.CurrentTabIndex = NewIndex;
+
             for _, OtherTab in next, Window.Tabs do
-                OtherTab:HideTab();
+                if OtherTab ~= Tab and OtherTab.HideButton then
+                    OtherTab:HideButton();
+                end;
             end;
 
             if isSidebar then
@@ -3520,25 +3559,59 @@ function Library:CreateWindow(...)
                 if Library.RegistryMap[TabButton] then
                     Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'MainColor';
                 end
-            end
+            end;
 
+            if not OldTab or not OldTab.TabFrame then
+                TabFrame.Position = UDim2.new(0, 0, 0, 0);
+                TabFrame.Visible = true;
+                return;
+            end;
+
+            local startOffset, exitOffset;
+            if isSidebar then
+                if isForward then
+                    startOffset = UDim2.new(0, 0, 0.2, 0);
+                    exitOffset = UDim2.new(0, 0, -0.2, 0);
+                else
+                    startOffset = UDim2.new(0, 0, -0.2, 0);
+                    exitOffset = UDim2.new(0, 0, 0.2, 0);
+                end;
+            else
+                if isForward then
+                    startOffset = UDim2.new(0.2, 0, 0, 0);
+                    exitOffset = UDim2.new(-0.2, 0, 0, 0);
+                else
+                    startOffset = UDim2.new(-0.2, 0, 0, 0);
+                    exitOffset = UDim2.new(0.2, 0, 0, 0);
+                end;
+            end;
+
+            local oldFrame = OldTab.TabFrame;
+            if oldFrame then
+                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Position = exitOffset
+                });
+                tweenOut:Play();
+                task.delay(0.2, function()
+                    if Window.CurrentTab ~= OldTab then
+                        oldFrame.Visible = false;
+                        oldFrame.Position = UDim2.new(0, 0, 0, 0);
+                    end;
+                end);
+            end;
+
+            TabFrame.Position = startOffset;
             TabFrame.Visible = true;
+            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, 0, 0, 0)
+            });
+            tweenIn:Play();
         end;
 
         function Tab:HideTab()
-            if isSidebar then
-                TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
-                TabButtonLabel.Position = UDim2.new(0, 8, 0, 0);
-                if TabGlow then TabGlow.Visible = false; end
-            else
-                if Blocker then Blocker.BackgroundTransparency = 1; end
-                TabButton.BackgroundColor3 = Library.BackgroundColor;
-                if Library.RegistryMap[TabButton] then
-                    Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'BackgroundColor';
-                end
-            end
-
+            Tab:HideButton();
             TabFrame.Visible = false;
+            TabFrame.Position = UDim2.new(0, 0, 0, 0);
         end;
 
         function Tab:SetLayoutOrder(Position)
@@ -3846,6 +3919,18 @@ function Library:CreateWindow(...)
         TabButton.InputBegan:Connect(function(Input)
             if Input.UserInputType == Enum.UserInputType.MouseButton1 then
                 Tab:ShowTab();
+            elseif Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
+                if Window.CurrentTab ~= Tab then
+                    TabButtonLabel.TextColor3 = Color3.fromRGB(200, 200, 200);
+                end;
+            end;
+        end);
+
+        TabButton.InputEnded:Connect(function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
+                if Window.CurrentTab ~= Tab then
+                    TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+                end;
             end;
         end);
 
