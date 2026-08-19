@@ -3546,9 +3546,20 @@ function Library:CreateWindow(...)
             Window.CurrentTab = Tab;
             Window.CurrentTabIndex = NewIndex;
 
+            local animToken = (Window.AnimToken or 0) + 1;
+            Window.AnimToken = animToken;
+
             for _, OtherTab in next, Window.Tabs do
                 if OtherTab ~= Tab and OtherTab.HideButton then
                     OtherTab:HideButton();
+                end;
+                -- Clean up any third frames immediately
+                if OtherTab ~= Tab and OtherTab ~= OldTab and OtherTab.TabFrame then
+                    OtherTab.TabFrame.Visible = false;
+                    OtherTab.TabFrame.Position = UDim2.new(0, 0, 0, 0);
+                    if OtherTab.TabFrame:IsA('CanvasGroup') then
+                        OtherTab.TabFrame.GroupTransparency = 0;
+                    end;
                 end;
             end;
 
@@ -3566,6 +3577,7 @@ function Library:CreateWindow(...)
 
             if not OldTab or not OldTab.TabFrame then
                 TabFrame.Position = UDim2.new(0, 0, 0, 0);
+                TabFrame.ZIndex = 2;
                 if TabFrame:IsA('CanvasGroup') then
                     TabFrame.GroupTransparency = 0;
                 end;
@@ -3576,33 +3588,34 @@ function Library:CreateWindow(...)
             local startOffset, exitOffset;
             if isSidebar then
                 if isForward then
-                    startOffset = UDim2.new(0, 0, 0.15, 0);
-                    exitOffset = UDim2.new(0, 0, -0.15, 0);
+                    startOffset = UDim2.new(0, 0, 0.12, 0);
+                    exitOffset = UDim2.new(0, 0, -0.12, 0);
                 else
-                    startOffset = UDim2.new(0, 0, -0.15, 0);
-                    exitOffset = UDim2.new(0, 0, 0.15, 0);
+                    startOffset = UDim2.new(0, 0, -0.12, 0);
+                    exitOffset = UDim2.new(0, 0, 0.12, 0);
                 end;
             else
                 if isForward then
-                    startOffset = UDim2.new(0.15, 0, 0, 0);
-                    exitOffset = UDim2.new(-0.15, 0, 0, 0);
+                    startOffset = UDim2.new(0.12, 0, 0, 0);
+                    exitOffset = UDim2.new(-0.12, 0, 0, 0);
                 else
-                    startOffset = UDim2.new(-0.15, 0, 0, 0);
-                    exitOffset = UDim2.new(0.15, 0, 0, 0);
+                    startOffset = UDim2.new(-0.12, 0, 0, 0);
+                    exitOffset = UDim2.new(0.12, 0, 0, 0);
                 end;
             end;
 
             local oldFrame = OldTab.TabFrame;
             if oldFrame then
+                oldFrame.ZIndex = 2;
                 local outProps = { Position = exitOffset };
                 if oldFrame:IsA('CanvasGroup') then
                     outProps.GroupTransparency = 1;
                 end;
 
-                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), outProps);
+                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.18, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), outProps);
                 tweenOut:Play();
-                task.delay(0.2, function()
-                    if Window.CurrentTab ~= OldTab then
+                task.delay(0.18, function()
+                    if Window.AnimToken == animToken and Window.CurrentTab ~= OldTab then
                         oldFrame.Visible = false;
                         oldFrame.Position = UDim2.new(0, 0, 0, 0);
                         if oldFrame:IsA('CanvasGroup') then
@@ -3612,9 +3625,10 @@ function Library:CreateWindow(...)
                 end);
             end;
 
+            TabFrame.ZIndex = 3;
             TabFrame.Position = startOffset;
             if TabFrame:IsA('CanvasGroup') then
-                TabFrame.GroupTransparency = 1;
+                TabFrame.GroupTransparency = 0.4;
             end;
             TabFrame.Visible = true;
 
@@ -3623,7 +3637,7 @@ function Library:CreateWindow(...)
                 inProps.GroupTransparency = 0;
             end;
 
-            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), inProps);
+            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.22, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), inProps);
             tweenIn:Play();
         end;
 
