@@ -390,29 +390,46 @@ function Library:UpdateColorsUsingRegistry()
     end;
 end;
 
-function Library:LoadCustomFont(fontName, fontUrl)
-    fontName = fontName or "Minecraftia.ttf";
+function Library:LoadCustomFont(fontPath, fontUrl)
+    fontPath = fontPath or "KittyAuth/Assets/Fonts/Minecraftia.ttf";
     fontUrl = fontUrl or "https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf";
+
+    -- Normalize slashes
+    fontPath = fontPath:gsub("\\", "/");
+
+    -- Create nested folders if they don't exist
+    local folderPath = fontPath:match("^(.-)/[^/]+$");
+    if folderPath and makefolder then
+        local current = "";
+        for part in folderPath:gmatch("[^/]+") do
+            current = (current == "" and part) or (current .. "/" .. part);
+            if isfolder and not isfolder(current) then
+                pcall(makefolder, current);
+            elseif not isfolder then
+                pcall(makefolder, current);
+            end;
+        end;
+    end;
 
     local fontData;
     local function download()
-        if isfile and not isfile(fontName) then
+        if isfile and not isfile(fontPath) then
             local req = (syn and syn.request) or http_request or request;
             if req then
                 local res = req({ Url = fontUrl, Method = "GET" });
                 if res and res.Body then
                     fontData = res.Body;
-                    if writefile then writefile(fontName, res.Body); end;
+                    if writefile then writefile(fontPath, res.Body); end;
                 end;
             elseif game and game.HttpGet then
                 local body = game:HttpGet(fontUrl);
                 if body then
                     fontData = body;
-                    if writefile then writefile(fontName, body); end;
+                    if writefile then writefile(fontPath, body); end;
                 end;
             end;
-        elseif isfile and isfile(fontName) and readfile then
-            fontData = readfile(fontName);
+        elseif isfile and isfile(fontPath) and readfile then
+            fontData = readfile(fontPath);
         end;
     end;
 
@@ -424,16 +441,16 @@ function Library:LoadCustomFont(fontName, fontUrl)
             local drawingFont = Drawing.new("Font");
             if fontData then
                 drawingFont.Data = fontData;
-            elseif isfile and isfile(fontName) and readfile then
-                drawingFont.Data = readfile(fontName);
+            elseif isfile and isfile(fontPath) and readfile then
+                drawingFont.Data = readfile(fontPath);
             end;
             Library.DrawingCustomFont = drawingFont;
         end);
     end;
 
     -- Roblox GUI FontFace support (Font.new(getcustomasset(...)))
-    if getcustomasset and (not isfile or isfile(fontName)) then
-        local success, assetId = pcall(getcustomasset, fontName);
+    if getcustomasset and (not isfile or isfile(fontPath)) then
+        local success, assetId = pcall(getcustomasset, fontPath);
         if success and assetId then
             local fontFace = Font.new(assetId);
             Library.FontFace = fontFace;
@@ -450,7 +467,7 @@ function Library:SetFont(Font)
         Library:UpdateColorsUsingRegistry();
     elseif type(Font) == 'string' then
         if Font:lower():find('minecraft') or Font:find('%.ttf') or Font:find('%.otf') then
-            Library:LoadCustomFont(Font:find('%.ttf') and Font or 'Minecraftia.ttf');
+            Library:LoadCustomFont('KittyAuth/Assets/Fonts/Minecraftia.ttf', 'https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf');
         else
             local fontEnum = Enum.Font[Font];
             if fontEnum then
