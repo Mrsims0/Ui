@@ -3130,7 +3130,7 @@ function Library:CreateWindow(...)
     local SidebarWidth = Config.SidebarWidth or 135;
 
     if typeof(Config.Position) ~= 'UDim2' then Config.Position = UDim2.fromOffset(175, 50) end
-    if typeof(Config.Size) ~= 'UDim2' then Config.Size = isSidebar and UDim2.fromOffset(720, 520) or UDim2.fromOffset(550, 600) end
+    if typeof(Config.Size) ~= 'UDim2' then Config.Size = isSidebar and UDim2.fromOffset(780, 560) or UDim2.fromOffset(550, 600) end
 
     if Config.Center then
         Config.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -3225,11 +3225,11 @@ function Library:CreateWindow(...)
         });
 
         LogoLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 6);
-            Size = UDim2.new(1, 0, 0, 36);
+            Position = UDim2.new(0, 0, 0, 10);
+            Size = UDim2.new(1, 0, 0, 28);
             Text = Config.Logo or Config.Title or 'SOLANCE';
             TextSize = 18;
-            TextColor3 = Color3.fromRGB(180, 215, 255);
+            TextColor3 = Color3.fromRGB(240, 240, 240);
             TextXAlignment = Enum.TextXAlignment.Center;
             Font = Library.Font;
             ZIndex = 3;
@@ -3238,8 +3238,8 @@ function Library:CreateWindow(...)
 
         TabArea = Library:Create('Frame', {
             BackgroundTransparency = 1;
-            Position = UDim2.new(0, 6, 0, 48);
-            Size = UDim2.new(1, -12, 1, -54);
+            Position = UDim2.new(0, 8, 0, 58);
+            Size = UDim2.new(1, -16, 1, -66);
             ZIndex = 3;
             Parent = Sidebar;
         });
@@ -3353,36 +3353,56 @@ function Library:CreateWindow(...)
             Tabboxes = {};
         };
 
-        local TabButton, TabButtonLabel, Blocker, TabIndicator;
+        local TabButton, TabButtonLabel, Blocker, TabGlow;
 
         if isSidebar then
             TabButton = Library:Create('Frame', {
-                BackgroundColor3 = Library.BackgroundColor;
+                BackgroundTransparency = 1;
                 BorderSizePixel = 0;
                 Size = UDim2.new(1, 0, 0, 26);
                 ZIndex = 3;
                 Parent = TabArea;
             });
 
-            TabIndicator = Library:Create('Frame', {
+            -- Soft ambient glow frame behind active tab
+            TabGlow = Library:Create('Frame', {
                 BackgroundColor3 = Library.AccentColor;
+                BackgroundTransparency = 0.88;
                 BorderSizePixel = 0;
                 Position = UDim2.new(0, 0, 0, 0);
-                Size = UDim2.new(0, 2, 1, 0);
+                Size = UDim2.new(1, 0, 1, 0);
                 Visible = false;
-                ZIndex = 5;
+                ZIndex = 3;
                 Parent = TabButton;
             });
 
-            Library:AddToRegistry(TabIndicator, {
+            Library:Create('UICorner', {
+                CornerRadius = UDim.new(0, 4);
+                Parent = TabGlow;
+            });
+
+            Library:Create('UIGradient', {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Library.AccentColor),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+                });
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, 0.65),
+                    NumberSequenceKeypoint.new(0.6, 0.85),
+                    NumberSequenceKeypoint.new(1, 1)
+                });
+                Parent = TabGlow;
+            });
+
+            Library:AddToRegistry(TabGlow, {
                 BackgroundColor3 = 'AccentColor';
             });
 
             TabButtonLabel = Library:CreateLabel({
-                Position = UDim2.new(0, 10, 0, 0);
-                Size = UDim2.new(1, -10, 1, 0);
+                Position = UDim2.new(0, 8, 0, 0);
+                Size = UDim2.new(1, -8, 1, 0);
                 Text = Name;
-                TextColor3 = Color3.fromRGB(150, 150, 150);
+                TextColor3 = Color3.fromRGB(140, 140, 140);
                 TextXAlignment = Enum.TextXAlignment.Left;
                 TextSize = 14;
                 ZIndex = 4;
@@ -3491,8 +3511,9 @@ function Library:CreateWindow(...)
             end;
 
             if isSidebar then
-                TabButtonLabel.TextColor3 = Library.AccentColor;
-                if TabIndicator then TabIndicator.Visible = true; end
+                TabButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255);
+                TabButtonLabel.Position = UDim2.new(0, 14, 0, 0);
+                if TabGlow then TabGlow.Visible = true; end
             else
                 if Blocker then Blocker.BackgroundTransparency = 0; end
                 TabButton.BackgroundColor3 = Library.MainColor;
@@ -3506,8 +3527,9 @@ function Library:CreateWindow(...)
 
         function Tab:HideTab()
             if isSidebar then
-                TabButtonLabel.TextColor3 = Color3.fromRGB(150, 150, 150);
-                if TabIndicator then TabIndicator.Visible = false; end
+                TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+                TabButtonLabel.Position = UDim2.new(0, 8, 0, 0);
+                if TabGlow then TabGlow.Visible = false; end
             else
                 if Blocker then Blocker.BackgroundTransparency = 1; end
                 TabButton.BackgroundColor3 = Library.BackgroundColor;
