@@ -535,6 +535,36 @@ function Library:LoadCustomFont(fontPath, fontUrl)
     end;
 end;
 
+function Library:GetCustomAsset(path)
+    if type(path) == 'number' then
+        return 'rbxassetid://' .. tostring(path);
+    end;
+
+    if not path or type(path) ~= 'string' then
+        return '';
+    end;
+
+    if path:find('^rbxassetid://') or path:find('^rbxasset://') or path:find('^http://') or path:find('^https://') or path:find('^roblox:') then
+        return path;
+    end;
+
+    if tonumber(path) then
+        return 'rbxassetid://' .. path;
+    end;
+
+    local customAssetFunc = getcustomasset or getsynasset or (getgenv and (getgenv().getcustomasset or getgenv().getsynasset));
+    if customAssetFunc then
+        if (not isfile) or (isfile and isfile(path)) then
+            local success, assetId = pcall(customAssetFunc, path);
+            if success and assetId then
+                return assetId;
+            end;
+        end;
+    end;
+
+    return path;
+end;
+
 function Library:SetFont(Font)
     if typeof(Font) == 'Font' then
         Library.FontFace = Font;
@@ -3249,7 +3279,7 @@ function Library:CreateWindow(...)
         BorderColor3 = isSidebar and 'OutlineColor' or 'AccentColor';
     });
 
-    local WindowLabel, LogoLabel, SubTitleLabel;
+    local WindowLabel, LogoImage, SubTitleLabel;
     local TabArea, TabListLayout, TabContainer;
 
     if isSidebar then
@@ -3291,17 +3321,27 @@ function Library:CreateWindow(...)
             BorderColor3 = 'OutlineColor';
         });
 
-        LogoLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 10);
-            Size = UDim2.new(1, 0, 0, 28);
-            Text = Config.Logo or Config.Title or 'SOLANCE';
-            TextSize = 18;
-            TextColor3 = Color3.fromRGB(240, 240, 240);
-            TextXAlignment = Enum.TextXAlignment.Center;
-            Font = Library.Font;
+        local rawLogo = Config.Logo or Config.LogoImage or Config.Image or 'logo.png';
+        local logoAsset = Library:GetCustomAsset(rawLogo);
+
+        LogoImage = Library:Create('ImageLabel', {
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            Position = UDim2.new(0.5, 0, 0, 8);
+            AnchorPoint = Vector2.new(0.5, 0);
+            Size = Config.LogoSize or UDim2.new(0, 38, 0, 38);
+            Image = logoAsset or '';
+            ImageColor3 = Config.LogoColor or Color3.fromRGB(255, 255, 255);
+            ScaleType = Enum.ScaleType.Fit;
             ZIndex = 3;
             Parent = Sidebar;
         });
+
+        if Config.LogoColor == 'AccentColor' then
+            Library:AddToRegistry(LogoImage, {
+                ImageColor3 = 'AccentColor';
+            });
+        end;
 
         TabArea = Library:Create('Frame', {
             BackgroundTransparency = 1;
@@ -3404,16 +3444,22 @@ function Library:CreateWindow(...)
     function Window:SetWindowTitle(Title)
         if WindowLabel then
             WindowLabel.Text = Title;
-        end
-        if LogoLabel then
-            LogoLabel.Text = Title;
-        end
+        end;
+    end;
+
+    function Window:SetLogoImage(ImageId, Color)
+        if LogoImage and LogoImage:IsA('ImageLabel') then
+            LogoImage.Image = type(ImageId) == 'number' and ('rbxassetid://' .. tostring(ImageId)) or tostring(ImageId);
+            if Color then
+                LogoImage.ImageColor3 = Color;
+            end;
+        end;
     end;
 
     function Window:SetSubTitle(SubTitle)
         if SubTitleLabel then
             SubTitleLabel.Text = SubTitle;
-        end
+        end;
     end;
 
     function Window:AddTab(Name)
