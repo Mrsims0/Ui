@@ -156,6 +156,7 @@ function Library:CreateLabel(Properties, IsHud)
 
     Library:AddToRegistry(_Instance, {
         TextColor3 = 'FontColor';
+        Font = 'Font';
     }, IsHud);
 
     return Library:Create(_Instance, Properties);
@@ -372,6 +373,19 @@ function Library:UpdateColorsUsingRegistry()
             end
         end;
     end;
+end;
+
+function Library:SetFont(Font)
+    if type(Font) == 'string' then
+        local fontEnum = Enum.Font[Font];
+        if fontEnum then
+            Library.Font = fontEnum;
+        end;
+    elseif typeof(Font) == 'EnumItem' then
+        Library.Font = Font;
+    end;
+
+    Library:UpdateColorsUsingRegistry();
 end;
 
 function Library:GiveSignal(Signal)
