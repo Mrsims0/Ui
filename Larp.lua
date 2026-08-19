@@ -37,7 +37,14 @@ local Library = {
     RiskColor = Color3.fromRGB(255, 50, 50),
 
     Black = Color3.new(0, 0, 0);
-    Font = Enum.Font.Code,
+    Font = Enum.Font.Highway;
+    FontFace = (function()
+        local s, res = pcall(function()
+            local base = Font.fromEnum(Enum.Font.Highway);
+            return Font.new(base.Family, Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+        end);
+        return s and res or nil;
+    end)();
 
     OpenedFrames = {};
     DependencyBoxes = {};
@@ -135,21 +142,25 @@ end;
 function Library:ApplyTextStroke(Inst)
     Inst.TextStrokeTransparency = 1;
 
-    Library:Create('UIStroke', {
+    local stroke = Inst:FindFirstChildOfClass('UIStroke') or Library:Create('UIStroke', {
         Color = Color3.new(0, 0, 0);
         Thickness = 1;
         LineJoinMode = Enum.LineJoinMode.Miter;
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Contextual;
         Parent = Inst;
     });
+
+    stroke.Color = Color3.new(0, 0, 0);
+    stroke.Thickness = 1;
 end;
 
 function Library:CreateLabel(Properties, IsHud)
     local _Instance = Library:Create('TextLabel', {
         BackgroundTransparency = 1;
-        Font = (typeof(Library.Font) == 'EnumItem' and Library.Font) or Enum.Font.Code;
+        Font = (typeof(Library.Font) == 'EnumItem' and Library.Font) or Enum.Font.Highway;
         TextColor3 = Library.FontColor;
         TextSize = 16;
-        TextStrokeTransparency = 0;
+        TextStrokeTransparency = 1;
     });
 
     if typeof(Library.FontFace) == 'Font' then
@@ -3133,13 +3144,21 @@ function Library:CreateWindow(...)
     local Outer = Library:Create('Frame', {
         AnchorPoint = Config.AnchorPoint,
         BackgroundColor3 = Color3.new(0, 0, 0);
-        BorderColor3 = Library.OutlineColor;
+        BorderColor3 = Color3.new(0, 0, 0);
         BorderSizePixel = 1;
         Position = Config.Position,
         Size = Config.Size,
         Visible = false;
         ZIndex = 1;
         Parent = ScreenGui;
+    });
+
+    Library:Create('UIStroke', {
+        Color = Color3.new(0, 0, 0);
+        Thickness = 1;
+        LineJoinMode = Enum.LineJoinMode.Miter;
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+        Parent = Outer;
     });
 
     Library:AddToRegistry(Outer, {
