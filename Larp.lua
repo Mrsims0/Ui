@@ -394,25 +394,44 @@ function Library:LoadCustomFont(fontName, fontUrl)
     fontName = fontName or "Minecraftia.ttf";
     fontUrl = fontUrl or "https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf";
 
+    local fontData;
     local function download()
         if isfile and not isfile(fontName) then
             local req = (syn and syn.request) or http_request or request;
             if req then
                 local res = req({ Url = fontUrl, Method = "GET" });
-                if res and res.Body and writefile then
-                    writefile(fontName, res.Body);
+                if res and res.Body then
+                    fontData = res.Body;
+                    if writefile then writefile(fontName, res.Body); end;
                 end;
-            elseif game and game.HttpGet and writefile then
+            elseif game and game.HttpGet then
                 local body = game:HttpGet(fontUrl);
                 if body then
-                    writefile(fontName, body);
+                    fontData = body;
+                    if writefile then writefile(fontName, body); end;
                 end;
             end;
+        elseif isfile and isfile(fontName) and readfile then
+            fontData = readfile(fontName);
         end;
     end;
 
     pcall(download);
 
+    -- Potassium Drawing Font support (Drawing.new('Font').Data = fontData)
+    if Drawing and Drawing.new then
+        pcall(function()
+            local drawingFont = Drawing.new("Font");
+            if fontData then
+                drawingFont.Data = fontData;
+            elseif isfile and isfile(fontName) and readfile then
+                drawingFont.Data = readfile(fontName);
+            end;
+            Library.DrawingCustomFont = drawingFont;
+        end);
+    end;
+
+    -- Roblox GUI FontFace support (Font.new(getcustomasset(...)))
     if getcustomasset and (not isfile or isfile(fontName)) then
         local success, assetId = pcall(getcustomasset, fontName);
         if success and assetId then
