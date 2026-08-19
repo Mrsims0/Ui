@@ -2871,16 +2871,19 @@ end;
 do
     Library.NotificationArea = Library:Create('Frame', {
         BackgroundTransparency = 1;
-        Position = UDim2.new(0, 0, 0, 40);
-        Size = UDim2.new(0, 300, 0, 200);
-        ZIndex = 100;
+        Position = UDim2.new(0, 20, 0, 40);
+        Size = UDim2.new(0, 320, 1, -60);
+        AnchorPoint = Vector2.new(0, 0);
+        ZIndex = 1000;
         Parent = ScreenGui;
     });
 
-    Library:Create('UIListLayout', {
-        Padding = UDim.new(0, 4);
+    Library.NotificationLayout = Library:Create('UIListLayout', {
+        Padding = UDim.new(0, 5);
         FillDirection = Enum.FillDirection.Vertical;
         SortOrder = Enum.SortOrder.LayoutOrder;
+        HorizontalAlignment = Enum.HorizontalAlignment.Left;
+        VerticalAlignment = Enum.VerticalAlignment.Top;
         Parent = Library.NotificationArea;
     });
 
@@ -2946,8 +2949,6 @@ do
     Library.WatermarkText = WatermarkLabel;
     Library:MakeDraggable(Library.Watermark);
 
-
-
     local KeybindOuter = Library:Create('Frame', {
         AnchorPoint = Vector2.new(0, 0.5);
         BorderColor3 = Color3.new(0, 0, 0);
@@ -2988,7 +2989,6 @@ do
         Size = UDim2.new(1, 0, 0, 20);
         Position = UDim2.fromOffset(5, 2),
         TextXAlignment = Enum.TextXAlignment.Left,
-
         Text = 'Keybinds';
         ZIndex = 104;
         Parent = KeybindInner;
@@ -3011,11 +3011,68 @@ do
     Library:Create('UIPadding', {
         PaddingLeft = UDim.new(0, 5),
         Parent = KeybindContainer,
-    })
+    });
 
     Library.KeybindFrame = KeybindOuter;
     Library.KeybindContainer = KeybindContainer;
     Library:MakeDraggable(KeybindOuter);
+end;
+
+function Library:SetKeybindListVisibility(Bool)
+    if Library.KeybindFrame then
+        Library.KeybindFrame.Visible = Bool;
+    end;
+end;
+
+function Library:SetNotificationPosition(Position, AnchorPoint, Alignment)
+    if not Library.NotificationArea then return end;
+    if type(Position) == 'string' then
+        local pos = Position:lower():gsub('%s+', '');
+        if pos == 'topleft' then
+            Library.NotificationArea.Position = UDim2.new(0, 20, 0, 40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(0, 0);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top;
+        elseif pos == 'topright' then
+            Library.NotificationArea.Position = UDim2.new(1, -20, 0, 40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(1, 0);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top;
+        elseif pos == 'topcenter' or pos == 'middletop' or pos == 'centertop' then
+            Library.NotificationArea.Position = UDim2.new(0.5, 0, 0, 40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(0.5, 0);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Top;
+        elseif pos == 'center' or pos == 'middle' then
+            Library.NotificationArea.Position = UDim2.new(0.5, 0, 0.5, 0);
+            Library.NotificationArea.AnchorPoint = Vector2.new(0.5, 0.5);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Center;
+        elseif pos == 'bottomleft' then
+            Library.NotificationArea.Position = UDim2.new(0, 20, 1, -40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(0, 1);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom;
+        elseif pos == 'bottomright' then
+            Library.NotificationArea.Position = UDim2.new(1, -20, 1, -40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(1, 1);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom;
+        elseif pos == 'bottomcenter' or pos == 'middlebottom' or pos == 'centerbottom' then
+            Library.NotificationArea.Position = UDim2.new(0.5, 0, 1, -40);
+            Library.NotificationArea.AnchorPoint = Vector2.new(0.5, 1);
+            Library.NotificationLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center;
+            Library.NotificationLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom;
+        end;
+    elseif typeof(Position) == 'UDim2' then
+        Library.NotificationArea.Position = Position;
+        if typeof(AnchorPoint) == 'Vector2' then
+            Library.NotificationArea.AnchorPoint = AnchorPoint;
+        end;
+        if typeof(Alignment) == 'EnumItem' then
+            Library.NotificationLayout.HorizontalAlignment = Alignment;
+        end;
+    end;
 end;
 
 function Library:SetWatermarkVisibility(Bool)
@@ -3025,22 +3082,22 @@ end;
 function Library:SetWatermark(Text)
     local X, Y = Library:GetTextBounds(Text, Library.Font, 14);
     Library.Watermark.Size = UDim2.new(0, X + 15, 0, (Y * 1.5) + 3);
-    Library:SetWatermarkVisibility(true)
-
+    Library:SetWatermarkVisibility(true);
     Library.WatermarkText.Text = Text;
 end;
 
 function Library:Notify(Text, Time)
     local XSize, YSize = Library:GetTextBounds(Text, Library.Font, 14);
-
-    YSize = YSize + 7
+    YSize = YSize + 7;
+    local TargetWidth = XSize + 14;
 
     local NotifyOuter = Library:Create('Frame', {
+        BackgroundColor3 = Color3.new(0, 0, 0);
         BorderColor3 = Color3.new(0, 0, 0);
-        Position = UDim2.new(0, 100, 0, 10);
+        BorderSizePixel = 0;
         Size = UDim2.new(0, 0, 0, YSize);
         ClipsDescendants = true;
-        ZIndex = 100;
+        ZIndex = 1000;
         Parent = Library.NotificationArea;
     });
 
@@ -3049,7 +3106,7 @@ function Library:Notify(Text, Time)
         BorderColor3 = Library.OutlineColor;
         BorderMode = Enum.BorderMode.Inset;
         Size = UDim2.new(1, 0, 1, 0);
-        ZIndex = 101;
+        ZIndex = 1001;
         Parent = NotifyOuter;
     });
 
@@ -3063,7 +3120,7 @@ function Library:Notify(Text, Time)
         BorderSizePixel = 0;
         Position = UDim2.new(0, 1, 0, 1);
         Size = UDim2.new(1, -2, 1, -2);
-        ZIndex = 102;
+        ZIndex = 1002;
         Parent = NotifyInner;
     });
 
@@ -3082,25 +3139,25 @@ function Library:Notify(Text, Time)
                 ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
                 ColorSequenceKeypoint.new(1, Library.MainColor),
             });
-        end
+        end;
     });
 
     local NotifyLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 4, 0, 0);
-        Size = UDim2.new(1, -4, 1, 0);
+        Position = UDim2.new(0, 6, 0, 0);
+        Size = UDim2.new(1, -6, 1, 0);
         Text = Text;
         TextXAlignment = Enum.TextXAlignment.Left;
         TextSize = 14;
-        ZIndex = 103;
+        ZIndex = 1003;
         Parent = InnerFrame;
     });
 
     local LeftColor = Library:Create('Frame', {
         BackgroundColor3 = Library.AccentColor;
         BorderSizePixel = 0;
-        Position = UDim2.new(0, -1, 0, -1);
-        Size = UDim2.new(0, 3, 1, 2);
-        ZIndex = 104;
+        Position = UDim2.new(0, 0, 0, 0);
+        Size = UDim2.new(0, 2, 1, 0);
+        ZIndex = 1004;
         Parent = NotifyOuter;
     });
 
@@ -3108,15 +3165,12 @@ function Library:Notify(Text, Time)
         BackgroundColor3 = 'AccentColor';
     }, true);
 
-    pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+    pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, TargetWidth, 0, YSize), 'Out', 'Quad', 0.35, true);
 
     task.spawn(function()
-        wait(Time or 5);
-
-        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
-
-        wait(0.4);
-
+        task.wait(Time or 4);
+        pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.3, true);
+        task.wait(0.3);
         NotifyOuter:Destroy();
     end);
 end;
