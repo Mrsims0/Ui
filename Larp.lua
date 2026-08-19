@@ -2971,7 +2971,8 @@ function Library:CreateWindow(...)
     local Outer = Library:Create('Frame', {
         AnchorPoint = Config.AnchorPoint,
         BackgroundColor3 = Color3.new(0, 0, 0);
-        BorderSizePixel = 0;
+        BorderColor3 = Library.OutlineColor;
+        BorderSizePixel = 1;
         Position = Config.Position,
         Size = Config.Size,
         Visible = false;
@@ -2979,11 +2980,15 @@ function Library:CreateWindow(...)
         Parent = ScreenGui;
     });
 
+    Library:AddToRegistry(Outer, {
+        BorderColor3 = 'OutlineColor';
+    });
+
     Library:MakeDraggable(Outer, 25);
 
     local Inner = Library:Create('Frame', {
         BackgroundColor3 = Library.MainColor;
-        BorderColor3 = Library.AccentColor;
+        BorderColor3 = isSidebar and Library.OutlineColor or Library.AccentColor;
         BorderMode = Enum.BorderMode.Inset;
         Position = UDim2.new(0, 1, 0, 1);
         Size = UDim2.new(1, -2, 1, -2);
@@ -2993,7 +2998,7 @@ function Library:CreateWindow(...)
 
     Library:AddToRegistry(Inner, {
         BackgroundColor3 = 'MainColor';
-        BorderColor3 = 'AccentColor';
+        BorderColor3 = isSidebar and 'OutlineColor' or 'AccentColor';
     });
 
     local WindowLabel, LogoLabel, SubTitleLabel;
@@ -3003,8 +3008,8 @@ function Library:CreateWindow(...)
         local TopAccentLine = Library:Create('Frame', {
             BackgroundColor3 = Library.AccentColor;
             BorderSizePixel = 0;
-            Position = UDim2.new(0, 0, 0, 0);
-            Size = UDim2.new(1, 0, 0, 2);
+            Position = UDim2.new(0, 6, 0, 20);
+            Size = UDim2.new(1, -12, 0, 2);
             ZIndex = 10;
             Parent = Inner;
         });
@@ -3014,8 +3019,8 @@ function Library:CreateWindow(...)
         });
 
         SubTitleLabel = Library:CreateLabel({
-            Position = UDim2.new(1, -12, 0, 4);
-            Size = UDim2.new(0, 0, 0, 18);
+            Position = UDim2.new(1, -10, 0, 3);
+            Size = UDim2.new(0, 0, 0, 16);
             Text = Config.SubTitle or 'days: lifetime';
             TextXAlignment = Enum.TextXAlignment.Right;
             TextSize = 13;
@@ -3027,8 +3032,8 @@ function Library:CreateWindow(...)
         local Sidebar = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
-            Position = UDim2.new(0, 8, 0, 12);
-            Size = UDim2.new(0, SidebarWidth, 1, -20);
+            Position = UDim2.new(0, 8, 0, 28);
+            Size = UDim2.new(0, SidebarWidth, 1, -36);
             ZIndex = 2;
             Parent = Inner;
         });
@@ -3039,10 +3044,10 @@ function Library:CreateWindow(...)
         });
 
         LogoLabel = Library:CreateLabel({
-            Position = UDim2.new(0, 0, 0, 8);
-            Size = UDim2.new(1, 0, 0, 40);
+            Position = UDim2.new(0, 0, 0, 6);
+            Size = UDim2.new(1, 0, 0, 36);
             Text = Config.Logo or Config.Title or 'SOLANCE';
-            TextSize = 20;
+            TextSize = 18;
             TextColor3 = Color3.fromRGB(180, 215, 255);
             TextXAlignment = Enum.TextXAlignment.Center;
             Font = Library.Font;
@@ -3052,8 +3057,8 @@ function Library:CreateWindow(...)
 
         TabArea = Library:Create('Frame', {
             BackgroundTransparency = 1;
-            Position = UDim2.new(0, 6, 0, 56);
-            Size = UDim2.new(1, -12, 1, -62);
+            Position = UDim2.new(0, 6, 0, 48);
+            Size = UDim2.new(1, -12, 1, -54);
             ZIndex = 3;
             Parent = Sidebar;
         });
@@ -3068,8 +3073,8 @@ function Library:CreateWindow(...)
         TabContainer = Library:Create('Frame', {
             BackgroundColor3 = Library.MainColor;
             BorderColor3 = Library.OutlineColor;
-            Position = UDim2.new(0, SidebarWidth + 16, 0, 12);
-            Size = UDim2.new(1, -(SidebarWidth + 24), 1, -20);
+            Position = UDim2.new(0, SidebarWidth + 16, 0, 28);
+            Size = UDim2.new(1, -(SidebarWidth + 24), 1, -36);
             ZIndex = 2;
             Parent = Inner;
         });
