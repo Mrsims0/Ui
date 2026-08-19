@@ -3553,17 +3553,16 @@ function Library:CreateWindow(...)
             Window.CurrentTab = Tab;
             Window.CurrentTabIndex = NewIndex;
 
-            local animToken = (Window.AnimToken or 0) + 1;
-            Window.AnimToken = animToken;
-
             for _, OtherTab in next, Window.Tabs do
-                if OtherTab ~= Tab and OtherTab.HideButton then
-                    OtherTab:HideButton();
-                end;
-                if OtherTab ~= Tab and OtherTab ~= OldTab and OtherTab.TabFrame then
-                    OtherTab.TabFrame.Visible = false;
-                    OtherTab.TabFrame.Position = UDim2.new(0, 0, 0, 0);
-                    OtherTab.TabFrame.ZIndex = 1;
+                if OtherTab ~= Tab then
+                    if OtherTab.HideButton then
+                        OtherTab:HideButton();
+                    end;
+                    if OtherTab.TabFrame then
+                        OtherTab.TabFrame.Visible = false;
+                        OtherTab.TabFrame.Position = UDim2.new(0, 0, 0, 0);
+                        OtherTab.TabFrame.ZIndex = 1;
+                    end;
                 end;
             end;
 
@@ -3586,46 +3585,26 @@ function Library:CreateWindow(...)
                 return;
             end;
 
-            local startOffset, exitOffset;
+            local startOffset;
             if isSidebar then
                 if isForward then
-                    startOffset = UDim2.new(0, 0, 0.15, 0);
-                    exitOffset = UDim2.new(0, 0, -0.15, 0);
+                    startOffset = UDim2.new(0, 0, 0.12, 0);
                 else
-                    startOffset = UDim2.new(0, 0, -0.15, 0);
-                    exitOffset = UDim2.new(0, 0, 0.15, 0);
+                    startOffset = UDim2.new(0, 0, -0.12, 0);
                 end;
             else
                 if isForward then
-                    startOffset = UDim2.new(0.15, 0, 0, 0);
-                    exitOffset = UDim2.new(-0.15, 0, 0, 0);
+                    startOffset = UDim2.new(0.12, 0, 0, 0);
                 else
-                    startOffset = UDim2.new(-0.15, 0, 0, 0);
-                    exitOffset = UDim2.new(0.15, 0, 0, 0);
+                    startOffset = UDim2.new(-0.12, 0, 0, 0);
                 end;
-            end;
-
-            local oldFrame = OldTab.TabFrame;
-            if oldFrame then
-                oldFrame.ZIndex = 1;
-                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.18, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
-                    Position = exitOffset
-                });
-                tweenOut:Play();
-                task.delay(0.18, function()
-                    if Window.AnimToken == animToken and Window.CurrentTab ~= OldTab then
-                        oldFrame.Visible = false;
-                        oldFrame.Position = UDim2.new(0, 0, 0, 0);
-                        oldFrame.ZIndex = 1;
-                    end;
-                end);
             end;
 
             TabFrame.ZIndex = 2;
             TabFrame.Position = startOffset;
             TabFrame.Visible = true;
 
-            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.22, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
                 Position = UDim2.new(0, 0, 0, 0)
             });
             tweenIn:Play();
