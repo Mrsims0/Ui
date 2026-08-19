@@ -14,8 +14,18 @@ local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end);
 local ScreenGui = Instance.new('ScreenGui');
 ProtectGui(ScreenGui);
 
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global;
-ScreenGui.Parent = CoreGui;
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
+ScreenGui.ResetOnSpawn = false;
+
+pcall(function()
+    ScreenGui.Parent = CoreGui;
+end);
+
+if ScreenGui.Parent ~= CoreGui then
+    pcall(function()
+        ScreenGui.Parent = (gethui and gethui()) or CoreGui;
+    end);
+end;
 
 local Toggles = {};
 local Options = {};
@@ -3456,16 +3466,13 @@ function Library:CreateWindow(...)
             });
         end
 
-        local TabFrameClass = (pcall(function() return Instance.new('CanvasGroup') end) and 'CanvasGroup') or 'Frame';
-
-        local TabFrame = Library:Create(TabFrameClass, {
+        local TabFrame = Library:Create('Frame', {
             Name = 'TabFrame',
             BackgroundTransparency = 1;
             Position = UDim2.new(0, 0, 0, 0);
             Size = UDim2.new(1, 0, 1, 0);
-            GroupTransparency = 0;
             Visible = false;
-            ZIndex = 2;
+            ZIndex = 1;
             Parent = TabContainer;
         });
 
@@ -3553,13 +3560,10 @@ function Library:CreateWindow(...)
                 if OtherTab ~= Tab and OtherTab.HideButton then
                     OtherTab:HideButton();
                 end;
-                -- Clean up any third frames immediately
                 if OtherTab ~= Tab and OtherTab ~= OldTab and OtherTab.TabFrame then
                     OtherTab.TabFrame.Visible = false;
                     OtherTab.TabFrame.Position = UDim2.new(0, 0, 0, 0);
-                    if OtherTab.TabFrame:IsA('CanvasGroup') then
-                        OtherTab.TabFrame.GroupTransparency = 0;
-                    end;
+                    OtherTab.TabFrame.ZIndex = 1;
                 end;
             end;
 
@@ -3578,9 +3582,6 @@ function Library:CreateWindow(...)
             if not OldTab or not OldTab.TabFrame then
                 TabFrame.Position = UDim2.new(0, 0, 0, 0);
                 TabFrame.ZIndex = 2;
-                if TabFrame:IsA('CanvasGroup') then
-                    TabFrame.GroupTransparency = 0;
-                end;
                 TabFrame.Visible = true;
                 return;
             end;
@@ -3588,56 +3589,45 @@ function Library:CreateWindow(...)
             local startOffset, exitOffset;
             if isSidebar then
                 if isForward then
-                    startOffset = UDim2.new(0, 0, 0.12, 0);
-                    exitOffset = UDim2.new(0, 0, -0.12, 0);
+                    startOffset = UDim2.new(0, 0, 0.15, 0);
+                    exitOffset = UDim2.new(0, 0, -0.15, 0);
                 else
-                    startOffset = UDim2.new(0, 0, -0.12, 0);
-                    exitOffset = UDim2.new(0, 0, 0.12, 0);
+                    startOffset = UDim2.new(0, 0, -0.15, 0);
+                    exitOffset = UDim2.new(0, 0, 0.15, 0);
                 end;
             else
                 if isForward then
-                    startOffset = UDim2.new(0.12, 0, 0, 0);
-                    exitOffset = UDim2.new(-0.12, 0, 0, 0);
+                    startOffset = UDim2.new(0.15, 0, 0, 0);
+                    exitOffset = UDim2.new(-0.15, 0, 0, 0);
                 else
-                    startOffset = UDim2.new(-0.12, 0, 0, 0);
-                    exitOffset = UDim2.new(0.12, 0, 0, 0);
+                    startOffset = UDim2.new(-0.15, 0, 0, 0);
+                    exitOffset = UDim2.new(0.15, 0, 0, 0);
                 end;
             end;
 
             local oldFrame = OldTab.TabFrame;
             if oldFrame then
-                oldFrame.ZIndex = 2;
-                local outProps = { Position = exitOffset };
-                if oldFrame:IsA('CanvasGroup') then
-                    outProps.GroupTransparency = 1;
-                end;
-
-                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.18, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), outProps);
+                oldFrame.ZIndex = 1;
+                local tweenOut = TweenService:Create(oldFrame, TweenInfo.new(0.18, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+                    Position = exitOffset
+                });
                 tweenOut:Play();
                 task.delay(0.18, function()
                     if Window.AnimToken == animToken and Window.CurrentTab ~= OldTab then
                         oldFrame.Visible = false;
                         oldFrame.Position = UDim2.new(0, 0, 0, 0);
-                        if oldFrame:IsA('CanvasGroup') then
-                            oldFrame.GroupTransparency = 0;
-                        end;
+                        oldFrame.ZIndex = 1;
                     end;
                 end);
             end;
 
-            TabFrame.ZIndex = 3;
+            TabFrame.ZIndex = 2;
             TabFrame.Position = startOffset;
-            if TabFrame:IsA('CanvasGroup') then
-                TabFrame.GroupTransparency = 0.4;
-            end;
             TabFrame.Visible = true;
 
-            local inProps = { Position = UDim2.new(0, 0, 0, 0) };
-            if TabFrame:IsA('CanvasGroup') then
-                inProps.GroupTransparency = 0;
-            end;
-
-            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.22, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), inProps);
+            local tweenIn = TweenService:Create(TabFrame, TweenInfo.new(0.22, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0, 0, 0, 0)
+            });
             tweenIn:Play();
         end;
 
@@ -3645,9 +3635,7 @@ function Library:CreateWindow(...)
             Tab:HideButton();
             TabFrame.Visible = false;
             TabFrame.Position = UDim2.new(0, 0, 0, 0);
-            if TabFrame:IsA('CanvasGroup') then
-                TabFrame.GroupTransparency = 0;
-            end;
+            TabFrame.ZIndex = 1;
         end;
 
         function Tab:SetLayoutOrder(Position)
