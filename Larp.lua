@@ -552,29 +552,28 @@ function Library:GetCustomAsset(path)
         return 'rbxassetid://' .. path;
     end;
 
-    local customAssetFunc = getcustomasset or getsynasset or (getgenv and (getgenv().getcustomasset or getgenv().getsynasset));
-    if customAssetFunc then
-        local cleanPath = path:gsub('\\', '/'):gsub('^workspace/', ''):gsub('^/', '');
+    local func = (type(getcustomasset) == 'function' and getcustomasset)
+        or (type(getsynasset) == 'function' and getsynasset)
+        or (getgenv and type(getgenv().getcustomasset) == 'function' and getgenv().getcustomasset)
+        or (getgenv and type(getgenv().getsynasset) == 'function' and getgenv().getsynasset)
+        or (_G and type(_G.getcustomasset) == 'function' and _G.getcustomasset)
+        or (_G and type(_G.getsynasset) == 'function' and _G.getsynasset)
+        or (syn and type(syn.get_custom_asset) == 'function' and syn.get_custom_asset);
 
-        local ok1, res1 = pcall(customAssetFunc, cleanPath);
-        if ok1 and res1 and res1 ~= '' then
-            return res1;
-        end;
-
-        local ok2, res2 = pcall(customAssetFunc, path);
-        if ok2 and res2 and res2 ~= '' then
-            return res2;
-        end;
-
-        local ok3, res3 = pcall(customAssetFunc, 'workspace/' .. cleanPath);
-        if ok3 and res3 and res3 ~= '' then
-            return res3;
-        end;
-
-        local backslashPath = cleanPath:gsub('/', '\\');
-        local ok4, res4 = pcall(customAssetFunc, backslashPath);
-        if ok4 and res4 and res4 ~= '' then
-            return res4;
+    if func then
+        local clean = path:gsub('\\', '/'):gsub('^workspace/', ''):gsub('^/', '');
+        local variants = {
+            clean,
+            clean:gsub('/', '\\'),
+            path,
+            'workspace/' .. clean,
+            'workspace\\' .. clean:gsub('/', '\\')
+        };
+        for _, v in ipairs(variants) do
+            local ok, res = pcall(func, v);
+            if ok and res and type(res) == 'string' and res ~= '' then
+                return res;
+            end;
         end;
     end;
 
@@ -3337,21 +3336,34 @@ function Library:CreateWindow(...)
             BorderColor3 = 'OutlineColor';
         });
 
-        local rawLogo = Config.Logo or Config.LogoImage or Config.Image or 'logo.png';
+        local rawLogo = Config.Logo or Config.LogoImage or Config.Image or 'KittyAuth/Icons/logo.png';
         local logoAsset = Library:GetCustomAsset(rawLogo);
 
         LogoImage = Library:Create('ImageLabel', {
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
-            Position = UDim2.new(0.5, 0, 0, 8);
+            Position = UDim2.new(0.5, 0, 0, 6);
             AnchorPoint = Vector2.new(0.5, 0);
-            Size = Config.LogoSize or UDim2.new(0, 38, 0, 38);
-            Image = logoAsset or '';
+            Size = Config.LogoSize or UDim2.new(1, -20, 0, 44);
+            Image = (logoAsset and logoAsset ~= '') and logoAsset or '';
             ImageColor3 = Config.LogoColor or Color3.fromRGB(255, 255, 255);
             ScaleType = Enum.ScaleType.Fit;
-            ZIndex = 3;
+            ZIndex = 5;
             Parent = Sidebar;
         });
+
+        if (not logoAsset or logoAsset == '' or logoAsset == rawLogo) and rawLogo ~= '' then
+            task.spawn(function()
+                for _ = 1, 5 do
+                    task.wait(0.1);
+                    local retryAsset = Library:GetCustomAsset(rawLogo);
+                    if retryAsset and retryAsset ~= '' and retryAsset ~= rawLogo and LogoImage then
+                        LogoImage.Image = retryAsset;
+                        break;
+                    end;
+                end;
+            end);
+        end;
 
         if Config.LogoColor == 'AccentColor' then
             Library:AddToRegistry(LogoImage, {
