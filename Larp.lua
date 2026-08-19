@@ -146,17 +146,24 @@ end;
 function Library:CreateLabel(Properties, IsHud)
     local _Instance = Library:Create('TextLabel', {
         BackgroundTransparency = 1;
-        Font = Library.Font;
+        Font = (typeof(Library.Font) == 'EnumItem' and Library.Font) or Enum.Font.Code;
         TextColor3 = Library.FontColor;
         TextSize = 16;
         TextStrokeTransparency = 0;
     });
+
+    if typeof(Library.FontFace) == 'Font' then
+        pcall(function()
+            _Instance.FontFace = Library.FontFace;
+        end)
+    end;
 
     Library:ApplyTextStroke(_Instance);
 
     Library:AddToRegistry(_Instance, {
         TextColor3 = 'FontColor';
         Font = 'Font';
+        FontFace = 'FontFace';
     }, IsHud);
 
     return Library:Create(_Instance, Properties);
@@ -354,38 +361,90 @@ function Library:RemoveFromRegistry(Instance)
 end;
 
 function Library:UpdateColorsUsingRegistry()
-    -- TODO: Could have an 'active' list of objects
-    -- where the active list only contains Visible objects.
-
-    -- IMPL: Could setup .Changed events on the AddToRegistry function
-    -- that listens for the 'Visible' propert being changed.
-    -- Visible: true => Add to active list, and call UpdateColors function
-    -- Visible: false => Remove from active list.
-
-    -- The above would be especially efficient for a rainbow menu color or live color-changing.
-
     for Idx, Object in next, Library.Registry do
         for Property, ColorIdx in next, Object.Properties do
-            if type(ColorIdx) == 'string' then
-                Object.Instance[Property] = Library[ColorIdx];
+            if Property == 'FontFace' then
+                if typeof(Library.FontFace) == 'Font' then
+                    pcall(function()
+                        Object.Instance.FontFace = Library.FontFace;
+                    end)
+                end
+            elseif Property == 'Font' then
+                if typeof(Library.Font) == 'EnumItem' then
+                    pcall(function()
+                        Object.Instance.Font = Library.Font;
+                    end)
+                end
+            elseif type(ColorIdx) == 'string' then
+                if Library[ColorIdx] ~= nil then
+                    pcall(function()
+                        Object.Instance[Property] = Library[ColorIdx];
+                    end)
+                end
             elseif type(ColorIdx) == 'function' then
-                Object.Instance[Property] = ColorIdx()
+                pcall(function()
+                    Object.Instance[Property] = ColorIdx();
+                end)
             end
         end;
     end;
 end;
 
+function Library:LoadCustomFont(fontName, fontUrl)
+    fontName = fontName or "Minecraftia.ttf";
+    fontUrl = fontUrl or "https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf";
+
+    local function download()
+        if isfile and not isfile(fontName) then
+            local req = (syn and syn.request) or http_request or request;
+            if req then
+                local res = req({ Url = fontUrl, Method = "GET" });
+                if res and res.Body and writefile then
+                    writefile(fontName, res.Body);
+                end;
+            elseif game and game.HttpGet and writefile then
+                local body = game:HttpGet(fontUrl);
+                if body then
+                    writefile(fontName, body);
+                end;
+            end;
+        end;
+    end;
+
+    pcall(download);
+
+    if getcustomasset and (not isfile or isfile(fontName)) then
+        local success, assetId = pcall(getcustomasset, fontName);
+        if success and assetId then
+            local fontFace = Font.new(assetId);
+            Library.FontFace = fontFace;
+            Library.CustomFont = fontFace;
+            Library:UpdateColorsUsingRegistry();
+            return fontFace;
+        end;
+    end;
+end;
+
 function Library:SetFont(Font)
-    if type(Font) == 'string' then
-        local fontEnum = Enum.Font[Font];
-        if fontEnum then
-            Library.Font = fontEnum;
+    if typeof(Font) == 'Font' then
+        Library.FontFace = Font;
+        Library:UpdateColorsUsingRegistry();
+    elseif type(Font) == 'string' then
+        if Font:lower():find('minecraft') or Font:find('%.ttf') or Font:find('%.otf') then
+            Library:LoadCustomFont(Font:find('%.ttf') and Font or 'Minecraftia.ttf');
+        else
+            local fontEnum = Enum.Font[Font];
+            if fontEnum then
+                Library.Font = fontEnum;
+                Library.FontFace = nil;
+                Library:UpdateColorsUsingRegistry();
+            end;
         end;
     elseif typeof(Font) == 'EnumItem' then
         Library.Font = Font;
+        Library.FontFace = nil;
+        Library:UpdateColorsUsingRegistry();
     end;
-
-    Library:UpdateColorsUsingRegistry();
 end;
 
 function Library:GiveSignal(Signal)
