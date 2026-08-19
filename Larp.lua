@@ -554,11 +554,27 @@ function Library:GetCustomAsset(path)
 
     local customAssetFunc = getcustomasset or getsynasset or (getgenv and (getgenv().getcustomasset or getgenv().getsynasset));
     if customAssetFunc then
-        if (not isfile) or (isfile and isfile(path)) then
-            local success, assetId = pcall(customAssetFunc, path);
-            if success and assetId then
-                return assetId;
-            end;
+        local cleanPath = path:gsub('\\', '/'):gsub('^workspace/', ''):gsub('^/', '');
+
+        local ok1, res1 = pcall(customAssetFunc, cleanPath);
+        if ok1 and res1 and res1 ~= '' then
+            return res1;
+        end;
+
+        local ok2, res2 = pcall(customAssetFunc, path);
+        if ok2 and res2 and res2 ~= '' then
+            return res2;
+        end;
+
+        local ok3, res3 = pcall(customAssetFunc, 'workspace/' .. cleanPath);
+        if ok3 and res3 and res3 ~= '' then
+            return res3;
+        end;
+
+        local backslashPath = cleanPath:gsub('/', '\\');
+        local ok4, res4 = pcall(customAssetFunc, backslashPath);
+        if ok4 and res4 and res4 ~= '' then
+            return res4;
         end;
     end;
 
