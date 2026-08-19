@@ -362,37 +362,42 @@ end;
 
 function Library:UpdateColorsUsingRegistry()
     for Idx, Object in next, Library.Registry do
-        for Property, ColorIdx in next, Object.Properties do
-            if Property == 'FontFace' then
+        local inst = Object.Instance;
+        if inst then
+            if inst:IsA('TextLabel') or inst:IsA('TextBox') or inst:IsA('TextButton') then
                 if typeof(Library.FontFace) == 'Font' then
                     pcall(function()
-                        Object.Instance.FontFace = Library.FontFace;
+                        inst.FontFace = Library.FontFace;
                     end)
-                end
-            elseif Property == 'Font' then
-                if typeof(Library.Font) == 'EnumItem' then
+                elseif typeof(Library.Font) == 'EnumItem' then
                     pcall(function()
-                        Object.Instance.Font = Library.Font;
+                        inst.Font = Library.Font;
                     end)
                 end
-            elseif type(ColorIdx) == 'string' then
-                if Library[ColorIdx] ~= nil then
-                    pcall(function()
-                        Object.Instance[Property] = Library[ColorIdx];
-                    end)
-                end
-            elseif type(ColorIdx) == 'function' then
-                pcall(function()
-                    Object.Instance[Property] = ColorIdx();
-                end)
             end
-        end;
+
+            for Property, ColorIdx in next, Object.Properties do
+                if Property ~= 'FontFace' and Property ~= 'Font' then
+                    if type(ColorIdx) == 'string' then
+                        if Library[ColorIdx] ~= nil then
+                            pcall(function()
+                                inst[Property] = Library[ColorIdx];
+                            end)
+                        end
+                    elseif type(ColorIdx) == 'function' then
+                        pcall(function()
+                            inst[Property] = ColorIdx();
+                        end)
+                    end
+                end
+            end;
+        end
     end;
 end;
 
 function Library:LoadCustomFont(fontPath, fontUrl)
     fontPath = fontPath or "KittyAuth/Assets/Fonts/Minecraftia.ttf";
-    fontUrl = fontUrl or "https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf";
+    fontUrl = fontUrl or "https://raw.githubusercontent.com/LuckyHub1/LuckyHub/main/Minecraftia.ttf";
 
     -- Normalize slashes
     fontPath = fontPath:gsub("\\", "/");
@@ -403,60 +408,108 @@ function Library:LoadCustomFont(fontPath, fontUrl)
         local current = "";
         for part in folderPath:gmatch("[^/]+") do
             current = (current == "" and part) or (current .. "/" .. part);
-            if isfolder and not isfolder(current) then
-                pcall(makefolder, current);
-            elseif not isfolder then
+            local exists = false;
+            if isfolder then
+                local s, res = pcall(isfolder, current);
+                exists = s and res;
+            end;
+            if not exists then
                 pcall(makefolder, current);
             end;
         end;
+    end;
+
+    local function isFontDataValid(data)
+        if type(data) ~= 'string' or #data < 500 then
+            return false;
+        end;
+        -- Check if starts with HTML tag / error page
+        if data:sub(1, 1) == '<' or data:find('<!DOCTYPE') or data:find('<html') then
+            return false;
+        end;
+        return true;
     end;
 
     local fontData;
-    local function download()
-        if isfile and not isfile(fontPath) then
-            local req = (syn and syn.request) or http_request or request;
-            if req then
-                local res = req({ Url = fontUrl, Method = "GET" });
-                if res and res.Body then
-                    fontData = res.Body;
-                    if writefile then writefile(fontPath, res.Body); end;
-                end;
-            elseif game and game.HttpGet then
-                local body = game:HttpGet(fontUrl);
-                if body then
-                    fontData = body;
-                    if writefile then writefile(fontPath, body); end;
-                end;
-            end;
-        elseif isfile and isfile(fontPath) and readfile then
-            fontData = readfile(fontPath);
+
+    -- Check if existing file is valid; if corrupted, delete and re-download
+    if isfile and isfile(fontPath) and readfile then
+        local existing = readfile(fontPath);
+        if isFontDataValid(existing) then
+            fontData = existing;
+        elseif delfile then
+            pcall(delfile, fontPath);
         end;
     end;
 
-    pcall(download);
+    -- Download font if not already loaded
+    if not fontData then
+        local urls = {
+            fontUrl,
+            "https://raw.githubusercontent.com/LuckyHub1/LuckyHub/main/Minecraftia.ttf",
+            "https://raw.githubusercontent.com/LuckyHub1/LuckyHub/refs/heads/main/Minecraftia.ttf",
+            "https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf"
+        };
+
+        for _, url in ipairs(urls) do
+            local body;
+            if game and game.HttpGet then
+                local s, res = pcall(function() return game:HttpGet(url) end);
+                if s and isFontDataValid(res) then
+                    body = res;
+                end;
+            end;
+
+            if not body then
+                local req = (syn and syn.request) or http_request or request;
+                if req then
+                    local s, res = pcall(req, { Url = url, Method = "GET" });
+                    if s and res and isFontDataValid(res.Body) then
+                        body = res.Body;
+                    end;
+                end;
+            end;
+
+            if body and isFontDataValid(body) then
+                fontData = body;
+                if writefile then
+                    pcall(writefile, fontPath, body);
+                end;
+                break;
+            end;
+        end;
+    end;
 
     -- Potassium Drawing Font support (Drawing.new('Font').Data = fontData)
-    if Drawing and Drawing.new then
+    if Drawing and Drawing.new and fontData then
         pcall(function()
             local drawingFont = Drawing.new("Font");
-            if fontData then
-                drawingFont.Data = fontData;
-            elseif isfile and isfile(fontPath) and readfile then
-                drawingFont.Data = readfile(fontPath);
-            end;
+            drawingFont.Data = fontData;
             Library.DrawingCustomFont = drawingFont;
         end);
     end;
 
     -- Roblox GUI FontFace support (Font.new(getcustomasset(...)))
-    if getcustomasset and (not isfile or isfile(fontPath)) then
-        local success, assetId = pcall(getcustomasset, fontPath);
+    local customAssetFunc = getcustomasset or getsynasset or (getgenv and (getgenv().getcustomasset or getgenv().getsynasset));
+    if customAssetFunc and (not isfile or isfile(fontPath)) then
+        local success, assetId = pcall(customAssetFunc, fontPath);
         if success and assetId then
-            local fontFace = Font.new(assetId);
-            Library.FontFace = fontFace;
-            Library.CustomFont = fontFace;
-            Library:UpdateColorsUsingRegistry();
-            return fontFace;
+            local fontFace;
+            local ok, res = pcall(function()
+                return Font.new(assetId, Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+            end);
+            if ok and res then
+                fontFace = res;
+            else
+                fontFace = Font.new(assetId);
+            end;
+
+            if fontFace then
+                Library.FontFace = fontFace;
+                Library.CustomFont = fontFace;
+                Library:UpdateColorsUsingRegistry();
+                return fontFace;
+            end;
         end;
     end;
 end;
@@ -467,7 +520,7 @@ function Library:SetFont(Font)
         Library:UpdateColorsUsingRegistry();
     elseif type(Font) == 'string' then
         if Font:lower():find('minecraft') or Font:find('%.ttf') or Font:find('%.otf') then
-            Library:LoadCustomFont('KittyAuth/Assets/Fonts/Minecraftia.ttf', 'https://github.com/LuckyHub1/LuckyHub/raw/refs/heads/main/Minecraftia.ttf');
+            Library:LoadCustomFont('KittyAuth/Assets/Fonts/Minecraftia.ttf', 'https://raw.githubusercontent.com/LuckyHub1/LuckyHub/main/Minecraftia.ttf');
         else
             local fontEnum = Enum.Font[Font];
             if fontEnum then
