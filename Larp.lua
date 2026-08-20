@@ -61,6 +61,8 @@ local Library = {
 
     Signals = {};
     ScreenGui = ScreenGui;
+    IsOpen = false;
+    Toggled = false;
 };
 
 local RainbowStep = 0
@@ -2305,10 +2307,10 @@ do
                 DisplayLabel.Text = string.format('%s/%s', Slider.Value .. Suffix, Slider.Max .. Suffix);
             end
 
-            local fraction = math.clamp((Slider.Value - Slider.Min) / (Slider.Max - Slider.Min), 0, 1);
-            Fill.Size = UDim2.new(fraction, 0, 1, 0);
+            local X = math.ceil(Library:MapValue(Slider.Value, Slider.Min, Slider.Max, 0, Slider.MaxSize));
+            Fill.Size = UDim2.new(0, X, 1, 0);
 
-            HideBorderRight.Visible = not (fraction >= 0.999 or fraction <= 0.001);
+            HideBorderRight.Visible = not (X == Slider.MaxSize or X == 0);
         end;
 
         function Slider:OnChanged(Func)
@@ -2347,22 +2349,24 @@ do
 
         SliderInner.InputBegan:Connect(function(Input)
             if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
+                local mPos = Mouse.X;
+                local gPos = Fill.Size.X.Offset;
+                local Diff = mPos - (Fill.AbsolutePosition.X + gPos);
+
                 while InputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                    local width = SliderInner.AbsoluteSize.X;
-                    if width > 0 then
-                        local relX = math.clamp(Mouse.X - SliderInner.AbsolutePosition.X, 0, width);
-                        local fraction = relX / width;
-                        local nValue = Round(Slider.Min + fraction * (Slider.Max - Slider.Min));
-                        local OldValue = Slider.Value;
-                        Slider.Value = nValue;
+                    local nMPos = Mouse.X;
+                    local nX = math.clamp(gPos + (nMPos - mPos) + Diff, 0, Slider.MaxSize);
 
-                        Slider:Display();
+                    local nValue = Slider:GetValueFromXOffset(nX);
+                    local OldValue = Slider.Value;
+                    Slider.Value = nValue;
 
-                        if nValue ~= OldValue then
-                            Library:SafeCallback(Slider.Callback, Slider.Value);
-                            Library:SafeCallback(Slider.Changed, Slider.Value);
-                        end;
-                    end
+                    Slider:Display();
+
+                    if nValue ~= OldValue then
+                        Library:SafeCallback(Slider.Callback, Slider.Value);
+                        Library:SafeCallback(Slider.Changed, Slider.Value);
+                    end;
 
                     RenderStepped:Wait();
                 end;
@@ -4093,7 +4097,11 @@ function Library:CreateWindow(...)
         local FadeTime = Config.MenuFadeTime;
         Fading = true;
         Toggled = (not Toggled);
+        Library.IsOpen = Toggled;
+        Library.Toggled = Toggled;
         ModalElement.Modal = Toggled;
+        ModalElement.Active = Toggled;
+        ModalElement.Size = Toggled and UDim2.new(1, 0, 1, 0) or UDim2.new(0, 0, 0, 0);
 
         if Toggled then
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
@@ -4193,6 +4201,8 @@ function Library:CreateWindow(...)
     if Config.AutoShow then task.spawn(Library.Toggle) end
 
     Window.Holder = Outer;
+    Window.IsOpen = function() return Toggled end;
+    Window.Toggled = function() return Toggled end;
 
     return Window;
 end;
