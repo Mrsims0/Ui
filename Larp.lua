@@ -1246,11 +1246,6 @@ do
             SyncToggleState = Info.SyncToggleState or false;
         };
 
-        if KeyPicker.SyncToggleState then
-            Info.Modes = { 'Toggle' }
-            Info.Mode = 'Toggle'
-        end
-
         local PickOuter = Library:Create('Frame', {
             BackgroundColor3 = Color3.new(0, 0, 0);
             BorderColor3 = Color3.new(0, 0, 0);
@@ -1345,6 +1340,14 @@ do
                 end;
 
                 KeyPicker.Mode = Mode;
+
+                if KeyPicker.SyncToggleState and ParentObj.Type == 'Toggle' then
+                    if Mode == 'Always' then
+                        ParentObj:SetValue(true)
+                    elseif Mode == 'Hold' then
+                        ParentObj:SetValue(KeyPicker:GetState())
+                    end
+                end
 
                 Label.TextColor3 = Library.AccentColor;
                 Library.RegistryMap[Label].Properties.TextColor3 = 'AccentColor';
@@ -1532,6 +1535,18 @@ do
                             KeyPicker:DoClick()
                         end;
                     end;
+                elseif KeyPicker.Mode == 'Hold' then
+                    local Key = KeyPicker.Value;
+                    local matches = false
+                    if Key == 'MB1' or Key == 'MB2' then
+                        matches = (Key == 'MB1' and Input.UserInputType == Enum.UserInputType.MouseButton1)
+                               or (Key == 'MB2' and Input.UserInputType == Enum.UserInputType.MouseButton2)
+                    elseif Input.UserInputType == Enum.UserInputType.Keyboard then
+                        matches = (Input.KeyCode.Name == Key)
+                    end
+                    if matches and ParentObj.Type == 'Toggle' and KeyPicker.SyncToggleState then
+                        ParentObj:SetValue(true)
+                    end
                 end;
 
                 KeyPicker:Update();
@@ -1550,6 +1565,19 @@ do
 
         Library:GiveSignal(InputService.InputEnded:Connect(function(Input)
             if (not Picking) then
+                if KeyPicker.Mode == 'Hold' then
+                    local Key = KeyPicker.Value;
+                    local matches = false
+                    if Key == 'MB1' or Key == 'MB2' then
+                        matches = (Key == 'MB1' and Input.UserInputType == Enum.UserInputType.MouseButton1)
+                               or (Key == 'MB2' and Input.UserInputType == Enum.UserInputType.MouseButton2)
+                    elseif Input.UserInputType == Enum.UserInputType.Keyboard then
+                        matches = (Input.KeyCode.Name == Key)
+                    end
+                    if matches and ParentObj.Type == 'Toggle' and KeyPicker.SyncToggleState then
+                        ParentObj:SetValue(false)
+                    end
+                end;
                 KeyPicker:Update();
             end;
         end))
