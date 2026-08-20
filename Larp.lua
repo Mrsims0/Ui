@@ -4100,8 +4100,6 @@ function Library:CreateWindow(...)
         Library.IsOpen = Toggled;
         Library.Toggled = Toggled;
         ModalElement.Modal = Toggled;
-        ModalElement.Active = Toggled;
-        ModalElement.Size = Toggled and UDim2.new(1, 0, 1, 0) or UDim2.new(0, 0, 0, 0);
 
         if Toggled then
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
