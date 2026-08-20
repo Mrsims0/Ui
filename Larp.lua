@@ -2115,6 +2115,7 @@ do
         });
 
         local ToggleRegion = Library:Create('Frame', {
+            Active = true;
             BackgroundTransparency = 1;
             Size = UDim2.new(0, 170, 1, 0);
             ZIndex = 8;
@@ -3511,6 +3512,7 @@ function Library:CreateWindow(...)
 
         if isSidebar then
             TabButton = Library:Create('Frame', {
+                Active = true;
                 BackgroundTransparency = 1;
                 BorderSizePixel = 0;
                 Size = UDim2.new(1, 0, 0, 26);
@@ -3919,6 +3921,7 @@ function Library:CreateWindow(...)
                 local Tab = {};
 
                 local Button = Library:Create('Frame', {
+                    Active = true;
                     BackgroundColor3 = Library.MainColor;
                     BorderColor3 = Color3.new(0, 0, 0);
                     Size = UDim2.new(0.5, 0, 1, 0);
