@@ -1243,7 +1243,7 @@ do
             Callback = Info.Callback or function(Value) end;
             ChangedCallback = Info.ChangedCallback or function(New) end;
 
-            SyncToggleState = Info.SyncToggleState or false;
+            SyncToggleState = (Info.SyncToggleState ~= false) and (Info.SyncToggleState or (ParentObj.Type == 'Toggle'));
         };
 
         local PickOuter = Library:Create('Frame', {
