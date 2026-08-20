@@ -306,14 +306,19 @@ end;
 
 function Library:MouseIsOverOpenedFrame()
     for Frame, _ in next, Library.OpenedFrames do
-        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
+        if Frame and Frame.Visible and Frame.Parent then
+            local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
 
-        if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
-            and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
+            if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
+                and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
 
-            return true;
-        end;
+                return true;
+            end;
+        else
+            Library.OpenedFrames[Frame] = nil;
+        end
     end;
+    return false;
 end;
 
 function Library:IsMouseOverFrame(Frame)
@@ -4099,7 +4104,7 @@ function Library:CreateWindow(...)
         Toggled = (not Toggled);
         Library.IsOpen = Toggled;
         Library.Toggled = Toggled;
-        ModalElement.Modal = Toggled;
+        ModalElement.Modal = false;
 
         if Toggled then
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
