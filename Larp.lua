@@ -61,8 +61,6 @@ local Library = {
 
     Signals = {};
     ScreenGui = ScreenGui;
-    IsOpen = false;
-    Toggled = false;
 };
 
 local RainbowStep = 0
@@ -306,19 +304,14 @@ end;
 
 function Library:MouseIsOverOpenedFrame()
     for Frame, _ in next, Library.OpenedFrames do
-        if Frame and Frame.Visible and Frame.Parent then
-            local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
+        local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
 
-            if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
-                and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
+        if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
+            and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
 
-                return true;
-            end;
-        else
-            Library.OpenedFrames[Frame] = nil;
-        end
+            return true;
+        end;
     end;
-    return false;
 end;
 
 function Library:IsMouseOverFrame(Frame)
@@ -2115,7 +2108,6 @@ do
         });
 
         local ToggleRegion = Library:Create('Frame', {
-            Active = true;
             BackgroundTransparency = 1;
             Size = UDim2.new(0, 170, 1, 0);
             ZIndex = 8;
@@ -3512,7 +3504,6 @@ function Library:CreateWindow(...)
 
         if isSidebar then
             TabButton = Library:Create('Frame', {
-                Active = true;
                 BackgroundTransparency = 1;
                 BorderSizePixel = 0;
                 Size = UDim2.new(1, 0, 0, 26);
@@ -3921,7 +3912,6 @@ function Library:CreateWindow(...)
                 local Tab = {};
 
                 local Button = Library:Create('Frame', {
-                    Active = true;
                     BackgroundColor3 = Library.MainColor;
                     BorderColor3 = Color3.new(0, 0, 0);
                     Size = UDim2.new(0.5, 0, 1, 0);
@@ -4105,9 +4095,7 @@ function Library:CreateWindow(...)
         local FadeTime = Config.MenuFadeTime;
         Fading = true;
         Toggled = (not Toggled);
-        Library.IsOpen = Toggled;
-        Library.Toggled = Toggled;
-        ModalElement.Modal = false;
+        ModalElement.Modal = Toggled;
 
         if Toggled then
             -- A bit scuffed, but if we're going from not toggled -> toggled we want to show the frame immediately so that the fade is visible.
@@ -4207,8 +4195,6 @@ function Library:CreateWindow(...)
     if Config.AutoShow then task.spawn(Library.Toggle) end
 
     Window.Holder = Outer;
-    Window.IsOpen = function() return Toggled end;
-    Window.Toggled = function() return Toggled end;
 
     return Window;
 end;
