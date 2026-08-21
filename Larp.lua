@@ -2082,6 +2082,11 @@ do
         Groupbox:AddBlank(5);
         Groupbox:Resize();
 
+        Textbox.Idx = Idx;
+        Textbox.Text = Info.Text;
+        Textbox.Groupbox = Groupbox;
+        Textbox.Instance = TextBoxOuter;
+
         Options[Idx] = Textbox;
 
         return Textbox;
@@ -2216,6 +2221,10 @@ do
 
         Toggle.TextLabel = ToggleLabel;
         Toggle.Container = Container;
+        Toggle.Idx = Idx;
+        Toggle.Text = Info.Text;
+        Toggle.Groupbox = Groupbox;
+        Toggle.Instance = ToggleOuter;
         setmetatable(Toggle, BaseAddons);
 
         Toggles[Idx] = Toggle;
@@ -2239,6 +2248,9 @@ do
             Rounding = Info.Rounding;
             MaxSize = 232;
             Type = 'Slider';
+            Idx = Idx;
+            Text = Info.Text;
+            Groupbox = self;
             Callback = Info.Callback or function(Value) end;
         };
 
@@ -2412,6 +2424,7 @@ do
         Groupbox:AddBlank(Info.BlankSize or 6);
         Groupbox:Resize();
 
+        Slider.Instance = SliderOuter;
         Options[Idx] = Slider;
 
         return Slider;
@@ -2858,6 +2871,11 @@ do
 
         Groupbox:AddBlank(Info.BlankSize or 5);
         Groupbox:Resize();
+
+        Dropdown.Idx = Idx;
+        Dropdown.Text = Info.Text;
+        Dropdown.Groupbox = Groupbox;
+        Dropdown.Instance = DropdownOuter;
 
         Options[Idx] = Dropdown;
 
@@ -3959,18 +3977,35 @@ function Library:CreateWindow(...)
     });
 
     local SearchCloseBtn = Library:Create('TextButton', {
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
+        BackgroundColor3 = Library.BackgroundColor,
+        BorderColor3 = Library.OutlineColor,
         Position = UDim2.new(1, -24, 0.5, 0),
         AnchorPoint = Vector2.new(0, 0.5),
         Size = UDim2.fromOffset(20, 20),
-        Font = Enum.Font.GothamBold,
-        Text = '✕',
+        Font = Enum.Font.SourceSansBold,
+        Text = 'X',
         TextColor3 = Color3.fromRGB(160, 160, 160),
-        TextSize = 12,
+        TextSize = 13,
         ZIndex = 53,
         Parent = SearchBarFrame,
     });
+
+    Library:AddToRegistry(SearchCloseBtn, {
+        BackgroundColor3 = 'BackgroundColor';
+        BorderColor3 = 'OutlineColor';
+    });
+
+    SearchCloseBtn.MouseEnter:Connect(function()
+        SearchCloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255);
+        SearchCloseBtn.BackgroundColor3 = Library.MainColor;
+        SearchCloseBtn.BorderColor3 = Library.AccentColor;
+    end);
+
+    SearchCloseBtn.MouseLeave:Connect(function()
+        SearchCloseBtn.TextColor3 = Color3.fromRGB(160, 160, 160);
+        SearchCloseBtn.BackgroundColor3 = Library.BackgroundColor;
+        SearchCloseBtn.BorderColor3 = Library.OutlineColor;
+    end);
 
     local SearchDivider = Library:Create('Frame', {
         BackgroundColor3 = Library.OutlineColor,
@@ -4027,18 +4062,102 @@ function Library:CreateWindow(...)
 
     function Window:CollectSearchableItems()
         local items = {};
+        local seen = {};
+
+        -- Layer 1: Index Toggles table
+        for idx, toggle in pairs(Toggles) do
+            local text = toggle.Text or (toggle.TextLabel and toggle.TextLabel.Text) or tostring(idx);
+            local groupbox = toggle.Groupbox;
+            local tab = groupbox and groupbox.Tab;
+
+            if not tab and Window.Tabs then
+                for tName, tObj in pairs(Window.Tabs) do
+                    if groupbox and tObj.Groupboxes and (tObj.Groupboxes[groupbox.Name] or tObj.Groupboxes[tostring(groupbox)]) then
+                        tab = tObj;
+                        break;
+                    end;
+                end;
+            end;
+
+            local tabName = (tab and (tab.Name or tab.Text)) or (groupbox and groupbox.TabName) or 'Main';
+            local groupName = (groupbox and (groupbox.Name or groupbox.Text)) or 'Settings';
+            local side = groupbox and (groupbox.ParentSide or (tab and (groupbox.Side == 1 and tab.LeftSide or tab.RightSide)));
+            local instance = toggle.Instance or toggle.ToggleOuter or (toggle.TextLabel and toggle.TextLabel.Parent and toggle.TextLabel.Parent.Parent);
+
+            if text and text ~= '' then
+                local key = 'TOGGLE_' .. tostring(idx) .. '_' .. tostring(text);
+                if not seen[key] then
+                    seen[key] = true;
+                    table.insert(items, {
+                        Text = text,
+                        Idx = idx,
+                        Type = 'TOGGLE',
+                        Tab = tab,
+                        TabName = tabName,
+                        Groupbox = groupbox,
+                        GroupboxName = groupName,
+                        ScrollingFrame = side,
+                        TargetFrame = instance,
+                    });
+                end;
+            end;
+        end;
+
+        -- Layer 2: Index Options table (Sliders, Dropdowns, Inputs, ColorPickers, KeyPickers)
+        for idx, option in pairs(Options) do
+            local optType = (option.Type or 'OPTION'):upper();
+            local text = option.Text or option.Title or (option.TextLabel and option.TextLabel.Text) or tostring(idx);
+            local groupbox = option.Groupbox;
+            local tab = groupbox and groupbox.Tab;
+
+            if not tab and Window.Tabs then
+                for tName, tObj in pairs(Window.Tabs) do
+                    if groupbox and tObj.Groupboxes and (tObj.Groupboxes[groupbox.Name] or tObj.Groupboxes[tostring(groupbox)]) then
+                        tab = tObj;
+                        break;
+                    end;
+                end;
+            end;
+
+            local tabName = (tab and (tab.Name or tab.Text)) or (groupbox and groupbox.TabName) or 'Main';
+            local groupName = (groupbox and (groupbox.Name or groupbox.Text)) or 'Settings';
+            local side = groupbox and (groupbox.ParentSide or (tab and (groupbox.Side == 1 and tab.LeftSide or tab.RightSide)));
+            local instance = option.Instance or option.SliderOuter or option.DropdownOuter or option.InputOuter or (option.TextLabel and option.TextLabel.Parent);
+
+            if text and text ~= '' then
+                local key = optType .. '_' .. tostring(idx) .. '_' .. tostring(text);
+                if not seen[key] then
+                    seen[key] = true;
+                    table.insert(items, {
+                        Text = text,
+                        Idx = idx,
+                        Type = optType,
+                        Tab = tab,
+                        TabName = tabName,
+                        Groupbox = groupbox,
+                        GroupboxName = groupName,
+                        ScrollingFrame = side,
+                        TargetFrame = instance,
+                    });
+                end;
+            end;
+        end;
+
+        -- Layer 3: Scan all Window.Tabs -> Groupboxes -> Container children
         for tabName, tab in pairs(Window.Tabs) do
             if not tab.IsConfigTab then
+                local currentTabName = tab.Name or tostring(tabName);
                 for groupboxName, groupbox in pairs(tab.Groupboxes or {}) do
+                    local currentGroupName = groupbox.Name or tostring(groupboxName);
                     local side = groupbox.ParentSide or (groupbox.Side == 1 and tab.LeftSide or tab.RightSide);
                     if groupbox.Container then
                         for _, child in ipairs(groupbox.Container:GetChildren()) do
-                            if not child:IsA('UIListLayout') and child.Visible ~= false then
-                                local labelText = "";
+                            if child:IsA('GuiObject') and not child:IsA('UIListLayout') and child.Visible ~= false and child.Size.Y.Offset > 0 then
+                                local labelText = nil;
                                 local itemType = "FEATURE";
 
-                                local textLabel = child:FindFirstChildOfClass('TextLabel');
-                                if textLabel and textLabel.Text ~= '' then
+                                local textLabel = child:FindFirstChildWhichIsA('TextLabel', true);
+                                if textLabel and textLabel.Text and textLabel.Text ~= '' and textLabel.Text ~= 'Are you sure?' and textLabel.Text ~= '--' then
                                     labelText = textLabel.Text;
                                 end;
 
@@ -4056,19 +4175,25 @@ function Library:CreateWindow(...)
                                     itemType = "KEYBIND";
                                 elseif child:FindFirstChild('ColorPicker') then
                                     itemType = "COLOR";
+                                elseif labelText then
+                                    itemType = "BUTTON";
                                 end;
 
-                                if labelText ~= "" then
-                                    table.insert(items, {
-                                        Text = labelText,
-                                        Type = itemType,
-                                        Tab = tab,
-                                        TabName = tabName,
-                                        Groupbox = groupbox,
-                                        GroupboxName = groupboxName,
-                                        ScrollingFrame = side,
-                                        TargetFrame = child,
-                                    });
+                                if labelText and labelText ~= '' then
+                                    local key = itemType .. '_' .. currentTabName .. '_' .. currentGroupName .. '_' .. labelText;
+                                    if not seen[key] then
+                                        seen[key] = true;
+                                        table.insert(items, {
+                                            Text = labelText,
+                                            Type = itemType,
+                                            Tab = tab,
+                                            TabName = currentTabName,
+                                            Groupbox = groupbox,
+                                            GroupboxName = currentGroupName,
+                                            ScrollingFrame = side,
+                                            TargetFrame = child,
+                                        });
+                                    end;
                                 end;
                             end;
                         end;
@@ -4076,6 +4201,7 @@ function Library:CreateWindow(...)
                 end;
             end;
         end;
+
         return items;
     end;
 
@@ -4362,6 +4488,7 @@ function Library:CreateWindow(...)
 
     function Window:AddTab(Name, TabConfig)
         local Tab = {
+            Name = Name;
             Groupboxes = {};
             Tabboxes = {};
         };
@@ -4517,6 +4644,9 @@ function Library:CreateWindow(...)
             Parent = TabFrame;
         });
 
+        Tab.LeftSide = LeftSide;
+        Tab.RightSide = RightSide;
+
         Library:Create('UIListLayout', {
             Padding = UDim.new(0, 8);
             FillDirection = Enum.FillDirection.Vertical;
@@ -4658,7 +4788,13 @@ function Library:CreateWindow(...)
         end;
 
         function Tab:AddGroupbox(Info)
-            local Groupbox = {};
+            local Groupbox = {
+                Name = Info.Name;
+                Side = Info.Side;
+                Tab = Tab;
+                TabName = Tab.Name or Name;
+                ParentSide = Info.Side == 1 and LeftSide or RightSide;
+            };
 
             local BoxOuter = Library:Create('Frame', {
                 BackgroundColor3 = Library.BackgroundColor;
@@ -4737,6 +4873,8 @@ function Library:CreateWindow(...)
             end;
 
             Groupbox.Container = Container;
+            Groupbox.BoxOuter = BoxOuter;
+            Groupbox.BoxInner = BoxInner;
             setmetatable(Groupbox, BaseGroupbox);
 
             Groupbox:AddBlank(3);
@@ -4757,6 +4895,11 @@ function Library:CreateWindow(...)
 
         function Tab:AddTabbox(Info)
             local Tabbox = {
+                Name = Info.Name;
+                Side = Info.Side;
+                Tab = Tab;
+                TabName = Tab.Name or Name;
+                ParentSide = Info.Side == 1 and LeftSide or RightSide;
                 Tabs = {};
             };
 
@@ -4791,8 +4934,9 @@ function Library:CreateWindow(...)
             local Highlight = Library:Create('Frame', {
                 BackgroundColor3 = Library.AccentColor;
                 BorderSizePixel = 0;
+                Position = UDim2.new(0, 0, 0, 0);
                 Size = UDim2.new(1, 0, 0, 2);
-                ZIndex = 10;
+                ZIndex = 5;
                 Parent = BoxInner;
             });
 
@@ -4802,7 +4946,7 @@ function Library:CreateWindow(...)
 
             local TabboxButtons = Library:Create('Frame', {
                 BackgroundTransparency = 1;
-                Position = UDim2.new(0, 0, 0, 1);
+                Position = UDim2.new(0, 0, 0, 2);
                 Size = UDim2.new(1, 0, 0, 18);
                 ZIndex = 5;
                 Parent = BoxInner;
@@ -4816,49 +4960,34 @@ function Library:CreateWindow(...)
             });
 
             function Tabbox:AddTab(Name)
-                local Tab = {};
+                local Tab = {
+                    Name = Name;
+                    Tab = Tab;
+                    TabName = Tab.Name or Name;
+                    Groupbox = Tabbox;
+                    GroupboxName = (Info.Name and (Info.Name .. ' - ' .. Name)) or Name;
+                    ParentSide = Info.Side == 1 and LeftSide or RightSide;
+                };
 
-                local Button = Library:Create('Frame', {
-                    BackgroundColor3 = Library.MainColor;
-                    BorderColor3 = Color3.new(0, 0, 0);
+                local Button = Library:Create('TextButton', {
+                    BackgroundColor3 = Library.BackgroundColor;
+                    BorderColor3 = Library.OutlineColor;
                     Size = UDim2.new(0.5, 0, 1, 0);
+                    Text = Name;
+                    TextColor3 = Color3.fromRGB(140, 140, 140);
+                    TextSize = 14;
+                    Font = (typeof(Library.Font) == 'EnumItem' and Library.Font) or Enum.Font.Highway;
+                    AutoButtonColor = false;
                     ZIndex = 6;
                     Parent = TabboxButtons;
-                });
-
-                Library:AddToRegistry(Button, {
-                    BackgroundColor3 = 'MainColor';
-                });
-
-                local ButtonLabel = Library:CreateLabel({
-                    Size = UDim2.new(1, 0, 1, 0);
-                    TextSize = 14;
-                    Text = Name;
-                    TextXAlignment = Enum.TextXAlignment.Center;
-                    ZIndex = 7;
-                    Parent = Button;
-                });
-
-                local Block = Library:Create('Frame', {
-                    BackgroundColor3 = Library.BackgroundColor;
-                    BorderSizePixel = 0;
-                    Position = UDim2.new(0, 0, 1, 0);
-                    Size = UDim2.new(1, 0, 0, 1);
-                    Visible = false;
-                    ZIndex = 9;
-                    Parent = Button;
-                });
-
-                Library:AddToRegistry(Block, {
-                    BackgroundColor3 = 'BackgroundColor';
                 });
 
                 local Container = Library:Create('Frame', {
                     BackgroundTransparency = 1;
                     Position = UDim2.new(0, 4, 0, 20);
                     Size = UDim2.new(1, -4, 1, -20);
-                    ZIndex = 1;
                     Visible = false;
+                    ZIndex = 1;
                     Parent = BoxInner;
                 });
 
@@ -4869,44 +4998,21 @@ function Library:CreateWindow(...)
                 });
 
                 function Tab:Show()
-                    for _, Tab in next, Tabbox.Tabs do
-                        Tab:Hide();
+                    for _, OtherTab in next, Tabbox.Tabs do
+                        OtherTab:Hide();
                     end;
 
+                    Button.TextColor3 = Color3.fromRGB(255, 255, 255);
                     Container.Visible = true;
-                    Block.Visible = true;
-
-                    Button.BackgroundColor3 = Library.BackgroundColor;
-                    Library.RegistryMap[Button].Properties.BackgroundColor3 = 'BackgroundColor';
-
                     Tab:Resize();
                 end;
 
                 function Tab:Hide()
+                    Button.TextColor3 = Color3.fromRGB(140, 140, 140);
                     Container.Visible = false;
-                    Block.Visible = false;
-
-                    Button.BackgroundColor3 = Library.MainColor;
-                    Library.RegistryMap[Button].Properties.BackgroundColor3 = 'MainColor';
                 end;
 
                 function Tab:Resize()
-                    local TabCount = 0;
-
-                    for _, Tab in next, Tabbox.Tabs do
-                        TabCount = TabCount + 1;
-                    end;
-
-                    for _, Button in next, TabboxButtons:GetChildren() do
-                        if not Button:IsA('UIListLayout') then
-                            Button.Size = UDim2.new(1 / TabCount, 0, 1, 0);
-                        end;
-                    end;
-
-                    if (not Container.Visible) then
-                        return;
-                    end;
-
                     local Size = 0;
 
                     for _, Element in next, Tab.Container:GetChildren() do
@@ -4918,11 +5024,8 @@ function Library:CreateWindow(...)
                     BoxOuter.Size = UDim2.new(1, 0, 0, 20 + Size + 2 + 2);
                 end;
 
-                Button.InputBegan:Connect(function(Input)
-                    if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
-                        Tab:Show();
-                        Tab:Resize();
-                    end;
+                Button.MouseButton1Click:Connect(function()
+                    Tab:Show();
                 end);
 
                 Tab.Container = Container;
@@ -4941,6 +5044,8 @@ function Library:CreateWindow(...)
                 return Tab;
             end;
 
+            Tabbox.BoxOuter = BoxOuter;
+            Tabbox.BoxInner = BoxInner;
             Tab.Tabboxes[Info.Name or ''] = Tabbox;
 
             return Tabbox;
