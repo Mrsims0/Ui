@@ -3764,11 +3764,29 @@ function Library:CreateWindow(...)
         end;
     end;
 
-    function Window:AddTab(Name)
+    function Window:AddConfigTab(Name)
+        Name = Name or 'configs';
+        local Tab = Window:AddTab(Name, { NoButton = true });
+        Tab.IsConfigTab = true;
+        Window.ConfigTab = Tab;
+        return Tab;
+    end;
+
+    function Window:AddTab(Name, TabConfig)
         local Tab = {
             Groupboxes = {};
             Tabboxes = {};
         };
+
+        local hasButton = true;
+        if type(TabConfig) == 'table' and (TabConfig.NoButton or TabConfig.Hidden or TabConfig.IsConfig) then
+            hasButton = false;
+        elseif TabConfig == false then
+            hasButton = false;
+        end;
+
+        Tab.HasButton = hasButton;
+        Tab.IsConfigTab = (not hasButton);
 
         local TabIndex = #Window.TabOrder + 1;
         Tab.Index = TabIndex;
@@ -3776,96 +3794,98 @@ function Library:CreateWindow(...)
 
         local TabButton, TabButtonLabel, Blocker, TabGlow;
 
-        if isSidebar then
-            TabButton = Library:Create('Frame', {
-                BackgroundTransparency = 1;
-                BorderSizePixel = 0;
-                Size = UDim2.new(1, 0, 0, 26);
-                ZIndex = 3;
-                Parent = TabArea;
-            });
-
-            -- Soft ambient glow frame behind active tab
-            TabGlow = Library:Create('Frame', {
-                BackgroundColor3 = Library.AccentColor;
-                BackgroundTransparency = 0.88;
-                BorderSizePixel = 0;
-                Position = UDim2.new(0, 0, 0, 0);
-                Size = UDim2.new(1, 0, 1, 0);
-                Visible = false;
-                ZIndex = 3;
-                Parent = TabButton;
-            });
-
-            Library:Create('UICorner', {
-                CornerRadius = UDim.new(0, 4);
-                Parent = TabGlow;
-            });
-
-            Library:Create('UIGradient', {
-                Color = ColorSequence.new({
-                    ColorSequenceKeypoint.new(0, Library.AccentColor),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+        if hasButton then
+            if isSidebar then
+                TabButton = Library:Create('Frame', {
+                    BackgroundTransparency = 1;
+                    BorderSizePixel = 0;
+                    Size = UDim2.new(1, 0, 0, 26);
+                    ZIndex = 3;
+                    Parent = TabArea;
                 });
-                Transparency = NumberSequence.new({
-                    NumberSequenceKeypoint.new(0, 0.65),
-                    NumberSequenceKeypoint.new(0.6, 0.85),
-                    NumberSequenceKeypoint.new(1, 1)
+
+                -- Soft ambient glow frame behind active tab
+                TabGlow = Library:Create('Frame', {
+                    BackgroundColor3 = Library.AccentColor;
+                    BackgroundTransparency = 0.88;
+                    BorderSizePixel = 0;
+                    Position = UDim2.new(0, 0, 0, 0);
+                    Size = UDim2.new(1, 0, 1, 0);
+                    Visible = false;
+                    ZIndex = 3;
+                    Parent = TabButton;
                 });
-                Parent = TabGlow;
-            });
 
-            Library:AddToRegistry(TabGlow, {
-                BackgroundColor3 = 'AccentColor';
-            });
+                Library:Create('UICorner', {
+                    CornerRadius = UDim.new(0, 4);
+                    Parent = TabGlow;
+                });
 
-            TabButtonLabel = Library:CreateLabel({
-                Position = UDim2.new(0, 8, 0, 0);
-                Size = UDim2.new(1, -8, 1, 0);
-                Text = Name;
-                TextColor3 = Color3.fromRGB(140, 140, 140);
-                TextXAlignment = Enum.TextXAlignment.Left;
-                TextSize = 14;
-                ZIndex = 4;
-                Parent = TabButton;
-            });
-        else
-            local TabButtonWidth = Library:GetTextBounds(Name, Library.Font, 16);
+                Library:Create('UIGradient', {
+                    Color = ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, Library.AccentColor),
+                        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+                    });
+                    Transparency = NumberSequence.new({
+                        NumberSequenceKeypoint.new(0, 0.65),
+                        NumberSequenceKeypoint.new(0.6, 0.85),
+                        NumberSequenceKeypoint.new(1, 1)
+                    });
+                    Parent = TabGlow;
+                });
 
-            TabButton = Library:Create('Frame', {
-                BackgroundColor3 = Library.BackgroundColor;
-                BorderColor3 = Library.OutlineColor;
-                Size = UDim2.new(0, TabButtonWidth + 8 + 4, 1, 0);
-                ZIndex = 1;
-                Parent = TabArea;
-            });
+                Library:AddToRegistry(TabGlow, {
+                    BackgroundColor3 = 'AccentColor';
+                });
 
-            Library:AddToRegistry(TabButton, {
-                BackgroundColor3 = 'BackgroundColor';
-                BorderColor3 = 'OutlineColor';
-            });
+                TabButtonLabel = Library:CreateLabel({
+                    Position = UDim2.new(0, 8, 0, 0);
+                    Size = UDim2.new(1, -8, 1, 0);
+                    Text = Name;
+                    TextColor3 = Color3.fromRGB(140, 140, 140);
+                    TextXAlignment = Enum.TextXAlignment.Left;
+                    TextSize = 14;
+                    ZIndex = 4;
+                    Parent = TabButton;
+                });
+            else
+                local TabButtonWidth = Library:GetTextBounds(Name, Library.Font, 16);
 
-            TabButtonLabel = Library:CreateLabel({
-                Position = UDim2.new(0, 0, 0, 0);
-                Size = UDim2.new(1, 0, 1, -1);
-                Text = Name;
-                ZIndex = 1;
-                Parent = TabButton;
-            });
+                TabButton = Library:Create('Frame', {
+                    BackgroundColor3 = Library.BackgroundColor;
+                    BorderColor3 = Library.OutlineColor;
+                    Size = UDim2.new(0, TabButtonWidth + 8 + 4, 1, 0);
+                    ZIndex = 1;
+                    Parent = TabArea;
+                });
 
-            Blocker = Library:Create('Frame', {
-                BackgroundColor3 = Library.MainColor;
-                BorderSizePixel = 0;
-                Position = UDim2.new(0, 0, 1, 0);
-                Size = UDim2.new(1, 0, 0, 1);
-                BackgroundTransparency = 1;
-                ZIndex = 3;
-                Parent = TabButton;
-            });
+                Library:AddToRegistry(TabButton, {
+                    BackgroundColor3 = 'BackgroundColor';
+                    BorderColor3 = 'OutlineColor';
+                });
 
-            Library:AddToRegistry(Blocker, {
-                BackgroundColor3 = 'MainColor';
-            });
+                TabButtonLabel = Library:CreateLabel({
+                    Position = UDim2.new(0, 0, 0, 0);
+                    Size = UDim2.new(1, 0, 1, -1);
+                    Text = Name;
+                    ZIndex = 1;
+                    Parent = TabButton;
+                });
+
+                Blocker = Library:Create('Frame', {
+                    BackgroundColor3 = Library.MainColor;
+                    BorderSizePixel = 0;
+                    Position = UDim2.new(0, 0, 1, 0);
+                    Size = UDim2.new(1, 0, 0, 1);
+                    BackgroundTransparency = 1;
+                    ZIndex = 3;
+                    Parent = TabButton;
+                });
+
+                Library:AddToRegistry(Blocker, {
+                    BackgroundColor3 = 'MainColor';
+                });
+            end
         end
 
         local TabFrame = Library:Create('Frame', {
@@ -3879,6 +3899,9 @@ function Library:CreateWindow(...)
         });
 
         Tab.TabFrame = TabFrame;
+        Tab.TabButton = TabButton;
+        Tab.TabButtonLabel = TabButtonLabel;
+        Tab.TabGlow = TabGlow;
 
         local LeftSide = Library:Create('ScrollingFrame', {
             BackgroundTransparency = 1;
@@ -3929,17 +3952,27 @@ function Library:CreateWindow(...)
         end;
 
         function Tab:HideButton()
-            if isSidebar then
-                TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
-                TabButtonLabel.Position = UDim2.new(0, 8, 0, 0);
-                if TabGlow then TabGlow.Visible = false; end
-            else
-                if Blocker then Blocker.BackgroundTransparency = 1; end
-                TabButton.BackgroundColor3 = Library.BackgroundColor;
-                if Library.RegistryMap[TabButton] then
-                    Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'BackgroundColor';
+            if TabButton then
+                if isSidebar then
+                    if TabButtonLabel then
+                        TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+                        TabButtonLabel.Position = UDim2.new(0, 8, 0, 0);
+                    end;
+                    if TabGlow then TabGlow.Visible = false; end
+                else
+                    if Blocker then Blocker.BackgroundTransparency = 1; end
+                    TabButton.BackgroundColor3 = Library.BackgroundColor;
+                    if Library.RegistryMap[TabButton] then
+                        Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'BackgroundColor';
+                    end
                 end
-            end
+            end;
+
+            if (Tab.IsConfigTab or Tab == Window.ConfigTab) and SaveIcon then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Color3.fromRGB(160, 160, 160);
+                }):Play();
+            end;
         end;
 
         function Tab:ShowTab()
@@ -3968,16 +4001,26 @@ function Library:CreateWindow(...)
                 end;
             end;
 
-            if isSidebar then
-                TabButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255);
-                TabButtonLabel.Position = UDim2.new(0, 14, 0, 0);
-                if TabGlow then TabGlow.Visible = true; end
-            else
-                if Blocker then Blocker.BackgroundTransparency = 0; end
-                TabButton.BackgroundColor3 = Library.MainColor;
-                if Library.RegistryMap[TabButton] then
-                    Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'MainColor';
-                end
+            if TabButton then
+                if isSidebar then
+                    if TabButtonLabel then
+                        TabButtonLabel.TextColor3 = Color3.fromRGB(255, 255, 255);
+                        TabButtonLabel.Position = UDim2.new(0, 14, 0, 0);
+                    end;
+                    if TabGlow then TabGlow.Visible = true; end
+                else
+                    if Blocker then Blocker.BackgroundTransparency = 0; end
+                    TabButton.BackgroundColor3 = Library.MainColor;
+                    if Library.RegistryMap[TabButton] then
+                        Library.RegistryMap[TabButton].Properties.BackgroundColor3 = 'MainColor';
+                    end
+                end;
+            end;
+
+            if (Tab.IsConfigTab or Tab == Window.ConfigTab) and SaveIcon then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Library.AccentColor;
+                }):Play();
             end;
 
             if not OldTab or not OldTab.TabFrame then
@@ -4020,8 +4063,10 @@ function Library:CreateWindow(...)
         end;
 
         function Tab:SetLayoutOrder(Position)
-            TabButton.LayoutOrder = Position;
-            TabListLayout:ApplyLayout();
+            if TabButton then
+                TabButton.LayoutOrder = Position;
+                TabListLayout:ApplyLayout();
+            end;
         end;
 
         function Tab:AddGroupbox(Info)
@@ -4321,26 +4366,28 @@ function Library:CreateWindow(...)
             return Tab:AddTabbox({ Name = Name, Side = 2; });
         end;
 
-        TabButton.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                Tab:ShowTab();
-            elseif Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
-                if Window.CurrentTab ~= Tab then
-                    TabButtonLabel.TextColor3 = Color3.fromRGB(200, 200, 200);
+        if TabButton then
+            TabButton.InputBegan:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    Tab:ShowTab();
+                elseif Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
+                    if Window.CurrentTab ~= Tab and TabButtonLabel then
+                        TabButtonLabel.TextColor3 = Color3.fromRGB(200, 200, 200);
+                    end;
                 end;
-            end;
-        end);
+            end);
 
-        TabButton.InputEnded:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
-                if Window.CurrentTab ~= Tab then
-                    TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+            TabButton.InputEnded:Connect(function(Input)
+                if Input.UserInputType == Enum.UserInputType.MouseMovement and isSidebar then
+                    if Window.CurrentTab ~= Tab and TabButtonLabel then
+                        TabButtonLabel.TextColor3 = Color3.fromRGB(140, 140, 140);
+                    end;
                 end;
-            end;
-        end);
+            end);
+        end;
 
         -- This was the first tab added, so we show it by default.
-        if #TabContainer:GetChildren() == 1 then
+        if hasButton and #TabContainer:GetChildren() == 1 then
             Tab:ShowTab();
         end;
 
