@@ -1060,7 +1060,7 @@ do
 
             Library:Create(DisplayFrame, {
                 BackgroundColor3 = ColorPicker.Value;
-                BackgroundTransparency = 0;
+                BackgroundTransparency = ColorPicker.Transparency or 0;
                 BorderColor3 = Library:GetDarkerColor(ColorPicker.Value);
             });
 
