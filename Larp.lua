@@ -3329,7 +3329,7 @@ function Library:CreateWindow(...)
         BorderColor3 = isSidebar and 'OutlineColor' or 'AccentColor';
     });
 
-    local WindowLabel, LogoImage, SubTitleLabel;
+    local WindowLabel, LogoImage, SubTitleLabel, SaveButton, SaveIcon, TopRightContainer;
     local TabArea, TabListLayout, TabContainer;
 
     if isSidebar then
@@ -3346,15 +3346,123 @@ function Library:CreateWindow(...)
             BackgroundColor3 = 'AccentColor';
         });
 
-        SubTitleLabel = Library:CreateLabel({
-            Position = UDim2.new(1, -10, 0, 3);
+        TopRightContainer = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -10, 0, 2);
             Size = UDim2.new(0, 0, 0, 16);
+            AnchorPoint = Vector2.new(1, 0);
+            AutomaticSize = Enum.AutomaticSize.X;
+            ZIndex = 11;
+            Parent = Inner;
+        });
+
+        local TopRightLayout = Library:Create('UIListLayout', {
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            VerticalAlignment = Enum.VerticalAlignment.Center;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Padding = UDim.new(0, 8);
+            Parent = TopRightContainer;
+        });
+
+        local rawSaveIcon = Config.SaveIcon or Config.ConfigIcon or 'KittyAuth/Icons/save.png';
+        local saveIconAsset = Library:GetCustomAsset(rawSaveIcon);
+        if not saveIconAsset or saveIconAsset == '' or saveIconAsset == rawSaveIcon then
+            saveIconAsset = 'rbxassetid://10734941499';
+        end;
+
+        SaveButton = Library:Create('ImageButton', {
+            Name = 'SaveConfigButton',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            Size = UDim2.fromOffset(16, 16);
+            LayoutOrder = 1;
+            ZIndex = 12;
+            Visible = Config.ShowSaveButton ~= false;
+            Parent = TopRightContainer;
+        });
+
+        SaveIcon = Library:Create('ImageLabel', {
+            Name = 'SaveIcon',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            Position = UDim2.new(0.5, 0, 0.5, 0);
+            Size = UDim2.fromOffset(13, 13);
+            Image = saveIconAsset;
+            ImageColor3 = Color3.fromRGB(160, 160, 160);
+            ScaleType = Enum.ScaleType.Fit;
+            ZIndex = 13;
+            Parent = SaveButton;
+        });
+
+        if (not saveIconAsset or saveIconAsset == '' or saveIconAsset == rawSaveIcon) and rawSaveIcon ~= '' then
+            task.spawn(function()
+                for _ = 1, 5 do
+                    task.wait(0.1);
+                    local retryAsset = Library:GetCustomAsset(rawSaveIcon);
+                    if retryAsset and retryAsset ~= '' and retryAsset ~= rawSaveIcon and SaveIcon then
+                        SaveIcon.Image = retryAsset;
+                        break;
+                    end;
+                end;
+            end);
+        end;
+
+        Library:AddToolTip('Configs', SaveButton);
+
+        SaveButton.MouseEnter:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Library.AccentColor;
+            }):Play();
+        end);
+
+        SaveButton.MouseLeave:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Color3.fromRGB(160, 160, 160);
+            }):Play();
+        end);
+
+        SaveButton.MouseButton1Click:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(10, 10);
+            }):Play();
+            task.delay(0.06, function()
+                if SaveIcon then
+                    TweenService:Create(SaveIcon, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Size = UDim2.fromOffset(13, 13);
+                    }):Play();
+                end;
+            end);
+
+            if Window.ConfigTab then
+                if Window.ConfigTab.ShowTab then
+                    Window.ConfigTab:ShowTab();
+                elseif Window.ConfigTab.Show then
+                    Window.ConfigTab:Show();
+                end;
+            elseif Window.Tabs and (Window.Tabs['configs'] or Window.Tabs['Configs'] or Window.Tabs['config'] or Window.Tabs['Config']) then
+                local tab = Window.Tabs['configs'] or Window.Tabs['Configs'] or Window.Tabs['config'] or Window.Tabs['Config'];
+                if tab and tab.ShowTab then
+                    tab:ShowTab();
+                end;
+            end;
+
+            if Window.OnSaveClickCallback then
+                Library:SafeCallback(Window.OnSaveClickCallback);
+            end;
+        end);
+
+        SubTitleLabel = Library:CreateLabel({
+            Size = UDim2.new(0, 0, 0, 16);
+            AutomaticSize = Enum.AutomaticSize.X;
             Text = Config.SubTitle or 'days: lifetime';
             TextXAlignment = Enum.TextXAlignment.Right;
             TextSize = 13;
             TextColor3 = Color3.fromRGB(160, 160, 160);
-            ZIndex = 10;
-            Parent = Inner;
+            LayoutOrder = 2;
+            ZIndex = 11;
+            Parent = TopRightContainer;
         });
 
         local Sidebar = Library:Create('Frame', {
@@ -3445,6 +3553,114 @@ function Library:CreateWindow(...)
             Parent = Inner;
         });
 
+        TopRightContainer = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -8, 0, 4);
+            Size = UDim2.new(0, 0, 0, 16);
+            AnchorPoint = Vector2.new(1, 0);
+            AutomaticSize = Enum.AutomaticSize.X;
+            ZIndex = 11;
+            Parent = Inner;
+        });
+
+        local TopRightLayout = Library:Create('UIListLayout', {
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            VerticalAlignment = Enum.VerticalAlignment.Center;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Padding = UDim.new(0, 8);
+            Parent = TopRightContainer;
+        });
+
+        local rawSaveIcon = Config.SaveIcon or Config.ConfigIcon or 'KittyAuth/Icons/save.png';
+        local saveIconAsset = Library:GetCustomAsset(rawSaveIcon);
+        if not saveIconAsset or saveIconAsset == '' or saveIconAsset == rawSaveIcon then
+            saveIconAsset = 'rbxassetid://10734941499';
+        end;
+
+        SaveButton = Library:Create('ImageButton', {
+            Name = 'SaveConfigButton',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            Size = UDim2.fromOffset(16, 16);
+            LayoutOrder = 1;
+            ZIndex = 12;
+            Visible = Config.ShowSaveButton ~= false;
+            Parent = TopRightContainer;
+        });
+
+        SaveIcon = Library:Create('ImageLabel', {
+            Name = 'SaveIcon',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            Position = UDim2.new(0.5, 0, 0.5, 0);
+            Size = UDim2.fromOffset(13, 13);
+            Image = saveIconAsset;
+            ImageColor3 = Color3.fromRGB(160, 160, 160);
+            ScaleType = Enum.ScaleType.Fit;
+            ZIndex = 13;
+            Parent = SaveButton;
+        });
+
+        Library:AddToolTip('Configs', SaveButton);
+
+        SaveButton.MouseEnter:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Library.AccentColor;
+            }):Play();
+        end);
+
+        SaveButton.MouseLeave:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Color3.fromRGB(160, 160, 160);
+            }):Play();
+        end);
+
+        SaveButton.MouseButton1Click:Connect(function()
+            TweenService:Create(SaveIcon, TweenInfo.new(0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Size = UDim2.fromOffset(10, 10);
+            }):Play();
+            task.delay(0.06, function()
+                if SaveIcon then
+                    TweenService:Create(SaveIcon, TweenInfo.new(0.1, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                        Size = UDim2.fromOffset(13, 13);
+                    }):Play();
+                end;
+            end);
+
+            if Window.ConfigTab then
+                if Window.ConfigTab.ShowTab then
+                    Window.ConfigTab:ShowTab();
+                elseif Window.ConfigTab.Show then
+                    Window.ConfigTab:Show();
+                end;
+            elseif Window.Tabs and (Window.Tabs['configs'] or Window.Tabs['Configs'] or Window.Tabs['config'] or Window.Tabs['Config']) then
+                local tab = Window.Tabs['configs'] or Window.Tabs['Configs'] or Window.Tabs['config'] or Window.Tabs['Config'];
+                if tab and tab.ShowTab then
+                    tab:ShowTab();
+                end;
+            end;
+
+            if Window.OnSaveClickCallback then
+                Library:SafeCallback(Window.OnSaveClickCallback);
+            end;
+        end);
+
+        if Config.SubTitle and Config.SubTitle ~= '' then
+            SubTitleLabel = Library:CreateLabel({
+                Size = UDim2.new(0, 0, 0, 16);
+                AutomaticSize = Enum.AutomaticSize.X;
+                Text = Config.SubTitle;
+                TextXAlignment = Enum.TextXAlignment.Right;
+                TextSize = 13;
+                TextColor3 = Color3.fromRGB(160, 160, 160);
+                LayoutOrder = 2;
+                ZIndex = 11;
+                Parent = TopRightContainer;
+            });
+        end;
+
         local MainSectionOuter = Library:Create('Frame', {
             BackgroundColor3 = Library.BackgroundColor;
             BorderColor3 = Library.OutlineColor;
@@ -3503,6 +3719,29 @@ function Library:CreateWindow(...)
             BorderColor3 = 'OutlineColor';
         });
     end
+
+    Window.SaveButton = SaveButton;
+    Window.SaveIcon = SaveIcon;
+    Window.ConfigTab = Config.ConfigTab;
+    Window.OnSaveClickCallback = Config.OnSaveClick;
+
+    function Window:SetConfigTab(Tab)
+        Window.ConfigTab = Tab;
+    end;
+
+    function Window:SetSaveIcon(ImageId, Color)
+        if SaveIcon and SaveIcon:IsA('ImageLabel') then
+            local asset = Library:GetCustomAsset(ImageId);
+            SaveIcon.Image = (asset and asset ~= '') and asset or (type(ImageId) == 'number' and ('rbxassetid://' .. tostring(ImageId)) or tostring(ImageId));
+            if Color then
+                SaveIcon.ImageColor3 = Color;
+            end;
+        end;
+    end;
+
+    function Window:OnSaveClick(Callback)
+        Window.OnSaveClickCallback = Callback;
+    end;
 
     function Window:SetWindowTitle(Title)
         if WindowLabel then
@@ -4244,8 +4483,353 @@ local function OnPlayerChange()
     end;
 end;
 
-Players.PlayerAdded:Connect(OnPlayerChange);
-Players.PlayerRemoving:Connect(OnPlayerChange);
+local HttpService = game:GetService('HttpService');
+
+local SaveManager = {
+    Folder = 'Solance/Configs';
+    Ignore = { 'MenuKeybind' };
+    Library = Library;
+    AutoloadFile = 'Solance/Configs/autoload.txt';
+};
+
+function SaveManager:SetFolder(Folder)
+    self.Folder = Folder;
+    self.AutoloadFile = Folder .. '/autoload.txt';
+    self:CheckFolder();
+end;
+
+function SaveManager:SetLibrary(Lib)
+    self.Library = Lib;
+end;
+
+function SaveManager:SetIgnoreIndexes(List)
+    for _, idx in ipairs(List) do
+        table.insert(self.Ignore, idx);
+    end;
+end;
+
+function SaveManager:CheckFolder()
+    if makefolder and isfolder then
+        local parts = self.Folder:split('/');
+        local curr = '';
+        for _, part in ipairs(parts) do
+            curr = (curr == '' and part) or (curr .. '/' .. part);
+            if not isfolder(curr) then
+                pcall(makefolder, curr);
+            end;
+        end;
+    end;
+end;
+
+function SaveManager:GetConfigs()
+    self:CheckFolder();
+    local list = {};
+    if listfiles and isfolder and isfolder(self.Folder) then
+        local ok, files = pcall(listfiles, self.Folder);
+        if ok and files then
+            for _, file in ipairs(files) do
+                local clean = file:gsub('\\', '/');
+                if clean:sub(-5) == '.json' then
+                    local name = clean:match('([^/]+)%.json$');
+                    if name then
+                        table.insert(list, name);
+                    end;
+                end;
+            end;
+        end;
+    end;
+    if #list == 0 then
+        list = { 'default' };
+    end;
+    table.sort(list);
+    return list;
+end;
+
+function SaveManager:Save(name)
+    if not name or name == '' then return false, 'Invalid name' end;
+    self:CheckFolder();
+
+    local data = {
+        Toggles = {};
+        Options = {};
+    };
+
+    for idx, toggle in next, Toggles do
+        if not table.find(self.Ignore, idx) then
+            data.Toggles[idx] = {
+                Value = toggle.Value;
+            };
+        end;
+    end;
+
+    for idx, option in next, Options do
+        if not table.find(self.Ignore, idx) then
+            if option.Type == 'ColorPicker' then
+                data.Options[idx] = {
+                    Type = 'ColorPicker';
+                    Value = { option.Value.R, option.Value.G, option.Value.B };
+                    Transparency = option.Transparency or 0;
+                };
+            elseif option.Type == 'KeyPicker' then
+                data.Options[idx] = {
+                    Type = 'KeyPicker';
+                    Value = option.Value;
+                    Mode = option.Mode;
+                };
+            elseif option.Type == 'Dropdown' then
+                data.Options[idx] = {
+                    Type = 'Dropdown';
+                    Value = option.Value;
+                };
+            elseif option.Type == 'Slider' then
+                data.Options[idx] = {
+                    Type = 'Slider';
+                    Value = option.Value;
+                };
+            elseif option.Type == 'Input' or option.Type == 'Textbox' then
+                data.Options[idx] = {
+                    Type = 'Input';
+                    Value = option.Value;
+                };
+            end;
+        end;
+    end;
+
+    local success, encoded = pcall(function()
+        return HttpService:JSONEncode(data);
+    end);
+
+    if success and encoded then
+        if writefile then
+            local ok = pcall(writefile, self.Folder .. '/' .. name .. '.json', encoded);
+            if ok then
+                return true;
+            end;
+        end;
+    end;
+    return false;
+end;
+
+function SaveManager:Load(name)
+    if not name or name == '' then return false, 'Invalid name' end;
+    self:CheckFolder();
+
+    local path = self.Folder .. '/' .. name .. '.json';
+    local str;
+    if isfile and isfile(path) and readfile then
+        local ok, res = pcall(readfile, path);
+        if ok then
+            str = res;
+        end;
+    end;
+
+    if not str or str == '' then
+        return false, 'Config file not found';
+    end;
+
+    local success, data = pcall(function()
+        return HttpService:JSONDecode(str);
+    end);
+
+    if not success or type(data) ~= 'table' then
+        return false, 'Failed to decode config';
+    end;
+
+    if data.Toggles then
+        for idx, toggleData in next, data.Toggles do
+            if Toggles[idx] and not table.find(self.Ignore, idx) then
+                pcall(function()
+                    Toggles[idx]:SetValue(toggleData.Value);
+                end);
+            end;
+        end;
+    end;
+
+    if data.Options then
+        for idx, optionData in next, data.Options do
+            if Options[idx] and not table.find(self.Ignore, idx) then
+                pcall(function()
+                    if optionData.Type == 'ColorPicker' and optionData.Value then
+                        local col = Color3.new(optionData.Value[1], optionData.Value[2], optionData.Value[3]);
+                        Options[idx]:SetValueRGB(col, optionData.Transparency or 0);
+                    elseif optionData.Type == 'KeyPicker' then
+                        Options[idx]:SetValue({ optionData.Value, optionData.Mode });
+                    elseif optionData.Type == 'Dropdown' then
+                        Options[idx]:SetValue(optionData.Value);
+                    elseif optionData.Type == 'Slider' then
+                        Options[idx]:SetValue(optionData.Value);
+                    elseif optionData.Type == 'Input' then
+                        Options[idx]:SetValue(optionData.Value);
+                    end;
+                end);
+            end;
+        end;
+    end;
+
+    return true;
+end;
+
+function SaveManager:Delete(name)
+    if not name or name == '' then return false end;
+    local path = self.Folder .. '/' .. name .. '.json';
+    if isfile and isfile(path) and delfile then
+        pcall(delfile, path);
+        return true;
+    end;
+    return false;
+end;
+
+function SaveManager:BuildConfigSection(Tab)
+    local LeftBox = Tab:AddLeftGroupbox('config management');
+    local RightBox = Tab:AddRightGroupbox('config options & backup');
+
+    LeftBox:AddInput('ConfigNameInput', {
+        Default = '';
+        Numeric = false;
+        Finished = false;
+        Text = 'config name';
+        Placeholder = 'enter config name...';
+    });
+
+    local configList = self:GetConfigs();
+    local ConfigDropdown = LeftBox:AddDropdown('ConfigListDropdown', {
+        Values = configList;
+        Default = 1;
+        Multi = false;
+        Text = 'saved configs';
+    });
+
+    LeftBox:AddButton({
+        Text = 'create / save config';
+        Func = function()
+            local name = Options.ConfigNameInput and Options.ConfigNameInput.Value;
+            if not name or name == '' then
+                name = ConfigDropdown.Value or 'default';
+            end;
+            if name and name ~= '' then
+                local ok = self:Save(name);
+                if ok then
+                    ConfigDropdown:SetValues(self:GetConfigs());
+                    ConfigDropdown:SetValue(name);
+                    Library:Notify('Config saved: ' .. name, 3);
+                else
+                    Library:Notify('Failed to save config!', 3);
+                end;
+            end;
+        end;
+    });
+
+    LeftBox:AddButton({
+        Text = 'load selected config';
+        Func = function()
+            local name = ConfigDropdown.Value;
+            if name and name ~= '' then
+                local ok = self:Load(name);
+                if ok then
+                    Library:Notify('Loaded config: ' .. name, 3);
+                else
+                    Library:Notify('Failed to load config!', 3);
+                end;
+            end;
+        end;
+    });
+
+    LeftBox:AddButton({
+        Text = 'overwrite config';
+        DoubleClick = true;
+        Tooltip = 'double click to overwrite';
+        Func = function()
+            local name = ConfigDropdown.Value;
+            if name and name ~= '' then
+                self:Save(name);
+                Library:Notify('Overwrote config: ' .. name, 3);
+            end;
+        end;
+    });
+
+    LeftBox:AddButton({
+        Text = 'delete config';
+        DoubleClick = true;
+        Tooltip = 'double click to delete';
+        Func = function()
+            local name = ConfigDropdown.Value;
+            if name and name ~= '' then
+                self:Delete(name);
+                ConfigDropdown:SetValues(self:GetConfigs());
+                Library:Notify('Deleted config: ' .. name, 3);
+            end;
+        end;
+    });
+
+    LeftBox:AddButton({
+        Text = 'refresh config list';
+        Func = function()
+            ConfigDropdown:SetValues(self:GetConfigs());
+            Library:Notify('Config list refreshed.', 2);
+        end;
+    });
+
+    RightBox:AddToggle('AutoloadConfigToggle', {
+        Text = 'autoload selected config';
+        Default = false;
+        Callback = function(val)
+            if val and ConfigDropdown.Value then
+                if writefile then
+                    pcall(writefile, self.AutoloadFile, ConfigDropdown.Value);
+                end;
+            elseif not val and isfile and isfile(self.AutoloadFile) and delfile then
+                pcall(delfile, self.AutoloadFile);
+            end;
+        end;
+    });
+
+    RightBox:AddDivider();
+
+    RightBox:AddButton({
+        Text = 'copy config to clipboard';
+        Func = function()
+            local name = ConfigDropdown.Value or 'default';
+            local path = self.Folder .. '/' .. name .. '.json';
+            if isfile and isfile(path) and readfile and setclipboard then
+                local ok, content = pcall(readfile, path);
+                if ok and content then
+                    setclipboard(content);
+                    Library:Notify('Config copied to clipboard!', 3);
+                else
+                    Library:Notify('Failed to read config file!', 3);
+                end;
+            else
+                Library:Notify('Save the config first to copy!', 3);
+            end;
+        end;
+    });
+
+    RightBox:AddButton({
+        Text = 'import config from clipboard';
+        Func = function()
+            if getclipboard then
+                local str = getclipboard();
+                if str and str ~= '' then
+                    local success, data = pcall(function() return HttpService:JSONDecode(str) end);
+                    if success and type(data) == 'table' then
+                        local tempName = 'clipboard_import';
+                        if writefile then
+                            pcall(writefile, self.Folder .. '/' .. tempName .. '.json', str);
+                            self:Load(tempName);
+                            ConfigDropdown:SetValues(self:GetConfigs());
+                            ConfigDropdown:SetValue(tempName);
+                            Library:Notify('Config imported from clipboard!', 3);
+                        end;
+                    else
+                        Library:Notify('Invalid JSON in clipboard!', 3);
+                    end;
+                end;
+            end;
+        end;
+    });
+end;
+
+Library.SaveManager = SaveManager;
 
 getgenv().Library = Library
 return Library
