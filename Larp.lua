@@ -3329,7 +3329,7 @@ function Library:CreateWindow(...)
         BorderColor3 = isSidebar and 'OutlineColor' or 'AccentColor';
     });
 
-    local WindowLabel, LogoImage, SubTitleLabel, SaveButton, SaveIcon, TopRightContainer;
+    local WindowLabel, LogoImage, SubTitleLabel, SaveButton, SaveIcon, SearchButton, SearchIcon, TopLeftContainer, TopRightContainer;
     local TabArea, TabListLayout, TabContainer;
 
     if isSidebar then
@@ -3346,24 +3346,82 @@ function Library:CreateWindow(...)
             BackgroundColor3 = 'AccentColor';
         });
 
-        TopRightContainer = Library:Create('Frame', {
+        TopLeftContainer = Library:Create('Frame', {
             BackgroundTransparency = 1;
-            Position = UDim2.new(1, -10, 0, 2);
+            Position = UDim2.new(0, 10, 0, 2);
             Size = UDim2.new(0, 0, 0, 16);
-            AnchorPoint = Vector2.new(1, 0);
+            AnchorPoint = Vector2.new(0, 0);
             AutomaticSize = Enum.AutomaticSize.X;
             ZIndex = 11;
             Parent = Inner;
         });
 
-        local TopRightLayout = Library:Create('UIListLayout', {
+        local TopLeftLayout = Library:Create('UIListLayout', {
             FillDirection = Enum.FillDirection.Horizontal;
-            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            HorizontalAlignment = Enum.HorizontalAlignment.Left;
             VerticalAlignment = Enum.VerticalAlignment.Center;
             SortOrder = Enum.SortOrder.LayoutOrder;
             Padding = UDim.new(0, 8);
-            Parent = TopRightContainer;
+            Parent = TopLeftContainer;
         });
+
+        local rawSearchIcon = Config.SearchIcon or 'KittyAuth/Icons/search.png';
+        local searchIconAsset = Library:GetCustomAsset(rawSearchIcon);
+        if not searchIconAsset or searchIconAsset == '' or searchIconAsset == rawSearchIcon then
+            searchIconAsset = 'rbxassetid://10734943674';
+        end;
+
+        SearchButton = Library:Create('ImageButton', {
+            Name = 'SearchButton',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            Size = UDim2.fromOffset(16, 16);
+            LayoutOrder = 1;
+            ZIndex = 12;
+            Visible = Config.ShowSearchButton ~= false;
+            Parent = TopLeftContainer;
+        });
+
+        SearchIcon = Library:Create('ImageLabel', {
+            Name = 'SearchIcon',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            Position = UDim2.new(0.5, 0, 0.5, 0);
+            Size = UDim2.fromOffset(13, 13);
+            Image = searchIconAsset;
+            ImageColor3 = Color3.fromRGB(160, 160, 160);
+            ScaleType = Enum.ScaleType.Fit;
+            ZIndex = 13;
+            Parent = SearchButton;
+        });
+
+        if (not searchIconAsset or searchIconAsset == '' or searchIconAsset == rawSearchIcon) and rawSearchIcon ~= '' then
+            task.spawn(function()
+                for _ = 1, 5 do
+                    task.wait(0.1);
+                    local retryAsset = Library:GetCustomAsset(rawSearchIcon);
+                    if retryAsset and retryAsset ~= '' and retryAsset ~= rawSearchIcon and SearchIcon then
+                        SearchIcon.Image = retryAsset;
+                        break;
+                    end;
+                end;
+            end);
+        end;
+
+        Library:AddToolTip('Search features', SearchButton);
+
+        SearchButton.MouseEnter:Connect(function()
+            TweenService:Create(SearchIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Library.AccentColor;
+            }):Play();
+        end);
+
+        SearchButton.MouseLeave:Connect(function()
+            TweenService:Create(SearchIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Color3.fromRGB(160, 160, 160);
+            }):Play();
+        end);
 
         local rawSaveIcon = Config.SaveIcon or Config.ConfigIcon or 'KittyAuth/Icons/save.png';
         local saveIconAsset = Library:GetCustomAsset(rawSaveIcon);
@@ -3376,10 +3434,10 @@ function Library:CreateWindow(...)
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
             Size = UDim2.fromOffset(16, 16);
-            LayoutOrder = 1;
+            LayoutOrder = 2;
             ZIndex = 12;
             Visible = Config.ShowSaveButton ~= false;
-            Parent = TopRightContainer;
+            Parent = TopLeftContainer;
         });
 
         SaveIcon = Library:Create('ImageLabel', {
@@ -3412,15 +3470,19 @@ function Library:CreateWindow(...)
         Library:AddToolTip('Configs', SaveButton);
 
         SaveButton.MouseEnter:Connect(function()
-            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                ImageColor3 = Library.AccentColor;
-            }):Play();
+            if Window.CurrentTab ~= Window.ConfigTab then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Color3.fromRGB(220, 220, 220);
+                }):Play();
+            end;
         end);
 
         SaveButton.MouseLeave:Connect(function()
-            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                ImageColor3 = Color3.fromRGB(160, 160, 160);
-            }):Play();
+            if Window.CurrentTab ~= Window.ConfigTab then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Color3.fromRGB(160, 160, 160);
+                }):Play();
+            end;
         end);
 
         SaveButton.MouseButton1Click:Connect(function()
@@ -3453,6 +3515,25 @@ function Library:CreateWindow(...)
             end;
         end);
 
+        TopRightContainer = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -10, 0, 2);
+            Size = UDim2.new(0, 0, 0, 16);
+            AnchorPoint = Vector2.new(1, 0);
+            AutomaticSize = Enum.AutomaticSize.X;
+            ZIndex = 11;
+            Parent = Inner;
+        });
+
+        local TopRightLayout = Library:Create('UIListLayout', {
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            VerticalAlignment = Enum.VerticalAlignment.Center;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Padding = UDim.new(0, 8);
+            Parent = TopRightContainer;
+        });
+
         SubTitleLabel = Library:CreateLabel({
             Size = UDim2.new(0, 0, 0, 16);
             AutomaticSize = Enum.AutomaticSize.X;
@@ -3460,7 +3541,7 @@ function Library:CreateWindow(...)
             TextXAlignment = Enum.TextXAlignment.Right;
             TextSize = 13;
             TextColor3 = Color3.fromRGB(160, 160, 160);
-            LayoutOrder = 2;
+            LayoutOrder = 1;
             ZIndex = 11;
             Parent = TopRightContainer;
         });
@@ -3553,24 +3634,69 @@ function Library:CreateWindow(...)
             Parent = Inner;
         });
 
-        TopRightContainer = Library:Create('Frame', {
+        TopLeftContainer = Library:Create('Frame', {
             BackgroundTransparency = 1;
-            Position = UDim2.new(1, -8, 0, 4);
+            Position = UDim2.new(0, 80, 0, 4);
             Size = UDim2.new(0, 0, 0, 16);
-            AnchorPoint = Vector2.new(1, 0);
+            AnchorPoint = Vector2.new(0, 0);
             AutomaticSize = Enum.AutomaticSize.X;
             ZIndex = 11;
             Parent = Inner;
         });
 
-        local TopRightLayout = Library:Create('UIListLayout', {
+        local TopLeftLayout = Library:Create('UIListLayout', {
             FillDirection = Enum.FillDirection.Horizontal;
-            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            HorizontalAlignment = Enum.HorizontalAlignment.Left;
             VerticalAlignment = Enum.VerticalAlignment.Center;
             SortOrder = Enum.SortOrder.LayoutOrder;
             Padding = UDim.new(0, 8);
-            Parent = TopRightContainer;
+            Parent = TopLeftContainer;
         });
+
+        local rawSearchIcon = Config.SearchIcon or 'KittyAuth/Icons/search.png';
+        local searchIconAsset = Library:GetCustomAsset(rawSearchIcon);
+        if not searchIconAsset or searchIconAsset == '' or searchIconAsset == rawSearchIcon then
+            searchIconAsset = 'rbxassetid://10734943674';
+        end;
+
+        SearchButton = Library:Create('ImageButton', {
+            Name = 'SearchButton',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            Size = UDim2.fromOffset(16, 16);
+            LayoutOrder = 1;
+            ZIndex = 12;
+            Visible = Config.ShowSearchButton ~= false;
+            Parent = TopLeftContainer;
+        });
+
+        SearchIcon = Library:Create('ImageLabel', {
+            Name = 'SearchIcon',
+            BackgroundTransparency = 1;
+            BorderSizePixel = 0;
+            AnchorPoint = Vector2.new(0.5, 0.5);
+            Position = UDim2.new(0.5, 0, 0.5, 0);
+            Size = UDim2.fromOffset(13, 13);
+            Image = searchIconAsset;
+            ImageColor3 = Color3.fromRGB(160, 160, 160);
+            ScaleType = Enum.ScaleType.Fit;
+            ZIndex = 13;
+            Parent = SearchButton;
+        });
+
+        Library:AddToolTip('Search features', SearchButton);
+
+        SearchButton.MouseEnter:Connect(function()
+            TweenService:Create(SearchIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Library.AccentColor;
+            }):Play();
+        end);
+
+        SearchButton.MouseLeave:Connect(function()
+            TweenService:Create(SearchIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                ImageColor3 = Color3.fromRGB(160, 160, 160);
+            }):Play();
+        end);
 
         local rawSaveIcon = Config.SaveIcon or Config.ConfigIcon or 'KittyAuth/Icons/save.png';
         local saveIconAsset = Library:GetCustomAsset(rawSaveIcon);
@@ -3583,10 +3709,10 @@ function Library:CreateWindow(...)
             BackgroundTransparency = 1;
             BorderSizePixel = 0;
             Size = UDim2.fromOffset(16, 16);
-            LayoutOrder = 1;
+            LayoutOrder = 2;
             ZIndex = 12;
             Visible = Config.ShowSaveButton ~= false;
-            Parent = TopRightContainer;
+            Parent = TopLeftContainer;
         });
 
         SaveIcon = Library:Create('ImageLabel', {
@@ -3606,15 +3732,19 @@ function Library:CreateWindow(...)
         Library:AddToolTip('Configs', SaveButton);
 
         SaveButton.MouseEnter:Connect(function()
-            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                ImageColor3 = Library.AccentColor;
-            }):Play();
+            if Window.CurrentTab ~= Window.ConfigTab then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Color3.fromRGB(220, 220, 220);
+                }):Play();
+            end;
         end);
 
         SaveButton.MouseLeave:Connect(function()
-            TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                ImageColor3 = Color3.fromRGB(160, 160, 160);
-            }):Play();
+            if Window.CurrentTab ~= Window.ConfigTab then
+                TweenService:Create(SaveIcon, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    ImageColor3 = Color3.fromRGB(160, 160, 160);
+                }):Play();
+            end;
         end);
 
         SaveButton.MouseButton1Click:Connect(function()
@@ -3647,6 +3777,25 @@ function Library:CreateWindow(...)
             end;
         end);
 
+        TopRightContainer = Library:Create('Frame', {
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -8, 0, 4);
+            Size = UDim2.new(0, 0, 0, 16);
+            AnchorPoint = Vector2.new(1, 0);
+            AutomaticSize = Enum.AutomaticSize.X;
+            ZIndex = 11;
+            Parent = Inner;
+        });
+
+        local TopRightLayout = Library:Create('UIListLayout', {
+            FillDirection = Enum.FillDirection.Horizontal;
+            HorizontalAlignment = Enum.HorizontalAlignment.Right;
+            VerticalAlignment = Enum.VerticalAlignment.Center;
+            SortOrder = Enum.SortOrder.LayoutOrder;
+            Padding = UDim.new(0, 8);
+            Parent = TopRightContainer;
+        });
+
         if Config.SubTitle and Config.SubTitle ~= '' then
             SubTitleLabel = Library:CreateLabel({
                 Size = UDim2.new(0, 0, 0, 16);
@@ -3655,7 +3804,7 @@ function Library:CreateWindow(...)
                 TextXAlignment = Enum.TextXAlignment.Right;
                 TextSize = 13;
                 TextColor3 = Color3.fromRGB(160, 160, 160);
-                LayoutOrder = 2;
+                LayoutOrder = 1;
                 ZIndex = 11;
                 Parent = TopRightContainer;
             });
@@ -3720,8 +3869,437 @@ function Library:CreateWindow(...)
         });
     end
 
+    -- ================= SEARCH OVERLAY =================
+    local SearchBackdrop = Library:Create('TextButton', {
+        Name = 'SearchBackdrop',
+        BackgroundColor3 = Color3.new(0, 0, 0),
+        BackgroundTransparency = 0.45,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 1, 0),
+        Text = '',
+        AutoButtonColor = false,
+        Visible = false,
+        ZIndex = 50,
+        Parent = Inner,
+    });
+
+    local SearchModal = Library:Create('Frame', {
+        Name = 'SearchModal',
+        BackgroundColor3 = Library.MainColor,
+        BorderColor3 = Library.OutlineColor,
+        Position = UDim2.fromScale(0.5, 0.45),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.fromOffset(480, 330),
+        Visible = false,
+        ZIndex = 51,
+        Parent = Inner,
+    });
+
+    Library:AddToRegistry(SearchModal, {
+        BackgroundColor3 = 'MainColor';
+        BorderColor3 = 'OutlineColor';
+    });
+
+    local SearchAccent = Library:Create('Frame', {
+        BackgroundColor3 = Library.AccentColor,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 0, 2),
+        ZIndex = 52,
+        Parent = SearchModal,
+    });
+
+    Library:AddToRegistry(SearchAccent, {
+        BackgroundColor3 = 'AccentColor';
+    });
+
+    local SearchBarFrame = Library:Create('Frame', {
+        BackgroundColor3 = Library.BackgroundColor,
+        BorderColor3 = Library.OutlineColor,
+        Position = UDim2.new(0, 10, 0, 10),
+        Size = UDim2.new(1, -20, 0, 28),
+        ZIndex = 52,
+        Parent = SearchModal,
+    });
+
+    Library:AddToRegistry(SearchBarFrame, {
+        BackgroundColor3 = 'BackgroundColor';
+        BorderColor3 = 'OutlineColor';
+    });
+
+    local SearchBarIcon = Library:Create('ImageLabel', {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 7, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        Size = UDim2.fromOffset(14, 14),
+        Image = 'rbxassetid://10734943674',
+        ImageColor3 = Color3.fromRGB(160, 160, 160),
+        ScaleType = Enum.ScaleType.Fit,
+        ZIndex = 53,
+        Parent = SearchBarFrame,
+    });
+
+    local SearchTextBox = Library:Create('TextBox', {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 28, 0, 0),
+        Size = UDim2.new(1, -56, 1, 0),
+        Font = (typeof(Library.Font) == 'EnumItem' and Library.Font) or Enum.Font.Highway,
+        PlaceholderText = 'Search features, toggles, sliders, keybinds...',
+        PlaceholderColor3 = Color3.fromRGB(130, 130, 130),
+        Text = '',
+        TextColor3 = Color3.fromRGB(240, 240, 240),
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false,
+        ZIndex = 53,
+        Parent = SearchBarFrame,
+    });
+
+    local SearchCloseBtn = Library:Create('TextButton', {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(1, -24, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        Size = UDim2.fromOffset(20, 20),
+        Font = Enum.Font.GothamBold,
+        Text = '✕',
+        TextColor3 = Color3.fromRGB(160, 160, 160),
+        TextSize = 12,
+        ZIndex = 53,
+        Parent = SearchBarFrame,
+    });
+
+    local SearchDivider = Library:Create('Frame', {
+        BackgroundColor3 = Library.OutlineColor,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 10, 0, 46),
+        Size = UDim2.new(1, -20, 0, 1),
+        ZIndex = 52,
+        Parent = SearchModal,
+    });
+
+    Library:AddToRegistry(SearchDivider, {
+        BackgroundColor3 = 'OutlineColor';
+    });
+
+    local SearchResultsFrame = Library:Create('ScrollingFrame', {
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 10, 0, 52),
+        Size = UDim2.new(1, -20, 1, -60),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Library.AccentColor,
+        BottomImage = '',
+        TopImage = '',
+        ZIndex = 52,
+        Parent = SearchModal,
+    });
+
+    Library:AddToRegistry(SearchResultsFrame, {
+        ScrollBarImageColor3 = 'AccentColor';
+    });
+
+    local SearchListLayout = Library:Create('UIListLayout', {
+        FillDirection = Enum.FillDirection.Vertical,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 4),
+        Parent = SearchResultsFrame,
+    });
+
+    local SearchEmptyLabel = Library:CreateLabel({
+        Position = UDim2.new(0, 0, 0, 20),
+        Size = UDim2.new(1, 0, 0, 24),
+        Text = 'Type to search features across all tabs...',
+        TextColor3 = Color3.fromRGB(140, 140, 140),
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 53,
+        Parent = SearchResultsFrame,
+    });
+
+    SearchListLayout:GetPropertyChangedSignal('AbsoluteContentSize'):Connect(function()
+        SearchResultsFrame.CanvasSize = UDim2.fromOffset(0, SearchListLayout.AbsoluteContentSize.Y + 10);
+    end);
+
+    function Window:CollectSearchableItems()
+        local items = {};
+        for tabName, tab in pairs(Window.Tabs) do
+            if not tab.IsConfigTab then
+                for groupboxName, groupbox in pairs(tab.Groupboxes or {}) do
+                    local side = groupbox.ParentSide or (groupbox.Side == 1 and tab.LeftSide or tab.RightSide);
+                    if groupbox.Container then
+                        for _, child in ipairs(groupbox.Container:GetChildren()) do
+                            if not child:IsA('UIListLayout') and child.Visible ~= false then
+                                local labelText = "";
+                                local itemType = "FEATURE";
+
+                                local textLabel = child:FindFirstChildOfClass('TextLabel');
+                                if textLabel and textLabel.Text ~= '' then
+                                    labelText = textLabel.Text;
+                                end;
+
+                                if child:FindFirstChild('ToggleRegion') or child.Name:find('Toggle') then
+                                    itemType = "TOGGLE";
+                                elseif child:FindFirstChild('Slider') or child.Name:find('Slider') then
+                                    itemType = "SLIDER";
+                                elseif child:FindFirstChild('Dropdown') or child.Name:find('Dropdown') then
+                                    itemType = "DROPDOWN";
+                                elseif child:FindFirstChild('Button') or child.Name:find('Button') then
+                                    itemType = "BUTTON";
+                                elseif child:FindFirstChild('TextBox') or child.Name:find('Input') then
+                                    itemType = "INPUT";
+                                elseif child:FindFirstChild('KeyPicker') then
+                                    itemType = "KEYBIND";
+                                elseif child:FindFirstChild('ColorPicker') then
+                                    itemType = "COLOR";
+                                end;
+
+                                if labelText ~= "" then
+                                    table.insert(items, {
+                                        Text = labelText,
+                                        Type = itemType,
+                                        Tab = tab,
+                                        TabName = tabName,
+                                        Groupbox = groupbox,
+                                        GroupboxName = groupboxName,
+                                        ScrollingFrame = side,
+                                        TargetFrame = child,
+                                    });
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+        end;
+        return items;
+    end;
+
+    local function JumpToSearchResult(item)
+        Window:CloseSearch();
+
+        if item.Tab and item.Tab.ShowTab then
+            item.Tab:ShowTab();
+        end;
+
+        task.wait(0.08);
+
+        if item.ScrollingFrame and item.TargetFrame then
+            local canvas = item.ScrollingFrame;
+            local target = item.TargetFrame;
+            local targetY = target.AbsolutePosition.Y - canvas.AbsolutePosition.Y + canvas.CanvasPosition.Y;
+            local maxCanvas = math.max(0, canvas.CanvasSize.Y.Offset - canvas.AbsoluteSize.Y);
+            local scrollTo = math.clamp(targetY - 20, 0, maxCanvas);
+
+            TweenService:Create(canvas, TweenInfo.new(0.35, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+                CanvasPosition = Vector2.new(0, scrollTo)
+            }):Play();
+        end;
+
+        if item.TargetFrame then
+            local target = item.TargetFrame;
+            local stroke = target:FindFirstChild('SearchPulseStroke') or Library:Create('UIStroke', {
+                Name = 'SearchPulseStroke',
+                Color = Library.AccentColor,
+                Thickness = 2,
+                Transparency = 0,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Parent = target,
+            });
+
+            stroke.Transparency = 0;
+            task.delay(1.2, function()
+                if stroke then
+                    local tw = TweenService:Create(stroke, TweenInfo.new(0.4), { Transparency = 1 });
+                    tw:Play();
+                    tw.Completed:Connect(function()
+                        if stroke then stroke:Destroy() end;
+                    end);
+                end;
+            end);
+        end;
+    end;
+
+    local function RenderSearchResults(query)
+        for _, child in ipairs(SearchResultsFrame:GetChildren()) do
+            if not child:IsA('UIListLayout') and child ~= SearchEmptyLabel then
+                child:Destroy();
+            end;
+        end;
+
+        query = query and query:lower():gsub('^%s+', ''):gsub('%s+$', '') or '';
+
+        local allItems = Window:CollectSearchableItems();
+        local matches = {};
+
+        if query == '' then
+            matches = allItems;
+        else
+            for _, item in ipairs(allItems) do
+                local itemText = item.Text:lower();
+                local groupText = item.GroupboxName:lower();
+                local tabText = item.TabName:lower();
+
+                if itemText:find(query, 1, true) then
+                    table.insert(matches, item);
+                elseif groupText:find(query, 1, true) or tabText:find(query, 1, true) then
+                    table.insert(matches, item);
+                end;
+            end;
+        end;
+
+        if #matches == 0 then
+            SearchEmptyLabel.Text = query == '' and 'No features available to search.' or 'No matching features found.';
+            SearchEmptyLabel.Visible = true;
+            return;
+        end;
+
+        SearchEmptyLabel.Visible = false;
+
+        for i, item in ipairs(matches) do
+            if i > 40 then break end;
+
+            local row = Library:Create('TextButton', {
+                Name = 'SearchResultRow',
+                BackgroundColor3 = Library.BackgroundColor,
+                BorderColor3 = Library.OutlineColor,
+                Size = UDim2.new(1, -4, 0, 30),
+                Text = '',
+                AutoButtonColor = false,
+                ZIndex = 53,
+                Parent = SearchResultsFrame,
+            });
+
+            Library:AddToRegistry(row, {
+                BackgroundColor3 = 'BackgroundColor';
+                BorderColor3 = 'OutlineColor';
+            });
+
+            local badge = Library:Create('Frame', {
+                BackgroundColor3 = Library.MainColor,
+                BorderColor3 = Library.AccentColor,
+                Position = UDim2.new(0, 6, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                Size = UDim2.fromOffset(56, 18),
+                ZIndex = 54,
+                Parent = row,
+            });
+
+            Library:AddToRegistry(badge, {
+                BackgroundColor3 = 'MainColor';
+                BorderColor3 = 'AccentColor';
+            });
+
+            local badgeLabel = Library:CreateLabel({
+                Position = UDim2.new(0, 0, 0, 0),
+                Size = UDim2.new(1, 0, 1, 0),
+                Text = item.Type or 'SETTING',
+                TextColor3 = Library.AccentColor,
+                TextSize = 10,
+                TextXAlignment = Enum.TextXAlignment.Center,
+                ZIndex = 55,
+                Parent = badge,
+            });
+
+            Library:AddToRegistry(badgeLabel, {
+                TextColor3 = 'AccentColor';
+            });
+
+            local titleLabel = Library:CreateLabel({
+                Position = UDim2.new(0, 68, 0, 0),
+                Size = UDim2.new(0.55, 0, 1, 0),
+                Text = item.Text,
+                TextColor3 = Color3.fromRGB(240, 240, 240),
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ZIndex = 54,
+                Parent = row,
+            });
+
+            local pathLabel = Library:CreateLabel({
+                Position = UDim2.new(0.58, 0, 0, 0),
+                Size = UDim2.new(0.40, -6, 1, 0),
+                Text = tostring(item.TabName) .. ' > ' .. tostring(item.GroupboxName),
+                TextColor3 = Color3.fromRGB(130, 130, 130),
+                TextSize = 11,
+                TextXAlignment = Enum.TextXAlignment.Right,
+                ZIndex = 54,
+                Parent = row,
+            });
+
+            row.MouseEnter:Connect(function()
+                row.BackgroundColor3 = Library.MainColor;
+                titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255);
+            end);
+
+            row.MouseLeave:Connect(function()
+                row.BackgroundColor3 = Library.BackgroundColor;
+                titleLabel.TextColor3 = Color3.fromRGB(240, 240, 240);
+            end);
+
+            row.MouseButton1Click:Connect(function()
+                JumpToSearchResult(item);
+            end);
+        end;
+    end;
+
+    SearchTextBox:GetPropertyChangedSignal('Text'):Connect(function()
+        RenderSearchResults(SearchTextBox.Text);
+    end);
+
+    SearchCloseBtn.MouseButton1Click:Connect(function()
+        Window:CloseSearch();
+    end);
+
+    SearchBackdrop.MouseButton1Click:Connect(function()
+        Window:CloseSearch();
+    end);
+
+    function Window:OpenSearch()
+        SearchBackdrop.Visible = true;
+        SearchModal.Visible = true;
+        SearchModal.Position = UDim2.fromScale(0.5, 0.42);
+        SearchModal.BackgroundTransparency = 0.5;
+
+        TweenService:Create(SearchModal, TweenInfo.new(0.2, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out), {
+            Position = UDim2.fromScale(0.5, 0.45);
+            BackgroundTransparency = 0;
+        }):Play();
+
+        RenderSearchResults(SearchTextBox.Text);
+        task.wait(0.05);
+        pcall(function() SearchTextBox:CaptureFocus() end);
+    end;
+
+    function Window:CloseSearch()
+        SearchBackdrop.Visible = false;
+        SearchModal.Visible = false;
+        SearchTextBox.Text = '';
+        pcall(function() SearchTextBox:ReleaseFocus() end);
+    end;
+
+    function Window:ToggleSearch()
+        if SearchModal.Visible then
+            Window:CloseSearch();
+        else
+            Window:OpenSearch();
+        end;
+    end;
+
+    if SearchButton then
+        SearchButton.MouseButton1Click:Connect(function()
+            Window:ToggleSearch();
+        end);
+    end;
+
     Window.SaveButton = SaveButton;
     Window.SaveIcon = SaveIcon;
+    Window.SearchButton = SearchButton;
+    Window.SearchIcon = SearchIcon;
     Window.ConfigTab = Config.ConfigTab;
     Window.OnSaveClickCallback = Config.OnSaveClick;
 
@@ -3735,6 +4313,16 @@ function Library:CreateWindow(...)
             SaveIcon.Image = (asset and asset ~= '') and asset or (type(ImageId) == 'number' and ('rbxassetid://' .. tostring(ImageId)) or tostring(ImageId));
             if Color then
                 SaveIcon.ImageColor3 = Color;
+            end;
+        end;
+    end;
+
+    function Window:SetSearchIcon(ImageId, Color)
+        if SearchIcon and SearchIcon:IsA('ImageLabel') then
+            local asset = Library:GetCustomAsset(ImageId);
+            SearchIcon.Image = (asset and asset ~= '') and asset or (type(ImageId) == 'number' and ('rbxassetid://' .. tostring(ImageId)) or tostring(ImageId));
+            if Color then
+                SearchIcon.ImageColor3 = Color;
             end;
         end;
     end;
