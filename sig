@@ -170,19 +170,16 @@ local function Tween(instance, properties, duration, style, direction)
     return tween
 end
 
-local function EnableDragging(frame, dragHandle, attachedFrame)
+local function EnableDragging(frame, dragHandle)
     dragHandle = dragHandle or frame
     local dragging = false
-    local dragInput, dragStart, startPos, attachedStartPos
+    local dragInput, dragStart, startPos
 
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
-            if attachedFrame then
-                attachedStartPos = attachedFrame.Position
-            end
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -207,14 +204,6 @@ local function EnableDragging(frame, dragHandle, attachedFrame)
                 startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
             )
-            if attachedFrame and attachedStartPos then
-                attachedFrame.Position = UDim2.new(
-                    attachedStartPos.X.Scale,
-                    attachedStartPos.X.Offset + delta.X,
-                    attachedStartPos.Y.Scale,
-                    attachedStartPos.Y.Offset + delta.Y
-                )
-            end
         end
     end)
 end
@@ -231,19 +220,6 @@ function Ignite:CreateWindow(options)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = GetSafeGuiParent()
 
-    local GlowBackdrop = Instance.new("ImageLabel")
-    GlowBackdrop.Name = "GlowBackdrop"
-    GlowBackdrop.Size = UDim2.new(0, 850 + 64, 0, 560 + 64)
-    GlowBackdrop.Position = UDim2.new(0.5, -425 - 32, 0.5, -280 - 32)
-    GlowBackdrop.BackgroundTransparency = 1
-    GlowBackdrop.Image = ResolveIcon("glow")
-    GlowBackdrop.ImageColor3 = Theme.Accent
-    GlowBackdrop.ImageTransparency = 0.45
-    GlowBackdrop.ScaleType = Enum.ScaleType.Slice
-    GlowBackdrop.SliceCenter = Rect.new(128, 128, 384, 384)
-    GlowBackdrop.ZIndex = 1
-    GlowBackdrop.Parent = ScreenGui
-
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 850, 0, 560)
@@ -254,6 +230,20 @@ function Ignite:CreateWindow(options)
     MainFrame.ClipsDescendants = false
     MainFrame.ZIndex = 2
     MainFrame.Parent = ScreenGui
+
+    local GlowBackdrop = Instance.new("ImageLabel")
+    GlowBackdrop.Name = "GlowBackdrop"
+    GlowBackdrop.Size = UDim2.new(1, 80, 1, 80)
+    GlowBackdrop.Position = UDim2.new(0.5, 0, 0.5, 0)
+    GlowBackdrop.AnchorPoint = Vector2.new(0.5, 0.5)
+    GlowBackdrop.BackgroundTransparency = 1
+    GlowBackdrop.Image = ResolveIcon("glow")
+    GlowBackdrop.ImageColor3 = Theme.Accent
+    GlowBackdrop.ImageTransparency = 0.2
+    GlowBackdrop.ScaleType = Enum.ScaleType.Slice
+    GlowBackdrop.SliceCenter = Rect.new(160, 160, 352, 352)
+    GlowBackdrop.ZIndex = 1
+    GlowBackdrop.Parent = MainFrame
 
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
@@ -294,7 +284,7 @@ function Ignite:CreateWindow(options)
     TitleBarBorder.ZIndex = 3
     TitleBarBorder.Parent = TitleBar
 
-    EnableDragging(MainFrame, TitleBar, GlowBackdrop)
+    EnableDragging(MainFrame, TitleBar)
 
     local LogoIcon = Instance.new("ImageLabel")
     LogoIcon.Name = "LogoIcon"
@@ -882,9 +872,7 @@ function Ignite:CreateWindow(options)
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == toggleKey then
-            local newVis = not MainFrame.Visible
-            MainFrame.Visible = newVis
-            GlowBackdrop.Visible = newVis
+            MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
