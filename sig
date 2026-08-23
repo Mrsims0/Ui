@@ -18,7 +18,6 @@ local IconList = {
     "eye.png",
     "flame.png",
     "gear.png",
-    "glow.png",
     "keyboard.png",
     "paintbrush.png",
     "rifle.png",
@@ -72,7 +71,6 @@ local FallbackIcons = {
     Keyboard     = "rbxassetid://10709798950",
     Paintbrush   = "rbxassetid://10723346049",
     Palette      = "rbxassetid://10723346049",
-    Glow         = "rbxassetid://10709791437",
 }
 
 local function SetupDirectories()
