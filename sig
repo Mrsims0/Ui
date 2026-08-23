@@ -170,16 +170,19 @@ local function Tween(instance, properties, duration, style, direction)
     return tween
 end
 
-local function EnableDragging(frame, dragHandle)
+local function EnableDragging(frame, dragHandle, attachedFrame)
     dragHandle = dragHandle or frame
     local dragging = false
-    local dragInput, dragStart, startPos
+    local dragInput, dragStart, startPos, attachedStartPos
 
     dragHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
+            if attachedFrame then
+                attachedStartPos = attachedFrame.Position
+            end
 
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -204,6 +207,14 @@ local function EnableDragging(frame, dragHandle)
                 startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
             )
+            if attachedFrame and attachedStartPos then
+                attachedFrame.Position = UDim2.new(
+                    attachedStartPos.X.Scale,
+                    attachedStartPos.X.Offset + delta.X,
+                    attachedStartPos.Y.Scale,
+                    attachedStartPos.Y.Offset + delta.Y
+                )
+            end
         end
     end)
 end
@@ -220,28 +231,29 @@ function Ignite:CreateWindow(options)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = GetSafeGuiParent()
 
+    local GlowBackdrop = Instance.new("ImageLabel")
+    GlowBackdrop.Name = "GlowBackdrop"
+    GlowBackdrop.Size = UDim2.new(0, 850 + 64, 0, 560 + 64)
+    GlowBackdrop.Position = UDim2.new(0.5, -425 - 32, 0.5, -280 - 32)
+    GlowBackdrop.BackgroundTransparency = 1
+    GlowBackdrop.Image = ResolveIcon("glow")
+    GlowBackdrop.ImageColor3 = Theme.Accent
+    GlowBackdrop.ImageTransparency = 0.45
+    GlowBackdrop.ScaleType = Enum.ScaleType.Slice
+    GlowBackdrop.SliceCenter = Rect.new(128, 128, 384, 384)
+    GlowBackdrop.ZIndex = 1
+    GlowBackdrop.Parent = ScreenGui
+
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 850, 0, 560)
     MainFrame.Position = UDim2.new(0.5, -425, 0.5, -280)
     MainFrame.BackgroundColor3 = Theme.MainBackground
+    MainFrame.BackgroundTransparency = 0
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = false
+    MainFrame.ZIndex = 2
     MainFrame.Parent = ScreenGui
-
-    local GlowBackdrop = Instance.new("ImageLabel")
-    GlowBackdrop.Name = "GlowBackdrop"
-    GlowBackdrop.Size = UDim2.new(1, 90, 1, 90)
-    GlowBackdrop.Position = UDim2.new(0.5, 0, 0.5, 0)
-    GlowBackdrop.AnchorPoint = Vector2.new(0.5, 0.5)
-    GlowBackdrop.BackgroundTransparency = 1
-    GlowBackdrop.Image = ResolveIcon("glow")
-    GlowBackdrop.ImageColor3 = Theme.Accent
-    GlowBackdrop.ImageTransparency = 0.52
-    GlowBackdrop.ScaleType = Enum.ScaleType.Slice
-    GlowBackdrop.SliceCenter = Rect.new(128, 128, 384, 384)
-    GlowBackdrop.ZIndex = 0
-    GlowBackdrop.Parent = MainFrame
 
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
@@ -259,7 +271,7 @@ function Ignite:CreateWindow(options)
     TitleBar.Size = UDim2.new(1, 0, 0, 50)
     TitleBar.BackgroundColor3 = Theme.TitleBarBackground
     TitleBar.BorderSizePixel = 0
-    TitleBar.ZIndex = 2
+    TitleBar.ZIndex = 3
     TitleBar.Parent = MainFrame
 
     local TitleBarCorner = Instance.new("UICorner")
@@ -271,7 +283,7 @@ function Ignite:CreateWindow(options)
     TitleBarBottomCover.Position = UDim2.new(0, 0, 1, -10)
     TitleBarBottomCover.BackgroundColor3 = Theme.TitleBarBackground
     TitleBarBottomCover.BorderSizePixel = 0
-    TitleBarBottomCover.ZIndex = 2
+    TitleBarBottomCover.ZIndex = 3
     TitleBarBottomCover.Parent = TitleBar
 
     local TitleBarBorder = Instance.new("Frame")
@@ -279,10 +291,10 @@ function Ignite:CreateWindow(options)
     TitleBarBorder.Position = UDim2.new(0, 0, 1, 0)
     TitleBarBorder.BackgroundColor3 = Theme.Separator
     TitleBarBorder.BorderSizePixel = 0
-    TitleBarBorder.ZIndex = 2
+    TitleBarBorder.ZIndex = 3
     TitleBarBorder.Parent = TitleBar
 
-    EnableDragging(MainFrame, TitleBar)
+    EnableDragging(MainFrame, TitleBar, GlowBackdrop)
 
     local LogoIcon = Instance.new("ImageLabel")
     LogoIcon.Name = "LogoIcon"
@@ -292,7 +304,7 @@ function Ignite:CreateWindow(options)
     LogoIcon.Image = ResolveIcon("flame")
     LogoIcon.ImageColor3 = Theme.Accent
     LogoIcon.ScaleType = Enum.ScaleType.Fit
-    LogoIcon.ZIndex = 3
+    LogoIcon.ZIndex = 4
     LogoIcon.Parent = TitleBar
 
     local TitleLabel = Instance.new("TextLabel")
@@ -305,7 +317,7 @@ function Ignite:CreateWindow(options)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Size = UDim2.new(0, 52, 1, 0)
     TitleLabel.Position = UDim2.new(0, 48, 0, 0)
-    TitleLabel.ZIndex = 3
+    TitleLabel.ZIndex = 4
     TitleLabel.Parent = TitleBar
 
     local VersionLabel = Instance.new("TextLabel")
@@ -318,7 +330,7 @@ function Ignite:CreateWindow(options)
     VersionLabel.BackgroundTransparency = 1
     VersionLabel.Size = UDim2.new(0, 60, 1, 0)
     VersionLabel.Position = UDim2.new(0, 102, 0, 0)
-    VersionLabel.ZIndex = 3
+    VersionLabel.ZIndex = 4
     VersionLabel.Parent = TitleBar
 
     local SearchContainer = Instance.new("Frame")
@@ -327,7 +339,7 @@ function Ignite:CreateWindow(options)
     SearchContainer.Position = UDim2.new(1, -216, 0.5, -15)
     SearchContainer.BackgroundColor3 = Theme.ControlBackground
     SearchContainer.BorderSizePixel = 0
-    SearchContainer.ZIndex = 3
+    SearchContainer.ZIndex = 4
     SearchContainer.Parent = TitleBar
 
     local SearchCorner = Instance.new("UICorner")
@@ -347,7 +359,7 @@ function Ignite:CreateWindow(options)
     SearchIcon.Image = ResolveIcon("search")
     SearchIcon.ImageColor3 = Theme.TextMuted
     SearchIcon.ScaleType = Enum.ScaleType.Fit
-    SearchIcon.ZIndex = 4
+    SearchIcon.ZIndex = 5
     SearchIcon.Parent = SearchContainer
 
     local SearchInput = Instance.new("TextBox")
@@ -363,7 +375,7 @@ function Ignite:CreateWindow(options)
     SearchInput.TextSize = 12
     SearchInput.TextXAlignment = Enum.TextXAlignment.Left
     SearchInput.ClearTextOnFocus = false
-    SearchInput.ZIndex = 4
+    SearchInput.ZIndex = 5
     SearchInput.Parent = SearchContainer
 
     local Sidebar = Instance.new("Frame")
@@ -372,7 +384,7 @@ function Ignite:CreateWindow(options)
     Sidebar.Position = UDim2.new(0, 0, 0, 50)
     Sidebar.BackgroundColor3 = Theme.SidebarBackground
     Sidebar.BorderSizePixel = 0
-    Sidebar.ZIndex = 2
+    Sidebar.ZIndex = 3
     Sidebar.Parent = MainFrame
 
     local SidebarCorner = Instance.new("UICorner")
@@ -384,7 +396,7 @@ function Ignite:CreateWindow(options)
     SidebarRightCover.Position = UDim2.new(1, -10, 0, 0)
     SidebarRightCover.BackgroundColor3 = Theme.SidebarBackground
     SidebarRightCover.BorderSizePixel = 0
-    SidebarRightCover.ZIndex = 2
+    SidebarRightCover.ZIndex = 3
     SidebarRightCover.Parent = Sidebar
 
     local SidebarTopCover = Instance.new("Frame")
@@ -392,7 +404,7 @@ function Ignite:CreateWindow(options)
     SidebarTopCover.Position = UDim2.new(0, 0, 0, 0)
     SidebarTopCover.BackgroundColor3 = Theme.SidebarBackground
     SidebarTopCover.BorderSizePixel = 0
-    SidebarTopCover.ZIndex = 2
+    SidebarTopCover.ZIndex = 3
     SidebarTopCover.Parent = Sidebar
 
     local SidebarDivider = Instance.new("Frame")
@@ -401,7 +413,7 @@ function Ignite:CreateWindow(options)
     SidebarDivider.Position = UDim2.new(1, 0, 0, 0)
     SidebarDivider.BackgroundColor3 = Theme.Separator
     SidebarDivider.BorderSizePixel = 0
-    SidebarDivider.ZIndex = 2
+    SidebarDivider.ZIndex = 3
     SidebarDivider.Parent = Sidebar
 
     local TabButtonsHolder = Instance.new("ScrollingFrame")
@@ -413,7 +425,7 @@ function Ignite:CreateWindow(options)
     TabButtonsHolder.ScrollBarThickness = 0
     TabButtonsHolder.CanvasSize = UDim2.new(0, 0, 0, 0)
     TabButtonsHolder.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    TabButtonsHolder.ZIndex = 3
+    TabButtonsHolder.ZIndex = 4
     TabButtonsHolder.Parent = Sidebar
 
     local TabListLayout = Instance.new("UIListLayout")
@@ -427,7 +439,7 @@ function Ignite:CreateWindow(options)
     ContentArea.Size = UDim2.new(1, -91, 1, -50)
     ContentArea.Position = UDim2.new(0, 91, 0, 50)
     ContentArea.BackgroundTransparency = 1
-    ContentArea.ZIndex = 2
+    ContentArea.ZIndex = 3
     ContentArea.Parent = MainFrame
 
     local PopupsLayer = Instance.new("Frame")
@@ -442,6 +454,7 @@ function Ignite:CreateWindow(options)
         CurrentTab = nil,
         ScreenGui = ScreenGui,
         MainFrame = MainFrame,
+        GlowBackdrop = GlowBackdrop,
         PopupsLayer = PopupsLayer,
         SearchQuery = "",
     }
@@ -869,7 +882,9 @@ function Ignite:CreateWindow(options)
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == toggleKey then
-            MainFrame.Visible = not MainFrame.Visible
+            local newVis = not MainFrame.Visible
+            MainFrame.Visible = newVis
+            GlowBackdrop.Visible = newVis
         end
     end)
 
@@ -907,19 +922,6 @@ function Ignite:CreateWindow(options)
         IndicatorBar.BorderSizePixel = 0
         IndicatorBar.BackgroundTransparency = 1
         IndicatorBar.Parent = TabButton
-
-        local IndicatorGlow = Instance.new("ImageLabel")
-        IndicatorGlow.Name = "IndicatorGlow"
-        IndicatorGlow.Size = UDim2.new(1, 18, 1, 18)
-        IndicatorGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-        IndicatorGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-        IndicatorGlow.BackgroundTransparency = 1
-        IndicatorGlow.Image = ResolveIcon("glow")
-        IndicatorGlow.ImageColor3 = Theme.AccentGlow
-        IndicatorGlow.ImageTransparency = 0.4
-        IndicatorGlow.ScaleType = Enum.ScaleType.Slice
-        IndicatorGlow.SliceCenter = Rect.new(128, 128, 384, 384)
-        IndicatorGlow.Parent = IndicatorBar
 
         local IndicatorCorner = Instance.new("UICorner")
         IndicatorCorner.CornerRadius = UDim.new(0, 2)
@@ -1070,19 +1072,6 @@ function Ignite:CreateWindow(options)
             SubIndicator.BorderSizePixel = 0
             SubIndicator.BackgroundTransparency = 1
             SubIndicator.Parent = SubTabButton
-
-            local SubIndicatorGlow = Instance.new("ImageLabel")
-            SubIndicatorGlow.Name = "SubIndicatorGlow"
-            SubIndicatorGlow.Size = UDim2.new(1, 16, 1, 16)
-            SubIndicatorGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-            SubIndicatorGlow.AnchorPoint = Vector2.new(0.5, 0.5)
-            SubIndicatorGlow.BackgroundTransparency = 1
-            SubIndicatorGlow.Image = ResolveIcon("glow")
-            SubIndicatorGlow.ImageColor3 = Theme.AccentGlow
-            SubIndicatorGlow.ImageTransparency = 0.4
-            SubIndicatorGlow.ScaleType = Enum.ScaleType.Slice
-            SubIndicatorGlow.SliceCenter = Rect.new(128, 128, 384, 384)
-            SubIndicatorGlow.Parent = SubIndicator
 
             local SubIndicatorCorner = Instance.new("UICorner")
             SubIndicatorCorner.CornerRadius = UDim.new(0, 1)
