@@ -10,6 +10,21 @@ local LocalPlayer = Players.LocalPlayer
 local Ignite = {}
 Ignite.__index = Ignite
 
+local GITHUB_ICONS_BASE = "https://raw.githubusercontent.com/Mrsims0/Ui/main/gig/"
+
+local IconList = {
+    "checkmark.png",
+    "chevron.png",
+    "eye.png",
+    "flame.png",
+    "gear.png",
+    "keyboard.png",
+    "rifle.png",
+    "search.png",
+    "sword.png",
+    "target.png",
+}
+
 local Theme = {
     MainBackground       = Color3.fromRGB(18, 18, 20),
     TitleBarBackground   = Color3.fromRGB(15, 15, 17),
@@ -55,6 +70,35 @@ local FallbackIcons = {
     Keyboard     = "rbxassetid://10709798950",
 }
 
+local function SetupDirectories()
+    if isfolder and makefolder then
+        if not isfolder("cat") then
+            pcall(makefolder, "cat")
+        end
+        if not isfolder("cat/icons") then
+            pcall(makefolder, "cat/icons")
+        end
+    end
+end
+
+local function DownloadIcon(fileName)
+    SetupDirectories()
+    local path = "cat/icons/" .. fileName
+    if isfile and isfile(path) then
+        return path
+    end
+    if writefile and game and game.HttpGet then
+        local success, content = pcall(function()
+            return game:HttpGet(GITHUB_ICONS_BASE .. fileName)
+        end)
+        if success and content and #content > 0 then
+            pcall(writefile, path, content)
+            return path
+        end
+    end
+    return path
+end
+
 local function ResolveIcon(name)
     if not name then return "" end
     if string.find(name, "rbxassetid://") or string.find(name, "http") then
@@ -65,7 +109,10 @@ local function ResolveIcon(name)
     if baseName == "chevrondown" then baseName = "chevron" end
     if baseName == "crosshair" then baseName = "target" end
 
-    local localPath = "icons/" .. baseName .. ".png"
+    local fileName = baseName .. ".png"
+    local localPath = "cat/icons/" .. fileName
+
+    DownloadIcon(fileName)
 
     if getcustomasset then
         local success, asset = pcall(getcustomasset, localPath)
@@ -83,6 +130,13 @@ local function ResolveIcon(name)
 
     return localPath
 end
+
+task.spawn(function()
+    SetupDirectories()
+    for _, iconFile in ipairs(IconList) do
+        DownloadIcon(iconFile)
+    end
+end)
 
 local function GetSafeGuiParent()
     local success, parent = pcall(function()
