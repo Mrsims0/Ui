@@ -231,20 +231,6 @@ function Ignite:CreateWindow(options)
     MainFrame.ZIndex = 2
     MainFrame.Parent = ScreenGui
 
-    local GlowBackdrop = Instance.new("ImageLabel")
-    GlowBackdrop.Name = "GlowBackdrop"
-    GlowBackdrop.Size = UDim2.new(1, 80, 1, 80)
-    GlowBackdrop.Position = UDim2.new(0.5, 0, 0.5, 0)
-    GlowBackdrop.AnchorPoint = Vector2.new(0.5, 0.5)
-    GlowBackdrop.BackgroundTransparency = 1
-    GlowBackdrop.Image = ResolveIcon("glow")
-    GlowBackdrop.ImageColor3 = Theme.Accent
-    GlowBackdrop.ImageTransparency = 0.2
-    GlowBackdrop.ScaleType = Enum.ScaleType.Slice
-    GlowBackdrop.SliceCenter = Rect.new(160, 160, 352, 352)
-    GlowBackdrop.ZIndex = 1
-    GlowBackdrop.Parent = MainFrame
-
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
     MainCorner.Parent = MainFrame
@@ -444,7 +430,6 @@ function Ignite:CreateWindow(options)
         CurrentTab = nil,
         ScreenGui = ScreenGui,
         MainFrame = MainFrame,
-        GlowBackdrop = GlowBackdrop,
         PopupsLayer = PopupsLayer,
         SearchQuery = "",
     }
