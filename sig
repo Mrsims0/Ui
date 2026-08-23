@@ -1267,6 +1267,7 @@ function Ignite:CreateWindow(options)
                         KeybindPill.Size = UDim2.new(0, currentKey == "None" and 46 or 28, 0, 18)
                         KeybindPill.BackgroundColor3 = Theme.KeybindBackground
                         KeybindPill.BorderSizePixel = 0
+                        KeybindPill.Text = ""
                         KeybindPill.AutoButtonColor = false
                         KeybindPill.Parent = RightItemsContainer
 
