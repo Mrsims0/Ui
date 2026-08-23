@@ -1,25 +1,3 @@
---[[
-    ===================================================================
-    IGNITE UI LIBRARY (v1.0.5)
-    ===================================================================
-    A modern, sleek, dark-themed Roblox Lua GUI library styled precisely
-    after the Ignite interface.
-    
-    Layout & Features:
-    * Rounded slate/charcoal main container (#121214) with subtle glowing border
-    * Title bar with custom flame branding, version tag, and live search bar
-    * Navigation sidebar with custom vector icons and active blue indicator tabs
-    * Horizontal sub-tab bar with glowing underline indicators
-    * Multi-column categorized content view (Main, Exploits, Visuals)
-    * Glowing blue scrollbar
-    * Checkboxes with vibrant blue checkmarks
-    * Keybind pill badges with mini keyboard icons
-    * Interactive color picker swatches & popups
-    * Smooth track sliders with circular white thumb knobs & real-time readouts
-    * Clean dropdown selection menus with chevron indicators
-    ===================================================================
-]]
-
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -32,26 +10,25 @@ local LocalPlayer = Players.LocalPlayer
 local Ignite = {}
 Ignite.__index = Ignite
 
--- Default Theme & Palette Configuration
 local Theme = {
-    MainBackground       = Color3.fromRGB(18, 18, 20),      -- #121214
-    TitleBarBackground   = Color3.fromRGB(15, 15, 17),      -- #0F0F11
-    SidebarBackground    = Color3.fromRGB(14, 14, 16),      -- #0E0E10
-    CardBackground       = Color3.fromRGB(20, 20, 24),      -- #141418
+    MainBackground       = Color3.fromRGB(18, 18, 20),
+    TitleBarBackground   = Color3.fromRGB(15, 15, 17),
+    SidebarBackground    = Color3.fromRGB(14, 14, 16),
+    CardBackground       = Color3.fromRGB(20, 20, 24),
     CardHover            = Color3.fromRGB(26, 26, 32),
     ControlBackground    = Color3.fromRGB(20, 20, 24),
     ControlBorder        = Color3.fromRGB(34, 34, 40),
     ControlBorderHover   = Color3.fromRGB(50, 50, 60),
     
-    Accent               = Color3.fromRGB(0, 170, 255),     -- #00AAFF Electric Blue
+    Accent               = Color3.fromRGB(0, 170, 255),
     AccentGlow           = Color3.fromRGB(0, 195, 255),
     AccentDark           = Color3.fromRGB(0, 120, 190),
     
-    HighlightYellow      = Color3.fromRGB(255, 195, 50),    -- Amber / Gold for special highlights (Hitscan)
+    HighlightYellow      = Color3.fromRGB(255, 195, 50),
     
-    TextPrimary          = Color3.fromRGB(255, 255, 255),   -- White
-    TextSecondary        = Color3.fromRGB(185, 185, 195),   -- Light Slate Gray
-    TextMuted            = Color3.fromRGB(120, 120, 130),   -- Muted Gray
+    TextPrimary          = Color3.fromRGB(255, 255, 255),
+    TextSecondary        = Color3.fromRGB(185, 185, 195),
+    TextMuted            = Color3.fromRGB(120, 120, 130),
     TextDark             = Color3.fromRGB(75, 75, 85),
     
     KeybindBackground    = Color3.fromRGB(14, 28, 44),
@@ -63,8 +40,7 @@ local Theme = {
     Scrollbar            = Color3.fromRGB(0, 170, 255),
 }
 
--- High-Resolution Vector Icons Map
-local Icons = {
+local FallbackIcons = {
     Flame        = "rbxassetid://10723345518",
     Sword        = "rbxassetid://10734934585",
     Target       = "rbxassetid://10734947936",
@@ -74,14 +50,40 @@ local Icons = {
     Gear         = "rbxassetid://10734950309",
     Search       = "rbxassetid://10734943725",
     Checkmark    = "rbxassetid://10709790644",
+    Chevron      = "rbxassetid://10709790948",
     ChevronDown  = "rbxassetid://10709790948",
     Keyboard     = "rbxassetid://10709798950",
-    Palette      = "rbxassetid://10723346049",
-    Close        = "rbxassetid://10747384394",
-    Info         = "rbxassetid://10723415903",
 }
 
--- Safe Parent Resolver
+local function ResolveIcon(name)
+    if not name then return "" end
+    if string.find(name, "rbxassetid://") or string.find(name, "http") then
+        return name
+    end
+
+    local baseName = string.lower(name)
+    if baseName == "chevrondown" then baseName = "chevron" end
+    if baseName == "crosshair" then baseName = "target" end
+
+    local localPath = "icons/" .. baseName .. ".png"
+
+    if getcustomasset then
+        local success, asset = pcall(getcustomasset, localPath)
+        if success and asset then return asset end
+    elseif getsynasset then
+        local success, asset = pcall(getsynasset, localPath)
+        if success and asset then return asset end
+    end
+
+    for k, v in pairs(FallbackIcons) do
+        if string.lower(k) == baseName then
+            return v
+        end
+    end
+
+    return localPath
+end
+
 local function GetSafeGuiParent()
     local success, parent = pcall(function()
         if gethui then
@@ -99,7 +101,6 @@ local function GetSafeGuiParent()
     return (LocalPlayer and LocalPlayer:FindFirstChild("PlayerGui")) or game:GetService("StarterGui")
 end
 
--- Tween Helper
 local function Tween(instance, properties, duration, style, direction)
     duration = duration or 0.2
     style = style or Enum.EasingStyle.Quad
@@ -109,7 +110,6 @@ local function Tween(instance, properties, duration, style, direction)
     return tween
 end
 
--- Make Frame Draggable
 local function EnableDragging(frame, dragHandle)
     dragHandle = dragHandle or frame
     local dragging = false
@@ -148,9 +148,6 @@ local function EnableDragging(frame, dragHandle)
     end)
 end
 
----------------------------------------------------------------------
--- WINDOW CREATION
----------------------------------------------------------------------
 function Ignite:CreateWindow(options)
     options = options or {}
     local windowTitle = options.Title or "Ignite"
@@ -163,7 +160,6 @@ function Ignite:CreateWindow(options)
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = GetSafeGuiParent()
 
-    -- Main Container Window
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 780, 0, 520)
@@ -182,12 +178,8 @@ function Ignite:CreateWindow(options)
     MainStroke.Thickness = 1
     MainStroke.Parent = MainFrame
 
-    -- Global Search & Filter Registry
     local SearchableElements = {}
 
-    -----------------------------------------------------------------
-    -- TOP TITLE BAR
-    -----------------------------------------------------------------
     local TitleBar = Instance.new("Frame")
     TitleBar.Name = "TitleBar"
     TitleBar.Size = UDim2.new(1, 0, 0, 48)
@@ -199,7 +191,6 @@ function Ignite:CreateWindow(options)
     TitleBarCorner.CornerRadius = UDim.new(0, 8)
     TitleBarCorner.Parent = TitleBar
 
-    -- Flat bottom cover for TitleBar corner
     local TitleBarBottomCover = Instance.new("Frame")
     TitleBarBottomCover.Size = UDim2.new(1, 0, 0, 10)
     TitleBarBottomCover.Position = UDim2.new(0, 0, 1, -10)
@@ -216,18 +207,16 @@ function Ignite:CreateWindow(options)
 
     EnableDragging(MainFrame, TitleBar)
 
-    -- Flame Logo Icon
     local LogoIcon = Instance.new("ImageLabel")
     LogoIcon.Name = "LogoIcon"
     LogoIcon.Size = UDim2.new(0, 22, 0, 22)
     LogoIcon.Position = UDim2.new(0, 14, 0.5, -11)
     LogoIcon.BackgroundTransparency = 1
-    LogoIcon.Image = Icons.Flame
+    LogoIcon.Image = ResolveIcon("flame")
     LogoIcon.ImageColor3 = Theme.Accent
     LogoIcon.ScaleType = Enum.ScaleType.Fit
     LogoIcon.Parent = TitleBar
 
-    -- Title Text: "Ignite"
     local TitleLabel = Instance.new("TextLabel")
     TitleLabel.Name = "TitleLabel"
     TitleLabel.Text = windowTitle
@@ -240,7 +229,6 @@ function Ignite:CreateWindow(options)
     TitleLabel.Position = UDim2.new(0, 42, 0, 0)
     TitleLabel.Parent = TitleBar
 
-    -- Version Tag: "v1.0.5"
     local VersionLabel = Instance.new("TextLabel")
     VersionLabel.Name = "VersionLabel"
     VersionLabel.Text = windowVersion
@@ -253,7 +241,6 @@ function Ignite:CreateWindow(options)
     VersionLabel.Position = UDim2.new(0, 94, 0, 0)
     VersionLabel.Parent = TitleBar
 
-    -- Global Search Box (Right side)
     local SearchContainer = Instance.new("Frame")
     SearchContainer.Name = "SearchContainer"
     SearchContainer.Size = UDim2.new(0, 190, 0, 28)
@@ -276,7 +263,7 @@ function Ignite:CreateWindow(options)
     SearchIcon.Size = UDim2.new(0, 14, 0, 14)
     SearchIcon.Position = UDim2.new(0, 8, 0.5, -7)
     SearchIcon.BackgroundTransparency = 1
-    SearchIcon.Image = Icons.Search
+    SearchIcon.Image = ResolveIcon("search")
     SearchIcon.ImageColor3 = Theme.TextMuted
     SearchIcon.ScaleType = Enum.ScaleType.Fit
     SearchIcon.Parent = SearchContainer
@@ -296,9 +283,6 @@ function Ignite:CreateWindow(options)
     SearchInput.ClearTextOnFocus = false
     SearchInput.Parent = SearchContainer
 
-    -----------------------------------------------------------------
-    -- LEFT NAVIGATION SIDEBAR
-    -----------------------------------------------------------------
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 84, 1, -48)
@@ -350,9 +334,6 @@ function Ignite:CreateWindow(options)
     TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
     TabListLayout.Parent = TabButtonsHolder
 
-    -----------------------------------------------------------------
-    -- CONTENT AREA
-    -----------------------------------------------------------------
     local ContentArea = Instance.new("Frame")
     ContentArea.Name = "ContentArea"
     ContentArea.Size = UDim2.new(1, -85, 1, -48)
@@ -360,7 +341,6 @@ function Ignite:CreateWindow(options)
     ContentArea.BackgroundTransparency = 1
     ContentArea.Parent = MainFrame
 
-    -- Layer for global popups (Dropdowns, Colorpickers)
     local PopupsLayer = Instance.new("Frame")
     PopupsLayer.Name = "PopupsLayer"
     PopupsLayer.Size = UDim2.new(1, 0, 1, 0)
@@ -377,7 +357,6 @@ function Ignite:CreateWindow(options)
         SearchQuery = "",
     }
 
-    -- Search engine filter logic
     SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
         local query = string.lower(SearchInput.Text)
         WindowState.SearchQuery = query
@@ -400,22 +379,15 @@ function Ignite:CreateWindow(options)
         end
     end)
 
-    -- Toggle Window Visibility Keybind
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == toggleKey then
             MainFrame.Visible = not MainFrame.Visible
         end
     end)
 
-    -----------------------------------------------------------------
-    -- TAB BUILDER
-    -----------------------------------------------------------------
     function WindowState:CreateTab(tabConfig)
         local tabName = tabConfig.Name or "Tab"
-        local tabIcon = tabConfig.Icon or Icons.Flame
-        if Icons[tabIcon] then
-            tabIcon = Icons[tabIcon]
-        end
+        local tabIcon = ResolveIcon(tabConfig.Icon or "flame")
 
         local TabState = {
             Name = tabName,
@@ -425,7 +397,6 @@ function Ignite:CreateWindow(options)
             ContentFrame = nil,
         }
 
-        -- Left Tab Button
         local TabButton = Instance.new("TextButton")
         TabButton.Name = "TabButton_" .. tabName
         TabButton.Size = UDim2.new(0, 72, 0, 56)
@@ -440,7 +411,6 @@ function Ignite:CreateWindow(options)
         TabButtonCorner.CornerRadius = UDim.new(0, 6)
         TabButtonCorner.Parent = TabButton
 
-        -- Active Indicator Bar (bottom neon cyan line)
         local IndicatorBar = Instance.new("Frame")
         IndicatorBar.Name = "IndicatorBar"
         IndicatorBar.Size = UDim2.new(0, 32, 0, 2)
@@ -454,7 +424,6 @@ function Ignite:CreateWindow(options)
         IndicatorCorner.CornerRadius = UDim.new(0, 2)
         IndicatorCorner.Parent = IndicatorBar
 
-        -- Icon
         local TabIconImage = Instance.new("ImageLabel")
         TabIconImage.Name = "TabIcon"
         TabIconImage.Size = UDim2.new(0, 20, 0, 20)
@@ -465,7 +434,6 @@ function Ignite:CreateWindow(options)
         TabIconImage.ScaleType = Enum.ScaleType.Fit
         TabIconImage.Parent = TabButton
 
-        -- Label
         local TabLabel = Instance.new("TextLabel")
         TabLabel.Name = "TabLabel"
         TabLabel.Text = tabName
@@ -477,7 +445,6 @@ function Ignite:CreateWindow(options)
         TabLabel.Position = UDim2.new(0, 0, 0, 32)
         TabLabel.Parent = TabButton
 
-        -- Tab Content Wrapper inside ContentArea
         local TabPage = Instance.new("Frame")
         TabPage.Name = "TabPage_" .. tabName
         TabPage.Size = UDim2.new(1, 0, 1, 0)
@@ -485,7 +452,6 @@ function Ignite:CreateWindow(options)
         TabPage.Visible = false
         TabPage.Parent = ContentArea
 
-        -- Top Horizontal Sub-Nav Bar for this Tab
         local SubNavBar = Instance.new("Frame")
         SubNavBar.Name = "SubNavBar"
         SubNavBar.Size = UDim2.new(1, 0, 0, 36)
@@ -513,7 +479,6 @@ function Ignite:CreateWindow(options)
         SubNavLayout.VerticalAlignment = Enum.VerticalAlignment.Center
         SubNavLayout.Parent = SubNavList
 
-        -- Sub-Tab Content Area (Below SubNavBar)
         local SubTabContentArea = Instance.new("Frame")
         SubTabContentArea.Name = "SubTabContentArea"
         SubTabContentArea.Size = UDim2.new(1, 0, 1, -37)
@@ -525,7 +490,6 @@ function Ignite:CreateWindow(options)
         TabState.SubNavList = SubNavList
         TabState.SubTabContentArea = SubTabContentArea
 
-        -- Activate Tab Function
         local function SelectTab()
             for _, otherTab in ipairs(WindowState.Tabs) do
                 otherTab.TabPage.Visible = false
@@ -576,9 +540,6 @@ function Ignite:CreateWindow(options)
 
         table.insert(WindowState.Tabs, TabState)
 
-        -------------------------------------------------------------
-        -- SUB-TAB BUILDER
-        -------------------------------------------------------------
         function TabState:CreateSubTab(subTabConfig)
             local subTabName = type(subTabConfig) == "string" and subTabConfig or subTabConfig.Name or "SubTab"
 
@@ -587,7 +548,6 @@ function Ignite:CreateWindow(options)
                 Columns = {},
             }
 
-            -- SubTab Text Button
             local textWidth = TextService:GetTextSize(subTabName, 13, Enum.Font.GothamMedium, Vector2.new(1000, 36)).X
 
             local SubTabButton = Instance.new("TextButton")
@@ -601,7 +561,6 @@ function Ignite:CreateWindow(options)
             SubTabButton.AutoButtonColor = false
             SubTabButton.Parent = SubNavList
 
-            -- Underline Indicator for active sub-tab
             local SubIndicator = Instance.new("Frame")
             SubIndicator.Name = "SubIndicator"
             SubIndicator.Size = UDim2.new(1, 0, 0, 2)
@@ -615,7 +574,6 @@ function Ignite:CreateWindow(options)
             SubIndicatorCorner.CornerRadius = UDim.new(0, 1)
             SubIndicatorCorner.Parent = SubIndicator
 
-            -- Scrollable 3-Column Content View for this SubTab
             local ContentScroll = Instance.new("ScrollingFrame")
             ContentScroll.Name = "ContentScroll_" .. subTabName
             ContentScroll.Size = UDim2.new(1, 0, 1, 0)
@@ -629,7 +587,6 @@ function Ignite:CreateWindow(options)
             ContentScroll.Visible = false
             ContentScroll.Parent = SubTabContentArea
 
-            -- Columns Container (3-Column Layout: Main, Exploits, Visuals)
             local ColumnsContainer = Instance.new("Frame")
             ColumnsContainer.Name = "ColumnsContainer"
             ColumnsContainer.Size = UDim2.new(1, -20, 1, -10)
@@ -678,9 +635,6 @@ function Ignite:CreateWindow(options)
 
             table.insert(TabState.SubTabs, SubTabState)
 
-            ---------------------------------------------------------
-            -- SECTION / COLUMN BUILDER
-            ---------------------------------------------------------
             function SubTabState:CreateSection(sectionConfig)
                 local sectionName = type(sectionConfig) == "string" and sectionConfig or sectionConfig.Name or "Section"
                 local order = sectionConfig.Order or #SubTabState.Columns + 1
@@ -698,7 +652,6 @@ function Ignite:CreateWindow(options)
                 SectionLayout.Padding = UDim.new(0, 8)
                 SectionLayout.Parent = SectionColumn
 
-                -- Section Header Title
                 local SectionHeader = Instance.new("TextLabel")
                 SectionHeader.Name = "SectionHeader"
                 SectionHeader.Text = sectionName
@@ -718,9 +671,6 @@ function Ignite:CreateWindow(options)
 
                 table.insert(SubTabState.Columns, SectionState)
 
-                -----------------------------------------------------
-                -- 1. TOGGLE / CHECKBOX COMPONENT
-                -----------------------------------------------------
                 function SectionState:AddToggle(toggleConfig)
                     local title = toggleConfig.Name or "Toggle"
                     local default = toggleConfig.Default or false
@@ -735,7 +685,6 @@ function Ignite:CreateWindow(options)
                     ToggleRow.BackgroundTransparency = 1
                     ToggleRow.Parent = SectionColumn
 
-                    -- Checkbox Square
                     local CheckBox = Instance.new("Frame")
                     CheckBox.Name = "CheckBox"
                     CheckBox.Size = UDim2.new(0, 15, 0, 15)
@@ -758,13 +707,12 @@ function Ignite:CreateWindow(options)
                     CheckIcon.Size = UDim2.new(0, 11, 0, 11)
                     CheckIcon.Position = UDim2.new(0.5, -5.5, 0.5, -5.5)
                     CheckIcon.BackgroundTransparency = 1
-                    CheckIcon.Image = Icons.Checkmark
+                    CheckIcon.Image = ResolveIcon("checkmark")
                     CheckIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
                     CheckIcon.ScaleType = Enum.ScaleType.Fit
                     CheckIcon.ImageTransparency = default and 0 or 1
                     CheckIcon.Parent = CheckBox
 
-                    -- Toggle Label Button (allows clicking text too)
                     local LabelButton = Instance.new("TextButton")
                     LabelButton.Name = "LabelButton"
                     LabelButton.Size = UDim2.new(1, -70, 1, 0)
@@ -822,7 +770,6 @@ function Ignite:CreateWindow(options)
                     ClickHitbox.Parent = CheckBox
                     ClickHitbox.MouseButton1Click:Connect(Toggle)
 
-                    -- Register in Searchable
                     table.insert(SearchableElements, {
                         Name = title,
                         Frame = ToggleRow,
@@ -836,7 +783,6 @@ function Ignite:CreateWindow(options)
                         GetValue = function() return isChecked end,
                     }
 
-                    -- Optional Inline Keybind
                     if keybindDefault ~= nil then
                         local currentKey = keybindDefault == "None" and "None" or tostring(keybindDefault)
                         local isBinding = false
@@ -870,7 +816,7 @@ function Ignite:CreateWindow(options)
                         KeyIcon.Name = "KeyIcon"
                         KeyIcon.Size = UDim2.new(0, 10, 0, 10)
                         KeyIcon.BackgroundTransparency = 1
-                        KeyIcon.Image = Icons.Keyboard
+                        KeyIcon.Image = ResolveIcon("keyboard")
                         KeyIcon.ImageColor3 = Theme.KeybindText
                         KeyIcon.ScaleType = Enum.ScaleType.Fit
                         KeyIcon.Parent = KeybindPill
@@ -919,7 +865,6 @@ function Ignite:CreateWindow(options)
                         }
                     end
 
-                    -- Optional Inline Colorpicker Dots
                     if colorPickerDefaults ~= nil then
                         local colorList = type(colorPickerDefaults) == "table" and colorPickerDefaults or { colorPickerDefaults }
                         ControlApi.ColorPickers = {}
@@ -945,7 +890,6 @@ function Ignite:CreateWindow(options)
                             SwatchStroke.Thickness = 1
                             SwatchStroke.Parent = SwatchBtn
 
-                            -- Color Picker Modal on Click
                             SwatchBtn.MouseButton1Click:Connect(function()
                                 local Popup = PopupsLayer:FindFirstChild("ColorPickerPopup")
                                 if Popup then Popup:Destroy() end
@@ -982,7 +926,6 @@ function Ignite:CreateWindow(options)
                                 PopTitle.TextXAlignment = Enum.TextXAlignment.Left
                                 PopTitle.Parent = Popup
 
-                                -- Preset quick colors palette
                                 local PresetPalette = {
                                     Color3.fromRGB(255, 60, 60),
                                     Color3.fromRGB(255, 140, 0),
@@ -1023,7 +966,6 @@ function Ignite:CreateWindow(options)
                                     end)
                                 end
 
-                                -- Close button
                                 local CloseBtn = Instance.new("TextButton")
                                 CloseBtn.Size = UDim2.new(1, -16, 0, 22)
                                 CloseBtn.Position = UDim2.new(0, 8, 1, -26)
@@ -1056,9 +998,6 @@ function Ignite:CreateWindow(options)
                     return ControlApi
                 end
 
-                -----------------------------------------------------
-                -- 2. SLIDER COMPONENT
-                -----------------------------------------------------
                 function SectionState:AddSlider(sliderConfig)
                     local title = sliderConfig.Name or "Slider"
                     local min = sliderConfig.Min or 0
@@ -1073,7 +1012,6 @@ function Ignite:CreateWindow(options)
                     SliderContainer.BackgroundTransparency = 1
                     SliderContainer.Parent = SectionColumn
 
-                    -- Top row: Label & Numeric Readout
                     local Label = Instance.new("TextLabel")
                     Label.Name = "Label"
                     Label.Text = title
@@ -1098,7 +1036,6 @@ function Ignite:CreateWindow(options)
                     ValueLabel.Position = UDim2.new(1, -50, 0, 0)
                     ValueLabel.Parent = SliderContainer
 
-                    -- Bottom Track Bar
                     local Track = Instance.new("Frame")
                     Track.Name = "Track"
                     Track.Size = UDim2.new(1, 0, 0, 4)
@@ -1122,7 +1059,6 @@ function Ignite:CreateWindow(options)
                     FillCorner.CornerRadius = UDim.new(1, 0)
                     FillCorner.Parent = Fill
 
-                    -- Circular Knob Thumb
                     local Knob = Instance.new("Frame")
                     Knob.Name = "Knob"
                     Knob.Size = UDim2.new(0, 10, 0, 10)
@@ -1192,7 +1128,6 @@ function Ignite:CreateWindow(options)
                         end
                     end)
 
-                    -- Register in Searchable
                     table.insert(SearchableElements, {
                         Name = title,
                         Frame = SliderContainer,
@@ -1213,9 +1148,6 @@ function Ignite:CreateWindow(options)
                     }
                 end
 
-                -----------------------------------------------------
-                -- 3. DROPDOWN COMPONENT
-                -----------------------------------------------------
                 function SectionState:AddDropdown(dropdownConfig)
                     local title = dropdownConfig.Name or "Dropdown"
                     local options = dropdownConfig.Options or {}
@@ -1228,7 +1160,6 @@ function Ignite:CreateWindow(options)
                     DropdownContainer.BackgroundTransparency = 1
                     DropdownContainer.Parent = SectionColumn
 
-                    -- Top Title Label
                     local Label = Instance.new("TextLabel")
                     Label.Name = "Label"
                     Label.Text = title
@@ -1240,7 +1171,6 @@ function Ignite:CreateWindow(options)
                     Label.Size = UDim2.new(1, 0, 0, 16)
                     Label.Parent = DropdownContainer
 
-                    -- Selection Box Button
                     local SelectBox = Instance.new("TextButton")
                     SelectBox.Name = "SelectBox"
                     SelectBox.Size = UDim2.new(1, 0, 0, 28)
@@ -1277,7 +1207,7 @@ function Ignite:CreateWindow(options)
                     ChevronIcon.Size = UDim2.new(0, 14, 0, 14)
                     ChevronIcon.Position = UDim2.new(1, -20, 0.5, -7)
                     ChevronIcon.BackgroundTransparency = 1
-                    ChevronIcon.Image = Icons.ChevronDown
+                    ChevronIcon.Image = ResolveIcon("chevron")
                     ChevronIcon.ImageColor3 = Theme.TextMuted
                     ChevronIcon.ScaleType = Enum.ScaleType.Fit
                     ChevronIcon.Parent = SelectBox
@@ -1393,7 +1323,6 @@ function Ignite:CreateWindow(options)
 
                     SelectBox.MouseButton1Click:Connect(ToggleDropdown)
 
-                    -- Register in Searchable
                     table.insert(SearchableElements, {
                         Name = title,
                         Frame = DropdownContainer,
@@ -1412,9 +1341,6 @@ function Ignite:CreateWindow(options)
                     }
                 end
 
-                -----------------------------------------------------
-                -- 4. BUTTON COMPONENT
-                -----------------------------------------------------
                 function SectionState:AddButton(buttonConfig)
                     local title = buttonConfig.Name or "Button"
                     local callback = buttonConfig.Callback or function() end
@@ -1473,7 +1399,6 @@ function Ignite:CreateWindow(options)
             return SubTabState
         end
 
-        -- Automatically select the first tab created
         if #WindowState.Tabs == 1 then
             TabState:Select()
         end
