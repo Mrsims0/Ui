@@ -19,6 +19,7 @@ local IconList = {
     "flame.png",
     "gear.png",
     "keyboard.png",
+    "paintbrush.png",
     "rifle.png",
     "search.png",
     "sword.png",
@@ -68,6 +69,8 @@ local FallbackIcons = {
     Chevron      = "rbxassetid://10709790948",
     ChevronDown  = "rbxassetid://10709790948",
     Keyboard     = "rbxassetid://10709798950",
+    Paintbrush   = "rbxassetid://10723346049",
+    Palette      = "rbxassetid://10723346049",
 }
 
 local function SetupDirectories()
@@ -108,6 +111,7 @@ local function ResolveIcon(name)
     local baseName = string.lower(name)
     if baseName == "chevrondown" then baseName = "chevron" end
     if baseName == "crosshair" then baseName = "target" end
+    if baseName == "palette" then baseName = "paintbrush" end
 
     local fileName = baseName .. ".png"
     local localPath = "cat/icons/" .. fileName
@@ -410,6 +414,405 @@ function Ignite:CreateWindow(options)
         PopupsLayer = PopupsLayer,
         SearchQuery = "",
     }
+
+    local function OpenInteractiveColorPicker(titleText, initialColor, onColorChanged, anchorElement)
+        local existingPopup = PopupsLayer:FindFirstChild("HSVColorPickerPopup")
+        if existingPopup then existingPopup:Destroy() end
+
+        local h, s, v = Color3.toHSV(initialColor)
+        local currentColor = initialColor
+
+        local Popup = Instance.new("Frame")
+        Popup.Name = "HSVColorPickerPopup"
+        Popup.Size = UDim2.new(0, 230, 0, 240)
+
+        local absPos = anchorElement.AbsolutePosition
+        local mainPos = MainFrame.AbsolutePosition
+        local posX = math.clamp(absPos.X - mainPos.X - 235, 10, MainFrame.AbsoluteSize.X - 240)
+        local posY = math.clamp(absPos.Y - mainPos.Y - 10, 10, MainFrame.AbsoluteSize.Y - 250)
+
+        Popup.Position = UDim2.new(0, posX, 0, posY)
+        Popup.BackgroundColor3 = Theme.CardBackground
+        Popup.BorderSizePixel = 0
+        Popup.ZIndex = 80
+        Popup.Parent = PopupsLayer
+
+        local PopCorner = Instance.new("UICorner")
+        PopCorner.CornerRadius = UDim.new(0, 8)
+        PopCorner.Parent = Popup
+
+        local PopStroke = Instance.new("UIStroke")
+        PopStroke.Color = Theme.Accent
+        PopStroke.Thickness = 1.5
+        PopStroke.Parent = Popup
+
+        local TopRow = Instance.new("Frame")
+        TopRow.Size = UDim2.new(1, -16, 0, 24)
+        TopRow.Position = UDim2.new(0, 8, 0, 6)
+        TopRow.BackgroundTransparency = 1
+        TopRow.ZIndex = 81
+        TopRow.Parent = Popup
+
+        local Title = Instance.new("TextLabel")
+        Title.Text = titleText
+        Title.Font = Enum.Font.GothamBold
+        Title.TextSize = 11
+        Title.TextColor3 = Theme.TextPrimary
+        Title.Size = UDim2.new(1, -50, 1, 0)
+        Title.BackgroundTransparency = 1
+        Title.TextXAlignment = Enum.TextXAlignment.Left
+        Title.ZIndex = 81
+        Title.Parent = TopRow
+
+        local PreviewBox = Instance.new("Frame")
+        PreviewBox.Size = UDim2.new(0, 18, 0, 18)
+        PreviewBox.Position = UDim2.new(1, -44, 0.5, -9)
+        PreviewBox.BackgroundColor3 = currentColor
+        PreviewBox.BorderSizePixel = 0
+        PreviewBox.ZIndex = 81
+        PreviewBox.Parent = TopRow
+
+        local PrevCorner = Instance.new("UICorner")
+        PrevCorner.CornerRadius = UDim.new(0, 4)
+        PrevCorner.Parent = PreviewBox
+
+        local PrevStroke = Instance.new("UIStroke")
+        PrevStroke.Color = Theme.Border
+        PrevStroke.Thickness = 1
+        PrevStroke.Parent = PreviewBox
+
+        local CloseBtn = Instance.new("TextButton")
+        CloseBtn.Size = UDim2.new(0, 18, 0, 18)
+        CloseBtn.Position = UDim2.new(1, -20, 0.5, -9)
+        CloseBtn.BackgroundColor3 = Theme.ControlBackground
+        CloseBtn.Text = "×"
+        CloseBtn.Font = Enum.Font.GothamBold
+        CloseBtn.TextSize = 14
+        CloseBtn.TextColor3 = Theme.TextMuted
+        CloseBtn.AutoButtonColor = false
+        CloseBtn.ZIndex = 81
+        CloseBtn.Parent = TopRow
+
+        local CloseCorner = Instance.new("UICorner")
+        CloseCorner.CornerRadius = UDim.new(0, 4)
+        CloseCorner.Parent = CloseBtn
+
+        CloseBtn.MouseButton1Click:Connect(function()
+            Popup:Destroy()
+        end)
+
+        local SVCanvas = Instance.new("Frame")
+        SVCanvas.Name = "SVCanvas"
+        SVCanvas.Size = UDim2.new(1, -16, 0, 105)
+        SVCanvas.Position = UDim2.new(0, 8, 0, 32)
+        SVCanvas.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+        SVCanvas.BorderSizePixel = 0
+        SVCanvas.ClipsDescendants = true
+        SVCanvas.ZIndex = 82
+        SVCanvas.Parent = Popup
+
+        local SVCorner = Instance.new("UICorner")
+        SVCorner.CornerRadius = UDim.new(0, 5)
+        SVCorner.Parent = SVCanvas
+
+        local WhiteGradFrame = Instance.new("Frame")
+        WhiteGradFrame.Size = UDim2.new(1, 0, 1, 0)
+        WhiteGradFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        WhiteGradFrame.BorderSizePixel = 0
+        WhiteGradFrame.ZIndex = 83
+        WhiteGradFrame.Parent = SVCanvas
+
+        local WhiteGrad = Instance.new("UIGradient")
+        WhiteGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        WhiteGrad.Rotation = 0
+        WhiteGrad.Parent = WhiteGradFrame
+
+        local BlackGradFrame = Instance.new("Frame")
+        BlackGradFrame.Size = UDim2.new(1, 0, 1, 0)
+        BlackGradFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        BlackGradFrame.BorderSizePixel = 0
+        BlackGradFrame.ZIndex = 84
+        BlackGradFrame.Parent = SVCanvas
+
+        local BlackGrad = Instance.new("UIGradient")
+        BlackGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 1),
+            NumberSequenceKeypoint.new(1, 0)
+        })
+        BlackGrad.Rotation = 90
+        BlackGrad.Parent = BlackGradFrame
+
+        local SVKnob = Instance.new("Frame")
+        SVKnob.Name = "SVKnob"
+        SVKnob.Size = UDim2.new(0, 10, 0, 10)
+        SVKnob.Position = UDim2.new(s, -5, 1 - v, -5)
+        SVKnob.BackgroundColor3 = currentColor
+        SVKnob.BorderSizePixel = 0
+        SVKnob.ZIndex = 85
+        SVKnob.Parent = SVCanvas
+
+        local SVKCorner = Instance.new("UICorner")
+        SVKCorner.CornerRadius = UDim.new(1, 0)
+        SVKCorner.Parent = SVKnob
+
+        local SVKStroke = Instance.new("UIStroke")
+        SVKStroke.Color = Color3.fromRGB(255, 255, 255)
+        SVKStroke.Thickness = 1.5
+        SVKStroke.Parent = SVKnob
+
+        local HueBar = Instance.new("Frame")
+        HueBar.Name = "HueBar"
+        HueBar.Size = UDim2.new(1, -16, 0, 12)
+        HueBar.Position = UDim2.new(0, 8, 0, 144)
+        HueBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        HueBar.BorderSizePixel = 0
+        HueBar.ZIndex = 82
+        HueBar.Parent = Popup
+
+        local HueCorner = Instance.new("UICorner")
+        HueCorner.CornerRadius = UDim.new(0, 3)
+        HueCorner.Parent = HueBar
+
+        local HueGrad = Instance.new("UIGradient")
+        HueGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 0)),
+            ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+            ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 255, 255)),
+            ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+            ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+            ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 0)),
+        })
+        HueGrad.Parent = HueBar
+
+        local HueKnob = Instance.new("Frame")
+        HueKnob.Name = "HueKnob"
+        HueKnob.Size = UDim2.new(0, 6, 1, 4)
+        HueKnob.Position = UDim2.new(h, -3, 0.5, -8)
+        HueKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        HueKnob.BorderSizePixel = 0
+        HueKnob.ZIndex = 85
+        HueKnob.Parent = HueBar
+
+        local HKCorner = Instance.new("UICorner")
+        HKCorner.CornerRadius = UDim.new(0, 2)
+        HKCorner.Parent = HueKnob
+
+        local HKStroke = Instance.new("UIStroke")
+        HKStroke.Color = Color3.fromRGB(20, 20, 24)
+        HKStroke.Thickness = 1
+        HKStroke.Parent = HueKnob
+
+        local PaletteRow = Instance.new("Frame")
+        PaletteRow.Size = UDim2.new(1, -16, 0, 18)
+        PaletteRow.Position = UDim2.new(0, 8, 0, 162)
+        PaletteRow.BackgroundTransparency = 1
+        PaletteRow.ZIndex = 82
+        PaletteRow.Parent = Popup
+
+        local PaletteLayout = Instance.new("UIListLayout")
+        PaletteLayout.FillDirection = Enum.FillDirection.Horizontal
+        PaletteLayout.Padding = UDim.new(0, 5)
+        PaletteLayout.Parent = PaletteRow
+
+        local QuickColors = {
+            Color3.fromRGB(255, 50, 50),
+            Color3.fromRGB(255, 140, 0),
+            Color3.fromRGB(255, 210, 0),
+            Color3.fromRGB(0, 230, 120),
+            Color3.fromRGB(0, 170, 255),
+            Color3.fromRGB(180, 70, 255),
+            Color3.fromRGB(255, 255, 255),
+            Color3.fromRGB(100, 100, 110),
+        }
+
+        local function RefreshColor()
+            currentColor = Color3.fromHSV(h, s, v)
+            SVCanvas.BackgroundColor3 = Color3.fromHSV(h, 1, 1)
+            SVKnob.Position = UDim2.new(s, -5, 1 - v, -5)
+            SVKnob.BackgroundColor3 = currentColor
+            HueKnob.Position = UDim2.new(h, -3, 0.5, -8)
+            PreviewBox.BackgroundColor3 = currentColor
+            if onColorChanged then
+                pcall(onColorChanged, currentColor)
+            end
+        end
+
+        for _, qcol in ipairs(QuickColors) do
+            local QDot = Instance.new("TextButton")
+            QDot.Size = UDim2.new(0, 20, 0, 16)
+            QDot.BackgroundColor3 = qcol
+            QDot.BorderSizePixel = 0
+            QDot.Text = ""
+            QDot.AutoButtonColor = false
+            QDot.ZIndex = 83
+            QDot.Parent = PaletteRow
+
+            local QC = Instance.new("UICorner")
+            QC.CornerRadius = UDim.new(0, 3)
+            QC.Parent = QDot
+
+            QDot.MouseButton1Click:Connect(function()
+                h, s, v = Color3.toHSV(qcol)
+                RefreshColor()
+            end)
+        end
+
+        local BottomInputs = Instance.new("Frame")
+        BottomInputs.Size = UDim2.new(1, -16, 0, 24)
+        BottomInputs.Position = UDim2.new(0, 8, 0, 186)
+        BottomInputs.BackgroundTransparency = 1
+        BottomInputs.ZIndex = 82
+        BottomInputs.Parent = Popup
+
+        local HexBox = Instance.new("TextBox")
+        HexBox.Size = UDim2.new(0, 70, 0, 22)
+        HexBox.Position = UDim2.new(0, 0, 0, 1)
+        HexBox.BackgroundColor3 = Theme.ControlBackground
+        HexBox.Text = "#" .. currentColor:ToHex():upper()
+        HexBox.Font = Enum.Font.GothamBold
+        HexBox.TextSize = 10
+        HexBox.TextColor3 = Theme.TextPrimary
+        HexBox.ZIndex = 83
+        HexBox.ClearTextOnFocus = false
+        HexBox.Parent = BottomInputs
+
+        local HexCorner = Instance.new("UICorner")
+        HexCorner.CornerRadius = UDim.new(0, 4)
+        HexCorner.Parent = HexBox
+
+        local HexStroke = Instance.new("UIStroke")
+        HexStroke.Color = Theme.ControlBorder
+        HexStroke.Thickness = 1
+        HexStroke.Parent = HexBox
+
+        local RGBLabel = Instance.new("TextLabel")
+        RGBLabel.Size = UDim2.new(1, -78, 0, 22)
+        RGBLabel.Position = UDim2.new(0, 78, 0, 1)
+        RGBLabel.BackgroundTransparency = 1
+        RGBLabel.Font = Enum.Font.GothamMedium
+        RGBLabel.TextSize = 10
+        RGBLabel.TextColor3 = Theme.TextMuted
+        RGBLabel.TextXAlignment = Enum.TextXAlignment.Right
+        RGBLabel.ZIndex = 83
+        RGBLabel.Text = string.format("RGB: %d, %d, %d", math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255))
+        RGBLabel.Parent = BottomInputs
+
+        local DoneBtn = Instance.new("TextButton")
+        DoneBtn.Size = UDim2.new(1, -16, 0, 20)
+        DoneBtn.Position = UDim2.new(0, 8, 1, -24)
+        DoneBtn.BackgroundColor3 = Theme.ControlBackground
+        DoneBtn.Text = "Done"
+        DoneBtn.Font = Enum.Font.GothamMedium
+        DoneBtn.TextSize = 11
+        DoneBtn.TextColor3 = Theme.TextPrimary
+        DoneBtn.AutoButtonColor = false
+        DoneBtn.ZIndex = 82
+        DoneBtn.Parent = Popup
+
+        local DoneCorner = Instance.new("UICorner")
+        DoneCorner.CornerRadius = UDim.new(0, 4)
+        DoneCorner.Parent = DoneBtn
+
+        DoneBtn.MouseButton1Click:Connect(function()
+            Popup:Destroy()
+        end)
+
+        HexBox.FocusLost:Connect(function()
+            local cleanHex = HexBox.Text:gsub("#", "")
+            local success, parsedColor = pcall(function()
+                return Color3.fromHex(cleanHex)
+            end)
+            if success and parsedColor then
+                h, s, v = Color3.toHSV(parsedColor)
+                RefreshColor()
+                HexBox.Text = "#" .. currentColor:ToHex():upper()
+                RGBLabel.Text = string.format("RGB: %d, %d, %d", math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255))
+            else
+                HexBox.Text = "#" .. currentColor:ToHex():upper()
+            end
+        end)
+
+        local draggingSV = false
+        local draggingHue = false
+
+        local function UpdateSV(inputX, inputY)
+            local absX = SVCanvas.AbsolutePosition.X
+            local absY = SVCanvas.AbsolutePosition.Y
+            local sizeX = SVCanvas.AbsoluteSize.X
+            local sizeY = SVCanvas.AbsoluteSize.Y
+
+            s = math.clamp((inputX - absX) / sizeX, 0, 1)
+            v = math.clamp(1 - ((inputY - absY) / sizeY), 0, 1)
+            RefreshColor()
+            HexBox.Text = "#" .. currentColor:ToHex():upper()
+            RGBLabel.Text = string.format("RGB: %d, %d, %d", math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255))
+        end
+
+        local function UpdateHue(inputX)
+            local absX = HueBar.AbsolutePosition.X
+            local sizeX = HueBar.AbsoluteSize.X
+            h = math.clamp((inputX - absX) / sizeX, 0, 1)
+            RefreshColor()
+            HexBox.Text = "#" .. currentColor:ToHex():upper()
+            RGBLabel.Text = string.format("RGB: %d, %d, %d", math.floor(currentColor.R * 255), math.floor(currentColor.G * 255), math.floor(currentColor.B * 255))
+        end
+
+        local SVHitbox = Instance.new("TextButton")
+        SVHitbox.Size = UDim2.new(1, 0, 1, 0)
+        SVHitbox.BackgroundTransparency = 1
+        SVHitbox.Text = ""
+        SVHitbox.ZIndex = 86
+        SVHitbox.Parent = SVCanvas
+
+        SVHitbox.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                draggingSV = true
+                UpdateSV(input.Position.X, input.Position.Y)
+            end
+        end)
+
+        local HueHitbox = Instance.new("TextButton")
+        HueHitbox.Size = UDim2.new(1, 0, 1, 0)
+        HueHitbox.BackgroundTransparency = 1
+        HueHitbox.Text = ""
+        HueHitbox.ZIndex = 86
+        HueHitbox.Parent = HueBar
+
+        HueHitbox.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                draggingHue = true
+                UpdateHue(input.Position.X)
+            end
+        end)
+
+        local dragConnection
+        dragConnection = UserInputService.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                if draggingSV then
+                    UpdateSV(input.Position.X, input.Position.Y)
+                elseif draggingHue then
+                    UpdateHue(input.Position.X)
+                end
+            end
+        end)
+
+        local endConnection
+        endConnection = UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                draggingSV = false
+                draggingHue = false
+            end
+        end)
+
+        Popup.Destroying:Connect(function()
+            if dragConnection then dragConnection:Disconnect() end
+            if endConnection then endConnection:Disconnect() end
+        end)
+    end
 
     SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
         local query = string.lower(SearchInput.Text)
@@ -926,130 +1329,150 @@ function Ignite:CreateWindow(options)
                         for i, initColor in ipairs(colorList) do
                             local currentColor = initColor
 
-                            local SwatchBtn = Instance.new("TextButton")
-                            SwatchBtn.Name = "Swatch_" .. i
-                            SwatchBtn.Size = UDim2.new(0, 13, 0, 13)
-                            SwatchBtn.BackgroundColor3 = currentColor
-                            SwatchBtn.BorderSizePixel = 0
-                            SwatchBtn.Text = ""
-                            SwatchBtn.AutoButtonColor = false
-                            SwatchBtn.Parent = RightItemsContainer
+                            local BrushBtn = Instance.new("TextButton")
+                            BrushBtn.Name = "ColorBrush_" .. i
+                            BrushBtn.Size = UDim2.new(0, 18, 0, 18)
+                            BrushBtn.BackgroundColor3 = Theme.ControlBackground
+                            BrushBtn.BorderSizePixel = 0
+                            BrushBtn.Text = ""
+                            BrushBtn.AutoButtonColor = false
+                            BrushBtn.Parent = RightItemsContainer
 
-                            local SwatchCorner = Instance.new("UICorner")
-                            SwatchCorner.CornerRadius = UDim.new(1, 0)
-                            SwatchCorner.Parent = SwatchBtn
+                            local BrushCorner = Instance.new("UICorner")
+                            BrushCorner.CornerRadius = UDim.new(0, 4)
+                            BrushCorner.Parent = BrushBtn
 
-                            local SwatchStroke = Instance.new("UIStroke")
-                            SwatchStroke.Color = Theme.Border
-                            SwatchStroke.Thickness = 1
-                            SwatchStroke.Parent = SwatchBtn
+                            local BrushStroke = Instance.new("UIStroke")
+                            BrushStroke.Color = Theme.ControlBorder
+                            BrushStroke.Thickness = 1
+                            BrushStroke.Parent = BrushBtn
 
-                            SwatchBtn.MouseButton1Click:Connect(function()
-                                local Popup = PopupsLayer:FindFirstChild("ColorPickerPopup")
-                                if Popup then Popup:Destroy() end
+                            local BrushIcon = Instance.new("ImageLabel")
+                            BrushIcon.Name = "BrushIcon"
+                            BrushIcon.Size = UDim2.new(0, 13, 0, 13)
+                            BrushIcon.Position = UDim2.new(0.5, -6.5, 0.5, -6.5)
+                            BrushIcon.BackgroundTransparency = 1
+                            BrushIcon.Image = ResolveIcon("paintbrush")
+                            BrushIcon.ImageColor3 = currentColor
+                            BrushIcon.ScaleType = Enum.ScaleType.Fit
+                            BrushIcon.Parent = BrushBtn
 
-                                Popup = Instance.new("Frame")
-                                Popup.Name = "ColorPickerPopup"
-                                Popup.Size = UDim2.new(0, 160, 0, 150)
-                                
-                                local absPos = SwatchBtn.AbsolutePosition
-                                local mainPos = MainFrame.AbsolutePosition
-                                Popup.Position = UDim2.new(0, absPos.X - mainPos.X - 165, 0, absPos.Y - mainPos.Y - 20)
-                                Popup.BackgroundColor3 = Theme.CardBackground
-                                Popup.BorderSizePixel = 0
-                                Popup.ZIndex = 60
-                                Popup.Parent = PopupsLayer
+                            local function OnColorSelected(newCol)
+                                currentColor = newCol
+                                BrushIcon.ImageColor3 = newCol
+                            end
 
-                                local PopCorner = Instance.new("UICorner")
-                                PopCorner.CornerRadius = UDim.new(0, 6)
-                                PopCorner.Parent = Popup
+                            BrushBtn.MouseButton1Click:Connect(function()
+                                OpenInteractiveColorPicker(title .. " Color " .. i, currentColor, OnColorSelected, BrushBtn)
+                            end)
 
-                                local PopStroke = Instance.new("UIStroke")
-                                PopStroke.Color = Theme.Accent
-                                PopStroke.Thickness = 1
-                                PopStroke.Parent = Popup
-
-                                local PopTitle = Instance.new("TextLabel")
-                                PopTitle.Text = title .. " Color " .. i
-                                PopTitle.Font = Enum.Font.GothamBold
-                                PopTitle.TextSize = 11
-                                PopTitle.TextColor3 = Theme.TextPrimary
-                                PopTitle.Size = UDim2.new(1, -16, 0, 22)
-                                PopTitle.Position = UDim2.new(0, 8, 0, 4)
-                                PopTitle.BackgroundTransparency = 1
-                                PopTitle.TextXAlignment = Enum.TextXAlignment.Left
-                                PopTitle.Parent = Popup
-
-                                local PresetPalette = {
-                                    Color3.fromRGB(255, 60, 60),
-                                    Color3.fromRGB(255, 140, 0),
-                                    Color3.fromRGB(255, 210, 0),
-                                    Color3.fromRGB(0, 230, 120),
-                                    Color3.fromRGB(0, 170, 255),
-                                    Color3.fromRGB(180, 70, 255),
-                                    Color3.fromRGB(255, 255, 255),
-                                    Color3.fromRGB(100, 100, 100),
-                                }
-
-                                local Grid = Instance.new("Frame")
-                                Grid.Size = UDim2.new(1, -16, 0, 80)
-                                Grid.Position = UDim2.new(0, 8, 0, 30)
-                                Grid.BackgroundTransparency = 1
-                                Grid.Parent = Popup
-
-                                local UIGrid = Instance.new("UIGridLayout")
-                                UIGrid.CellSize = UDim2.new(0, 32, 0, 32)
-                                UIGrid.CellPadding = UDim2.new(0, 5, 0, 5)
-                                UIGrid.Parent = Grid
-
-                                for _, col in ipairs(PresetPalette) do
-                                    local Dot = Instance.new("TextButton")
-                                    Dot.BackgroundColor3 = col
-                                    Dot.BorderSizePixel = 0
-                                    Dot.Text = ""
-                                    Dot.Parent = Grid
-
-                                    local DC = Instance.new("UICorner")
-                                    DC.CornerRadius = UDim.new(0, 4)
-                                    DC.Parent = Dot
-
-                                    Dot.MouseButton1Click:Connect(function()
-                                        currentColor = col
-                                        SwatchBtn.BackgroundColor3 = col
-                                        Popup:Destroy()
-                                    end)
-                                end
-
-                                local CloseBtn = Instance.new("TextButton")
-                                CloseBtn.Size = UDim2.new(1, -16, 0, 22)
-                                CloseBtn.Position = UDim2.new(0, 8, 1, -26)
-                                CloseBtn.BackgroundColor3 = Theme.ControlBackground
-                                CloseBtn.Text = "Done"
-                                CloseBtn.Font = Enum.Font.GothamMedium
-                                CloseBtn.TextSize = 10
-                                CloseBtn.TextColor3 = Theme.TextPrimary
-                                CloseBtn.Parent = Popup
-
-                                local CBCorner = Instance.new("UICorner")
-                                CBCorner.CornerRadius = UDim.new(0, 4)
-                                CBCorner.Parent = CloseBtn
-
-                                CloseBtn.MouseButton1Click:Connect(function()
-                                    Popup:Destroy()
-                                end)
+                            BrushBtn.MouseEnter:Connect(function()
+                                Tween(BrushStroke, { Color = Theme.Accent })
+                            end)
+                            BrushBtn.MouseLeave:Connect(function()
+                                Tween(BrushStroke, { Color = Theme.ControlBorder })
                             end)
 
                             table.insert(ControlApi.ColorPickers, {
                                 GetColor = function() return currentColor end,
                                 SetColor = function(newCol)
                                     currentColor = newCol
-                                    SwatchBtn.BackgroundColor3 = newCol
+                                    BrushIcon.ImageColor3 = newCol
                                 end,
                             })
                         end
                     end
 
                     return ControlApi
+                end
+
+                function SectionState:AddColorPicker(colorConfig)
+                    local title = colorConfig.Name or "Color Picker"
+                    local default = colorConfig.Default or Color3.fromRGB(0, 170, 255)
+                    local callback = colorConfig.Callback or function() end
+
+                    local ColorRow = Instance.new("Frame")
+                    ColorRow.Name = "ColorPickerRow_" .. title
+                    ColorRow.Size = UDim2.new(1, 0, 0, 24)
+                    ColorRow.BackgroundTransparency = 1
+                    ColorRow.Parent = SectionColumn
+
+                    local Label = Instance.new("TextLabel")
+                    Label.Name = "Label"
+                    Label.Text = title
+                    Label.Font = Enum.Font.GothamMedium
+                    Label.TextSize = 12
+                    Label.TextColor3 = Theme.TextSecondary
+                    Label.TextXAlignment = Enum.TextXAlignment.Left
+                    Label.BackgroundTransparency = 1
+                    Label.Size = UDim2.new(1, -30, 1, 0)
+                    Label.Position = UDim2.new(0, 0, 0, 0)
+                    Label.Parent = ColorRow
+
+                    local BrushBtn = Instance.new("TextButton")
+                    BrushBtn.Name = "ColorBrushBtn"
+                    BrushBtn.Size = UDim2.new(0, 18, 0, 18)
+                    BrushBtn.Position = UDim2.new(1, -20, 0.5, -9)
+                    BrushBtn.BackgroundColor3 = Theme.ControlBackground
+                    BrushBtn.BorderSizePixel = 0
+                    BrushBtn.Text = ""
+                    BrushBtn.AutoButtonColor = false
+                    BrushBtn.Parent = ColorRow
+
+                    local BrushCorner = Instance.new("UICorner")
+                    BrushCorner.CornerRadius = UDim.new(0, 4)
+                    BrushCorner.Parent = BrushBtn
+
+                    local BrushStroke = Instance.new("UIStroke")
+                    BrushStroke.Color = Theme.ControlBorder
+                    BrushStroke.Thickness = 1
+                    BrushStroke.Parent = BrushBtn
+
+                    local BrushIcon = Instance.new("ImageLabel")
+                    BrushIcon.Name = "BrushIcon"
+                    BrushIcon.Size = UDim2.new(0, 13, 0, 13)
+                    BrushIcon.Position = UDim2.new(0.5, -6.5, 0.5, -6.5)
+                    BrushIcon.BackgroundTransparency = 1
+                    BrushIcon.Image = ResolveIcon("paintbrush")
+                    BrushIcon.ImageColor3 = default
+                    BrushIcon.ScaleType = Enum.ScaleType.Fit
+                    BrushIcon.Parent = BrushBtn
+
+                    local currentColor = default
+
+                    local function OnColorSelected(newCol)
+                        currentColor = newCol
+                        BrushIcon.ImageColor3 = newCol
+                        pcall(callback, newCol)
+                    end
+
+                    BrushBtn.MouseButton1Click:Connect(function()
+                        OpenInteractiveColorPicker(title, currentColor, OnColorSelected, BrushBtn)
+                    end)
+
+                    BrushBtn.MouseEnter:Connect(function()
+                        Tween(BrushStroke, { Color = Theme.Accent })
+                    end)
+                    BrushBtn.MouseLeave:Connect(function()
+                        Tween(BrushStroke, { Color = Theme.ControlBorder })
+                    end)
+
+                    table.insert(SearchableElements, {
+                        Name = title,
+                        Frame = ColorRow,
+                        Label = Label,
+                        OriginalColor = Theme.TextSecondary,
+                    })
+
+                    return {
+                        Row = ColorRow,
+                        GetColor = function() return currentColor end,
+                        SetColor = function(newCol)
+                            currentColor = newCol
+                            BrushIcon.ImageColor3 = newCol
+                            pcall(callback, newCol)
+                        end,
+                    }
                 end
 
                 function SectionState:AddSlider(sliderConfig)
