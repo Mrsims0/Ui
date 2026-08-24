@@ -27,33 +27,33 @@ local IconList = {
 }
 
 local Theme = {
-    MainBackground       = Color3.fromRGB(11, 11, 13),
-    TitleBarBackground   = Color3.fromRGB(8, 8, 10),
-    SidebarBackground    = Color3.fromRGB(7, 7, 9),
-    CardBackground       = Color3.fromRGB(14, 14, 17),
-    CardHover            = Color3.fromRGB(22, 22, 28),
-    ControlBackground    = Color3.fromRGB(13, 13, 16),
-    ControlBorder        = Color3.fromRGB(25, 25, 31),
-    ControlBorderHover   = Color3.fromRGB(45, 45, 55),
+    MainBackground       = Color3.fromRGB(15, 16, 20),
+    TitleBarBackground   = Color3.fromRGB(19, 20, 26),
+    SidebarBackground    = Color3.fromRGB(12, 13, 16),
+    CardBackground       = Color3.fromRGB(20, 21, 28),
+    CardHover            = Color3.fromRGB(28, 30, 40),
+    ControlBackground    = Color3.fromRGB(18, 19, 24),
+    ControlBorder        = Color3.fromRGB(36, 38, 48),
+    ControlBorderHover   = Color3.fromRGB(60, 65, 82),
     
-    Accent               = Color3.fromRGB(0, 170, 255),
-    AccentGlow           = Color3.fromRGB(0, 215, 255),
-    AccentDark           = Color3.fromRGB(0, 120, 190),
+    Accent               = Color3.fromRGB(0, 180, 255),
+    AccentBright         = Color3.fromRGB(0, 215, 255),
+    AccentDark           = Color3.fromRGB(0, 130, 200),
     
     HighlightYellow      = Color3.fromRGB(255, 195, 50),
     
     TextPrimary          = Color3.fromRGB(255, 255, 255),
-    TextSecondary        = Color3.fromRGB(175, 175, 185),
-    TextMuted            = Color3.fromRGB(110, 110, 120),
-    TextDark             = Color3.fromRGB(65, 65, 75),
+    TextSecondary        = Color3.fromRGB(200, 202, 214),
+    TextMuted            = Color3.fromRGB(130, 133, 148),
+    TextDark             = Color3.fromRGB(80, 83, 96),
     
-    KeybindBackground    = Color3.fromRGB(10, 22, 36),
-    KeybindBorder        = Color3.fromRGB(0, 110, 190),
-    KeybindText          = Color3.fromRGB(130, 210, 255),
+    KeybindBackground    = Color3.fromRGB(10, 24, 42),
+    KeybindBorder        = Color3.fromRGB(0, 140, 230),
+    KeybindText          = Color3.fromRGB(110, 210, 255),
     
-    Separator            = Color3.fromRGB(18, 18, 22),
-    Border               = Color3.fromRGB(24, 24, 30),
-    Scrollbar            = Color3.fromRGB(0, 215, 255),
+    Separator            = Color3.fromRGB(26, 28, 36),
+    Border               = Color3.fromRGB(34, 36, 46),
+    Scrollbar            = Color3.fromRGB(0, 200, 255),
 }
 
 local FallbackIcons = {
@@ -309,8 +309,8 @@ function Ignite:CreateWindow(options)
 
     local SearchContainer = Instance.new("Frame")
     SearchContainer.Name = "SearchContainer"
-    SearchContainer.Size = UDim2.new(0, 200, 0, 30)
-    SearchContainer.Position = UDim2.new(1, -216, 0.5, -15)
+    SearchContainer.Size = UDim2.new(0, 220, 0, 30)
+    SearchContainer.Position = UDim2.new(1, -236, 0.5, -15)
     SearchContainer.BackgroundColor3 = Theme.ControlBackground
     SearchContainer.BorderSizePixel = 0
     SearchContainer.ZIndex = 4
@@ -342,7 +342,7 @@ function Ignite:CreateWindow(options)
     SearchInput.Position = UDim2.new(0, 28, 0, 0)
     SearchInput.BackgroundTransparency = 1
     SearchInput.Font = Enum.Font.Gotham
-    SearchInput.PlaceholderText = "Search..."
+    SearchInput.PlaceholderText = "Search features..."
     SearchInput.PlaceholderColor3 = Theme.TextDark
     SearchInput.Text = ""
     SearchInput.TextColor3 = Theme.TextPrimary
@@ -422,6 +422,154 @@ function Ignite:CreateWindow(options)
     PopupsLayer.BackgroundTransparency = 1
     PopupsLayer.ZIndex = 50
     PopupsLayer.Parent = MainFrame
+
+    local SearchResultsPopup = Instance.new("Frame")
+    SearchResultsPopup.Name = "SearchResultsPopup"
+    SearchResultsPopup.Size = UDim2.new(0, 360, 0, 260)
+    SearchResultsPopup.Position = UDim2.new(1, -376, 0, 46)
+    SearchResultsPopup.BackgroundColor3 = Theme.CardBackground
+    SearchResultsPopup.BorderSizePixel = 0
+    SearchResultsPopup.Visible = false
+    SearchResultsPopup.ZIndex = 90
+    SearchResultsPopup.Parent = PopupsLayer
+
+    local SRPCorner = Instance.new("UICorner")
+    SRPCorner.CornerRadius = UDim.new(0, 8)
+    SRPCorner.Parent = SearchResultsPopup
+
+    local SRPStroke = Instance.new("UIStroke")
+    SRPStroke.Color = Theme.Accent
+    SRPStroke.Thickness = 1.5
+    SRPStroke.Parent = SearchResultsPopup
+
+    local SRPHeader = Instance.new("Frame")
+    SRPHeader.Size = UDim2.new(1, 0, 0, 28)
+    SRPHeader.BackgroundColor3 = Theme.ControlBackground
+    SRPHeader.BorderSizePixel = 0
+    SRPHeader.ZIndex = 91
+    SRPHeader.Parent = SearchResultsPopup
+
+    local SRPHeaderCorner = Instance.new("UICorner")
+    SRPHeaderCorner.CornerRadius = UDim.new(0, 8)
+    SRPHeaderCorner.Parent = SRPHeader
+
+    local SRPHeaderTitle = Instance.new("TextLabel")
+    SRPHeaderTitle.Text = "GLOBAL SEARCH RESULTS"
+    SRPHeaderTitle.Font = Enum.Font.GothamBold
+    SRPHeaderTitle.TextSize = 10
+    SRPHeaderTitle.TextColor3 = Theme.Accent
+    SRPHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
+    SRPHeaderTitle.Size = UDim2.new(1, -16, 1, 0)
+    SRPHeaderTitle.Position = UDim2.new(0, 10, 0, 0)
+    SRPHeaderTitle.BackgroundTransparency = 1
+    SRPHeaderTitle.ZIndex = 92
+    SRPHeaderTitle.Parent = SRPHeader
+
+    local SRPScroll = Instance.new("ScrollingFrame")
+    SRPScroll.Name = "SRPScroll"
+    SRPScroll.Size = UDim2.new(1, -12, 1, -36)
+    SRPScroll.Position = UDim2.new(0, 6, 0, 32)
+    SRPScroll.BackgroundTransparency = 1
+    SRPScroll.BorderSizePixel = 0
+    SRPScroll.ScrollBarThickness = 3
+    SRPScroll.ScrollBarImageColor3 = Theme.Scrollbar
+    SRPScroll.ScrollBarImageTransparency = 0
+    SRPScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    SRPScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    SRPScroll.ZIndex = 91
+    SRPScroll.Parent = SearchResultsPopup
+
+    local SRPLayout = Instance.new("UIListLayout")
+    SRPLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    SRPLayout.Padding = UDim.new(0, 4)
+    SRPLayout.Parent = SRPScroll
+
+    local ResizeHandle = Instance.new("TextButton")
+    ResizeHandle.Name = "ResizeHandle"
+    ResizeHandle.Size = UDim2.new(0, 22, 0, 22)
+    ResizeHandle.Position = UDim2.new(1, -22, 1, -22)
+    ResizeHandle.BackgroundTransparency = 1
+    ResizeHandle.Text = ""
+    ResizeHandle.AutoButtonColor = false
+    ResizeHandle.ZIndex = 40
+    ResizeHandle.Parent = MainFrame
+
+    local GripFrame = Instance.new("Frame")
+    GripFrame.Size = UDim2.new(1, 0, 1, 0)
+    GripFrame.BackgroundTransparency = 1
+    GripFrame.ZIndex = 41
+    GripFrame.Parent = ResizeHandle
+
+    local dot1 = Instance.new("Frame")
+    dot1.Size = UDim2.new(0, 3, 0, 3)
+    dot1.Position = UDim2.new(1, -7, 1, -7)
+    dot1.BackgroundColor3 = Theme.TextMuted
+    dot1.BorderSizePixel = 0
+    dot1.ZIndex = 42
+    dot1.Parent = GripFrame
+    local c1 = Instance.new("UICorner")
+    c1.CornerRadius = UDim.new(1, 0)
+    c1.Parent = dot1
+
+    local dot2 = Instance.new("Frame")
+    dot2.Size = UDim2.new(0, 3, 0, 3)
+    dot2.Position = UDim2.new(1, -13, 1, -7)
+    dot2.BackgroundColor3 = Theme.TextMuted
+    dot2.BorderSizePixel = 0
+    dot2.ZIndex = 42
+    dot2.Parent = GripFrame
+    local c2 = Instance.new("UICorner")
+    c2.CornerRadius = UDim.new(1, 0)
+    c2.Parent = dot2
+
+    local dot3 = Instance.new("Frame")
+    dot3.Size = UDim2.new(0, 3, 0, 3)
+    dot3.Position = UDim2.new(1, -7, 1, -13)
+    dot3.BackgroundColor3 = Theme.TextMuted
+    dot3.BorderSizePixel = 0
+    dot3.ZIndex = 42
+    dot3.Parent = GripFrame
+    local c3 = Instance.new("UICorner")
+    c3.CornerRadius = UDim.new(1, 0)
+    c3.Parent = dot3
+
+    ResizeHandle.MouseEnter:Connect(function()
+        dot1.BackgroundColor3 = Theme.Accent
+        dot2.BackgroundColor3 = Theme.Accent
+        dot3.BackgroundColor3 = Theme.Accent
+    end)
+
+    ResizeHandle.MouseLeave:Connect(function()
+        dot1.BackgroundColor3 = Theme.TextMuted
+        dot2.BackgroundColor3 = Theme.TextMuted
+        dot3.BackgroundColor3 = Theme.TextMuted
+    end)
+
+    local isResizing = false
+    local resizeStartMouse, resizeStartSize
+
+    ResizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isResizing = true
+            resizeStartMouse = input.Position
+            resizeStartSize = Vector2.new(MainFrame.AbsoluteSize.X, MainFrame.AbsoluteSize.Y)
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    isResizing = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if isResizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - resizeStartMouse
+            local newW = math.clamp(resizeStartSize.X + delta.X, 680, 1600)
+            local newH = math.clamp(resizeStartSize.Y + delta.Y, 420, 1100)
+            MainFrame.Size = UDim2.new(0, newW, 0, newH)
+        end
+    end)
 
     local WindowState = {
         Tabs = {},
@@ -640,7 +788,7 @@ function Ignite:CreateWindow(options)
             Color3.fromRGB(255, 140, 0),
             Color3.fromRGB(255, 210, 0),
             Color3.fromRGB(0, 230, 120),
-            Color3.fromRGB(0, 170, 255),
+            Color3.fromRGB(0, 180, 255),
             Color3.fromRGB(180, 70, 255),
             Color3.fromRGB(255, 255, 255),
             Color3.fromRGB(100, 100, 110),
@@ -831,27 +979,133 @@ function Ignite:CreateWindow(options)
         end)
     end
 
-    SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+    local function PerformGlobalSearch()
         local query = string.lower(SearchInput.Text)
         WindowState.SearchQuery = query
 
-        for _, item in ipairs(SearchableElements) do
-            if query == "" then
+        for _, child in ipairs(SRPScroll:GetChildren()) do
+            if child:IsA("Frame") or child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+
+        if query == "" then
+            SearchResultsPopup.Visible = false
+            for _, item in ipairs(SearchableElements) do
                 item.Frame.Visible = true
                 if item.Label then
                     item.Label.TextColor3 = item.OriginalColor or Theme.TextSecondary
                 end
-            else
-                local match = string.find(string.lower(item.Name), query, 1, true) ~= nil
-                item.Frame.Visible = match
-                if match and item.Label then
-                    item.Label.TextColor3 = Theme.Accent
-                elseif item.Label then
-                    item.Label.TextColor3 = item.OriginalColor or Theme.TextSecondary
-                end
+            end
+            return
+        end
+
+        local matches = {}
+        for _, item in ipairs(SearchableElements) do
+            local itemNameLower = string.lower(item.Name)
+            local match = string.find(itemNameLower, query, 1, true) ~= nil
+            if match then
+                table.insert(matches, item)
             end
         end
-    end)
+
+        SRPHeaderTitle.Text = string.format("GLOBAL SEARCH (%d MATCHES)", #matches)
+        SearchResultsPopup.Visible = true
+
+        if #matches == 0 then
+            local NoMatch = Instance.new("TextLabel")
+            NoMatch.Size = UDim2.new(1, 0, 0, 40)
+            NoMatch.BackgroundTransparency = 1
+            NoMatch.Text = "No features found matching '" .. query .. "'"
+            NoMatch.Font = Enum.Font.GothamMedium
+            NoMatch.TextSize = 11
+            NoMatch.TextColor3 = Theme.TextMuted
+            NoMatch.ZIndex = 92
+            NoMatch.Parent = SRPScroll
+            return
+        end
+
+        for _, item in ipairs(matches) do
+            local ItemCard = Instance.new("TextButton")
+            ItemCard.Size = UDim2.new(1, 0, 0, 32)
+            ItemCard.BackgroundColor3 = Theme.ControlBackground
+            ItemCard.BorderSizePixel = 0
+            ItemCard.Text = ""
+            ItemCard.AutoButtonColor = false
+            ItemCard.ZIndex = 92
+            ItemCard.Parent = SRPScroll
+
+            local ICCorner = Instance.new("UICorner")
+            ICCorner.CornerRadius = UDim.new(0, 5)
+            ICCorner.Parent = ItemCard
+
+            local ICStroke = Instance.new("UIStroke")
+            ICStroke.Color = Theme.ControlBorder
+            ICStroke.Thickness = 1
+            ICStroke.Parent = ItemCard
+
+            local ItemName = Instance.new("TextLabel")
+            ItemName.Text = item.Name
+            ItemName.Font = Enum.Font.GothamBold
+            ItemName.TextSize = 12
+            ItemName.TextColor3 = Theme.TextPrimary
+            ItemName.TextXAlignment = Enum.TextXAlignment.Left
+            ItemName.Size = UDim2.new(0.55, -10, 1, 0)
+            ItemName.Position = UDim2.new(0, 10, 0, 0)
+            ItemName.BackgroundTransparency = 1
+            ItemName.ZIndex = 93
+            ItemName.Parent = ItemCard
+
+            local BreadcrumbPill = Instance.new("TextLabel")
+            BreadcrumbPill.Text = item.Breadcrumb or ""
+            BreadcrumbPill.Font = Enum.Font.GothamMedium
+            BreadcrumbPill.TextSize = 9
+            BreadcrumbPill.TextColor3 = Theme.KeybindText
+            BreadcrumbPill.TextXAlignment = Enum.TextXAlignment.Right
+            BreadcrumbPill.Size = UDim2.new(0.45, -10, 1, 0)
+            BreadcrumbPill.Position = UDim2.new(0.55, 0, 0, 0)
+            BreadcrumbPill.BackgroundTransparency = 1
+            BreadcrumbPill.ZIndex = 93
+            BreadcrumbPill.Parent = ItemCard
+
+            ItemCard.MouseEnter:Connect(function()
+                Tween(ItemCard, { BackgroundColor3 = Theme.CardHover })
+                Tween(ICStroke, { Color = Theme.Accent })
+                Tween(ItemName, { TextColor3 = Theme.AccentBright })
+            end)
+
+            ItemCard.MouseLeave:Connect(function()
+                Tween(ItemCard, { BackgroundColor3 = Theme.ControlBackground })
+                Tween(ICStroke, { Color = Theme.ControlBorder })
+                Tween(ItemName, { TextColor3 = Theme.TextPrimary })
+            end)
+
+            ItemCard.MouseButton1Click:Connect(function()
+                SearchResultsPopup.Visible = false
+                SearchInput.Text = ""
+
+                if item.Tab and item.Tab.Select then
+                    item.Tab:Select()
+                end
+                if item.SubTab and item.SubTab.Select then
+                    item.SubTab:Select()
+                end
+
+                if item.Frame then
+                    task.spawn(function()
+                        for _ = 1, 2 do
+                            Tween(item.Frame, { BackgroundTransparency = 0.5, BackgroundColor3 = Theme.Accent })
+                            task.wait(0.2)
+                            Tween(item.Frame, { BackgroundTransparency = 1 })
+                            task.wait(0.2)
+                        end
+                    end)
+                end
+            end)
+        end
+    end
+
+    SearchInput:GetPropertyChangedSignal("Text"):Connect(PerformGlobalSearch)
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if not gameProcessed and input.KeyCode == toggleKey then
@@ -889,7 +1143,7 @@ function Ignite:CreateWindow(options)
         IndicatorBar.Name = "IndicatorBar"
         IndicatorBar.Size = UDim2.new(0, 36, 0, 2)
         IndicatorBar.Position = UDim2.new(0.5, -18, 1, -4)
-        IndicatorBar.BackgroundColor3 = Theme.Accent
+        IndicatorBar.BackgroundColor3 = Theme.AccentBright
         IndicatorBar.BorderSizePixel = 0
         IndicatorBar.BackgroundTransparency = 1
         IndicatorBar.Parent = TabButton
@@ -975,8 +1229,8 @@ function Ignite:CreateWindow(options)
 
             TabPage.Visible = true
             Tween(TabButton, { BackgroundTransparency = 0.88, BackgroundColor3 = Theme.CardHover })
-            Tween(TabIconImage, { ImageColor3 = Theme.Accent })
-            Tween(TabLabel, { TextColor3 = Theme.Accent })
+            Tween(TabIconImage, { ImageColor3 = Theme.AccentBright })
+            Tween(TabLabel, { TextColor3 = Theme.AccentBright })
             Tween(IndicatorBar, { BackgroundTransparency = 0 })
 
             WindowState.CurrentTab = TabState
@@ -1020,6 +1274,7 @@ function Ignite:CreateWindow(options)
             local SubTabState = {
                 Name = subTabName,
                 Columns = {},
+                Tab = TabState,
             }
 
             local textWidth = TextService:GetTextSize(subTabName, 13, Enum.Font.GothamMedium, Vector2.new(1000, 38)).X
@@ -1039,7 +1294,7 @@ function Ignite:CreateWindow(options)
             SubIndicator.Name = "SubIndicator"
             SubIndicator.Size = UDim2.new(1, 0, 0, 2)
             SubIndicator.Position = UDim2.new(0, 0, 1, -1)
-            SubIndicator.BackgroundColor3 = Theme.Accent
+            SubIndicator.BackgroundColor3 = Theme.AccentBright
             SubIndicator.BorderSizePixel = 0
             SubIndicator.BackgroundTransparency = 1
             SubIndicator.Parent = SubTabButton
@@ -1142,6 +1397,8 @@ function Ignite:CreateWindow(options)
                 local SectionState = {
                     Column = SectionColumn,
                     Name = sectionName,
+                    Tab = TabState,
+                    SubTab = SubTabState,
                 }
 
                 table.insert(SubTabState.Columns, SectionState)
@@ -1173,7 +1430,7 @@ function Ignite:CreateWindow(options)
                     CheckCorner.Parent = CheckBox
 
                     local CheckStroke = Instance.new("UIStroke")
-                    CheckStroke.Color = default and Theme.Accent or Theme.ControlBorder
+                    CheckStroke.Color = default and Theme.AccentBright or Theme.ControlBorder
                     CheckStroke.Thickness = 1
                     CheckStroke.Parent = CheckBox
 
@@ -1222,7 +1479,7 @@ function Ignite:CreateWindow(options)
                         isChecked = val
                         if isChecked then
                             Tween(CheckBox, { BackgroundColor3 = Theme.Accent })
-                            Tween(CheckStroke, { Color = Theme.Accent })
+                            Tween(CheckStroke, { Color = Theme.AccentBright })
                             Tween(CheckIcon, { ImageTransparency = 0 })
                         else
                             Tween(CheckBox, { BackgroundColor3 = Theme.ControlBackground })
@@ -1247,9 +1504,14 @@ function Ignite:CreateWindow(options)
 
                     table.insert(SearchableElements, {
                         Name = title,
+                        Type = "Toggle",
                         Frame = ToggleRow,
                         Label = LabelButton,
                         OriginalColor = customTextColor,
+                        Tab = TabState,
+                        SubTab = SubTabState,
+                        Section = SectionState,
+                        Breadcrumb = tabName .. " > " .. subTabName .. " > " .. sectionName,
                     })
 
                     local ControlApi = {
@@ -1318,7 +1580,7 @@ function Ignite:CreateWindow(options)
                             if isBinding then return end
                             isBinding = true
                             UpdateKey("...")
-                            Tween(PillStroke, { Color = Theme.Accent })
+                            Tween(PillStroke, { Color = Theme.AccentBright })
 
                             local connection
                             connection = UserInputService.InputBegan:Connect(function(input)
@@ -1386,7 +1648,7 @@ function Ignite:CreateWindow(options)
                             end)
 
                             BrushBtn.MouseEnter:Connect(function()
-                                Tween(BrushStroke, { Color = Theme.Accent })
+                                Tween(BrushStroke, { Color = Theme.AccentBright })
                             end)
                             BrushBtn.MouseLeave:Connect(function()
                                 Tween(BrushStroke, { Color = Theme.ControlBorder })
@@ -1407,7 +1669,7 @@ function Ignite:CreateWindow(options)
 
                 function SectionState:AddColorPicker(colorConfig)
                     local title = colorConfig.Name or "Color Picker"
-                    local default = colorConfig.Default or Color3.fromRGB(0, 170, 255)
+                    local default = colorConfig.Default or Color3.fromRGB(0, 180, 255)
                     local callback = colorConfig.Callback or function() end
 
                     local ColorRow = Instance.new("Frame")
@@ -1470,7 +1732,7 @@ function Ignite:CreateWindow(options)
                     end)
 
                     BrushBtn.MouseEnter:Connect(function()
-                        Tween(BrushStroke, { Color = Theme.Accent })
+                        Tween(BrushStroke, { Color = Theme.AccentBright })
                     end)
                     BrushBtn.MouseLeave:Connect(function()
                         Tween(BrushStroke, { Color = Theme.ControlBorder })
@@ -1478,9 +1740,14 @@ function Ignite:CreateWindow(options)
 
                     table.insert(SearchableElements, {
                         Name = title,
+                        Type = "ColorPicker",
                         Frame = ColorRow,
                         Label = Label,
                         OriginalColor = Theme.TextSecondary,
+                        Tab = TabState,
+                        SubTab = SubTabState,
+                        Section = SectionState,
+                        Breadcrumb = tabName .. " > " .. subTabName .. " > " .. sectionName,
                     })
 
                     return {
@@ -1547,7 +1814,7 @@ function Ignite:CreateWindow(options)
                     local Fill = Instance.new("Frame")
                     Fill.Name = "Fill"
                     Fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-                    Fill.BackgroundColor3 = Theme.Accent
+                    Fill.BackgroundColor3 = Theme.AccentBright
                     Fill.BorderSizePixel = 0
                     Fill.Parent = Track
 
@@ -1568,7 +1835,7 @@ function Ignite:CreateWindow(options)
                     KnobCorner.Parent = Knob
 
                     local KnobStroke = Instance.new("UIStroke")
-                    KnobStroke.Color = Theme.Accent
+                    KnobStroke.Color = Theme.AccentBright
                     KnobStroke.Thickness = 1.5
                     KnobStroke.Parent = Knob
 
@@ -1626,9 +1893,14 @@ function Ignite:CreateWindow(options)
 
                     table.insert(SearchableElements, {
                         Name = title,
+                        Type = "Slider",
                         Frame = SliderContainer,
                         Label = Label,
                         OriginalColor = Theme.TextSecondary,
+                        Tab = TabState,
+                        SubTab = SubTabState,
+                        Section = SectionState,
+                        Breadcrumb = tabName .. " > " .. subTabName .. " > " .. sectionName,
                     })
 
                     return {
@@ -1729,8 +2001,8 @@ function Ignite:CreateWindow(options)
                         end
 
                         if isOpen then
-                            Tween(BoxStroke, { Color = Theme.Accent })
-                            Tween(ChevronIcon, { Rotation = 180, ImageColor3 = Theme.Accent })
+                            Tween(BoxStroke, { Color = Theme.AccentBright })
+                            Tween(ChevronIcon, { Rotation = 180, ImageColor3 = Theme.AccentBright })
 
                             local absPos = SelectBox.AbsolutePosition
                             local mainPos = MainFrame.AbsolutePosition
@@ -1749,7 +2021,7 @@ function Ignite:CreateWindow(options)
                             ListCorner.Parent = ListPopup
 
                             local ListStroke = Instance.new("UIStroke")
-                            ListStroke.Color = Theme.Accent
+                            ListStroke.Color = Theme.AccentBright
                             ListStroke.Thickness = 1
                             ListStroke.Parent = ListPopup
 
@@ -1782,7 +2054,7 @@ function Ignite:CreateWindow(options)
                                 ItemBtn.Text = "  " .. opt
                                 ItemBtn.Font = Enum.Font.GothamMedium
                                 ItemBtn.TextSize = 11
-                                ItemBtn.TextColor3 = (opt == currentSelected) and Theme.Accent or Theme.TextSecondary
+                                ItemBtn.TextColor3 = (opt == currentSelected) and Theme.AccentBright or Theme.TextSecondary
                                 ItemBtn.TextXAlignment = Enum.TextXAlignment.Left
                                 ItemBtn.AutoButtonColor = false
                                 ItemBtn.Parent = Scroll
@@ -1798,7 +2070,7 @@ function Ignite:CreateWindow(options)
                                 ItemBtn.MouseLeave:Connect(function()
                                     Tween(ItemBtn, {
                                         BackgroundColor3 = (opt == currentSelected) and Theme.CardHover or Theme.CardBackground,
-                                        TextColor3 = (opt == currentSelected) and Theme.Accent or Theme.TextSecondary
+                                        TextColor3 = (opt == currentSelected) and Theme.AccentBright or Theme.TextSecondary
                                     })
                                 end)
 
@@ -1822,9 +2094,14 @@ function Ignite:CreateWindow(options)
 
                     table.insert(SearchableElements, {
                         Name = title,
+                        Type = "Dropdown",
                         Frame = DropdownContainer,
                         Label = Label,
                         OriginalColor = Theme.TextSecondary,
+                        Tab = TabState,
+                        SubTab = SubTabState,
+                        Section = SectionState,
+                        Breadcrumb = tabName .. " > " .. subTabName .. " > " .. sectionName,
                     })
 
                     return {
@@ -1865,7 +2142,7 @@ function Ignite:CreateWindow(options)
 
                     Btn.MouseEnter:Connect(function()
                         Tween(Btn, { BackgroundColor3 = Theme.CardHover })
-                        Tween(BStroke, { Color = Theme.Accent })
+                        Tween(BStroke, { Color = Theme.AccentBright })
                     end)
 
                     Btn.MouseLeave:Connect(function()
@@ -1882,9 +2159,14 @@ function Ignite:CreateWindow(options)
 
                     table.insert(SearchableElements, {
                         Name = title,
+                        Type = "Button",
                         Frame = Btn,
                         Label = Btn,
                         OriginalColor = Theme.TextPrimary,
+                        Tab = TabState,
+                        SubTab = SubTabState,
+                        Section = SectionState,
+                        Breadcrumb = tabName .. " > " .. subTabName .. " > " .. sectionName,
                     })
 
                     return Btn
