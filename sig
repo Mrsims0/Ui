@@ -270,7 +270,7 @@ function KW:CreateWindow(options)
         KittyLabel.TextXAlignment = Enum.TextXAlignment.Right
         KittyLabel.BackgroundTransparency = 1
         KittyLabel.Size = UDim2.new(0, 320, 0, 80)
-        KittyLabel.Position = UDim2.new(0.5, -1400, 0.5, -40)
+        KittyLabel.Position = UDim2.new(0.5, -2000, 0.5, -40)
         KittyLabel.TextTransparency = 1
         KittyLabel.ZIndex = 202
         KittyLabel.Parent = CenterContainer
@@ -284,7 +284,7 @@ function KW:CreateWindow(options)
         WareLabel.TextXAlignment = Enum.TextXAlignment.Left
         WareLabel.BackgroundTransparency = 1
         WareLabel.Size = UDim2.new(0, 320, 0, 80)
-        WareLabel.Position = UDim2.new(0.5, 1400, 0.5, -40)
+        WareLabel.Position = UDim2.new(0.5, 2000, 0.5, -40)
         WareLabel.TextTransparency = 1
         WareLabel.ZIndex = 202
         WareLabel.Parent = CenterContainer
@@ -298,20 +298,20 @@ function KW:CreateWindow(options)
             task.wait(0.1)
 
             -- 1. Slide in KITTY from far off-screen left
-            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- 2. Wait before sliding in WARE
-            task.wait(0.35)
+            -- 2. Wait 1.5 seconds
+            task.wait(1.5)
 
             -- 3. Slide in WARE from far off-screen right
-            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- 4. Hold full display
-            task.wait(0.8)
+            -- 4. Wait 4.5 seconds
+            task.wait(4.5)
 
             -- 5. Outro fade and slide up
-            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
                 Tween(Blur, { Size = 0 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
