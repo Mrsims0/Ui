@@ -301,13 +301,13 @@ function KW:CreateWindow(options)
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
             -- 2. Wait 1.5 seconds
-            task.wait(1.5)
+            task.wait(0.8)
 
             -- 3. Slide in WARE from far off-screen right
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
             -- 4. Wait 4.5 seconds
-            task.wait(4.5)
+            task.wait(2.5)
 
             -- 5. Outro fade and slide up
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
