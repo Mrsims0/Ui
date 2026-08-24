@@ -307,17 +307,6 @@ function KW:CreateWindow(options)
         LCStroke.Thickness = 1.5
         LCStroke.Parent = LoadingCard
 
-        local MiniIcon = Instance.new("ImageLabel")
-        MiniIcon.Name = "MiniIcon"
-        MiniIcon.Size = UDim2.new(0, 16, 0, 16)
-        MiniIcon.Position = UDim2.new(0, 10, 0, 10)
-        MiniIcon.BackgroundTransparency = 1
-        MiniIcon.Image = ResolveIcon("flame")
-        MiniIcon.ImageColor3 = Theme.AccentBright
-        MiniIcon.ScaleType = Enum.ScaleType.Fit
-        MiniIcon.ZIndex = 211
-        MiniIcon.Parent = LoadingCard
-
         local LoadTitle = Instance.new("TextLabel")
         LoadTitle.Name = "LoadTitle"
         LoadTitle.Text = "LOADING ASSETS"
@@ -325,8 +314,8 @@ function KW:CreateWindow(options)
         LoadTitle.TextSize = 11
         LoadTitle.TextColor3 = Theme.TextPrimary
         LoadTitle.TextXAlignment = Enum.TextXAlignment.Left
-        LoadTitle.Size = UDim2.new(1, -70, 0, 14)
-        LoadTitle.Position = UDim2.new(0, 32, 0, 8)
+        LoadTitle.Size = UDim2.new(1, -60, 0, 14)
+        LoadTitle.Position = UDim2.new(0, 12, 0, 8)
         LoadTitle.BackgroundTransparency = 1
         LoadTitle.ZIndex = 211
         LoadTitle.Parent = LoadingCard
@@ -351,16 +340,16 @@ function KW:CreateWindow(options)
         LoadDetail.TextSize = 9
         LoadDetail.TextColor3 = Theme.TextMuted
         LoadDetail.TextXAlignment = Enum.TextXAlignment.Left
-        LoadDetail.Size = UDim2.new(1, -42, 0, 14)
-        LoadDetail.Position = UDim2.new(0, 32, 0, 23)
+        LoadDetail.Size = UDim2.new(1, -24, 0, 14)
+        LoadDetail.Position = UDim2.new(0, 12, 0, 23)
         LoadDetail.BackgroundTransparency = 1
         LoadDetail.ZIndex = 211
         LoadDetail.Parent = LoadingCard
 
         local BarTrack = Instance.new("Frame")
         BarTrack.Name = "BarTrack"
-        BarTrack.Size = UDim2.new(1, -20, 0, 4)
-        BarTrack.Position = UDim2.new(0, 10, 0, 42)
+        BarTrack.Size = UDim2.new(1, -24, 0, 4)
+        BarTrack.Position = UDim2.new(0, 12, 0, 42)
         BarTrack.BackgroundColor3 = Theme.ControlBackground
         BarTrack.BorderSizePixel = 0
         BarTrack.ZIndex = 211
@@ -388,20 +377,25 @@ function KW:CreateWindow(options)
                 Tween(Blur, { Size = 24 }, 0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
 
-            -- Slide in loading widget from top-right
-            Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-
             task.wait(0.1)
 
-            -- Slide in KITTY from off-screen left
+            -- 1. Slide in KITTY from off-screen left
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            task.wait(0.4)
+            -- 2. Wait before sliding in WARE
+            task.wait(0.6)
 
-            -- Slide in WARE from off-screen right
+            -- 3. Slide in WARE from off-screen right
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- Dynamic Asset & Hook Loading Routine
+            -- 4. Wait for text animation to fully settle
+            task.wait(0.8)
+
+            -- 5. NOW slide in the top-right loading card and start loading assets
+            Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            task.wait(0.2)
+
+            -- 6. Dynamic Asset & Hook Loading Routine
             local totalSteps = #IconList + 3
             local currentStep = 0
 
@@ -441,9 +435,9 @@ function KW:CreateWindow(options)
             Tween(BarFill, { Size = UDim2.new(1, 0, 1, 0) }, 0.1)
             LoadTitle.Text = "ALL ASSETS LOADED"
             LoadTitle.TextColor3 = Theme.AccentBright
-            task.wait(0.4)
+            task.wait(0.5)
 
-            -- Outro transition: slide off and reveal GUI
+            -- 7. Outro transition: slide off and reveal GUI
             Tween(LoadingCard, { Position = UDim2.new(1, 270, 0, 20) }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
