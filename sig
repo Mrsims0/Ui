@@ -255,34 +255,22 @@ function KW:CreateWindow(options)
 
         local CenterContainer = Instance.new("Frame")
         CenterContainer.Name = "CenterContainer"
-        CenterContainer.Size = UDim2.new(0, 420, 0, 120)
-        CenterContainer.Position = UDim2.new(0.5, -210, 0.5, -60)
+        CenterContainer.Size = UDim2.new(1, 0, 0, 100)
+        CenterContainer.Position = UDim2.new(0, 0, 0.5, -50)
         CenterContainer.BackgroundTransparency = 1
         CenterContainer.ZIndex = 201
         CenterContainer.Parent = IntroOverlay
 
-        local FlameLogo = Instance.new("ImageLabel")
-        FlameLogo.Name = "FlameLogo"
-        FlameLogo.Size = UDim2.new(0, 34, 0, 34)
-        FlameLogo.Position = UDim2.new(0.5, -17, 0, 4)
-        FlameLogo.BackgroundTransparency = 1
-        FlameLogo.Image = ResolveIcon("flame")
-        FlameLogo.ImageColor3 = Theme.AccentBright
-        FlameLogo.ImageTransparency = 1
-        FlameLogo.ScaleType = Enum.ScaleType.Fit
-        FlameLogo.ZIndex = 202
-        FlameLogo.Parent = CenterContainer
-
         local KittyLabel = Instance.new("TextLabel")
         KittyLabel.Name = "KittyLabel"
         KittyLabel.Text = "KITTY"
-        KittyLabel.Font = Enum.Font.GothamBold
-        KittyLabel.TextSize = 36
+        KittyLabel.Font = Enum.Font.GothamBlack
+        KittyLabel.TextSize = 64
         KittyLabel.TextColor3 = Theme.TextPrimary
         KittyLabel.TextXAlignment = Enum.TextXAlignment.Right
         KittyLabel.BackgroundTransparency = 1
-        KittyLabel.Size = UDim2.new(0, 150, 0, 44)
-        KittyLabel.Position = UDim2.new(0.5, -280, 0, 44)
+        KittyLabel.Size = UDim2.new(0, 320, 0, 80)
+        KittyLabel.Position = UDim2.new(0.5, -1400, 0.5, -40)
         KittyLabel.TextTransparency = 1
         KittyLabel.ZIndex = 202
         KittyLabel.Parent = CenterContainer
@@ -290,65 +278,46 @@ function KW:CreateWindow(options)
         local WareLabel = Instance.new("TextLabel")
         WareLabel.Name = "WareLabel"
         WareLabel.Text = "WARE"
-        WareLabel.Font = Enum.Font.GothamBold
-        WareLabel.TextSize = 36
+        WareLabel.Font = Enum.Font.GothamBlack
+        WareLabel.TextSize = 64
         WareLabel.TextColor3 = Theme.AccentBright
         WareLabel.TextXAlignment = Enum.TextXAlignment.Left
         WareLabel.BackgroundTransparency = 1
-        WareLabel.Size = UDim2.new(0, 150, 0, 44)
-        WareLabel.Position = UDim2.new(0.5, 130, 0, 44)
+        WareLabel.Size = UDim2.new(0, 320, 0, 80)
+        WareLabel.Position = UDim2.new(0.5, 1400, 0.5, -40)
         WareLabel.TextTransparency = 1
         WareLabel.ZIndex = 202
         WareLabel.Parent = CenterContainer
 
-        local GlowLine = Instance.new("Frame")
-        GlowLine.Name = "GlowLine"
-        GlowLine.Size = UDim2.new(0, 0, 0, 2)
-        GlowLine.Position = UDim2.new(0.5, 0, 0, 94)
-        GlowLine.BackgroundColor3 = Theme.AccentBright
-        GlowLine.BorderSizePixel = 0
-        GlowLine.BackgroundTransparency = 1
-        GlowLine.ZIndex = 202
-        GlowLine.Parent = CenterContainer
-
-        local GlowLineCorner = Instance.new("UICorner")
-        GlowLineCorner.CornerRadius = UDim.new(1, 0)
-        GlowLineCorner.Parent = GlowLine
-
-        local GlowStroke = Instance.new("UIStroke")
-        GlowStroke.Color = Theme.Accent
-        GlowStroke.Thickness = 1.5
-        GlowStroke.Parent = GlowLine
-
         task.spawn(function()
-            Tween(IntroOverlay, { BackgroundTransparency = 0.4 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            Tween(IntroOverlay, { BackgroundTransparency = 0.35 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
-                Tween(Blur, { Size = 22 }, 0.42, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                Tween(Blur, { Size = 24 }, 0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
 
-            task.wait(0.12)
+            task.wait(0.1)
 
-            Tween(FlameLogo, { ImageTransparency = 0 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            Tween(KittyLabel, { Position = UDim2.new(0.5, -156, 0, 44), TextTransparency = 0 }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            Tween(WareLabel, { Position = UDim2.new(0.5, 6, 0, 44), TextTransparency = 0 }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            -- 1. Slide in KITTY from far off-screen left
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
+            -- 2. Wait before sliding in WARE
             task.wait(0.35)
 
-            GlowLine.BackgroundTransparency = 0
-            Tween(GlowLine, { Size = UDim2.new(0, 230, 0, 2), Position = UDim2.new(0.5, -115, 0, 94) }, 0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            -- 3. Slide in WARE from far off-screen right
+            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            task.wait(0.75)
+            -- 4. Hold full display
+            task.wait(0.8)
 
-            Tween(FlameLogo, { ImageTransparency = 1, Position = UDim2.new(0.5, -17, 0, -12) }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(KittyLabel, { Position = UDim2.new(0.5, -156, 0, 24), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(WareLabel, { Position = UDim2.new(0.5, 6, 0, 24), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(GlowLine, { Size = UDim2.new(0, 0, 0, 2), Position = UDim2.new(0.5, 0, 0, 94), BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            -- 5. Outro fade and slide up
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
-                Tween(Blur, { Size = 0 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                Tween(Blur, { Size = 0 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
 
-            task.wait(0.38)
+            task.wait(0.4)
             if Blur then pcall(function() Blur:Destroy() end) end
             IntroOverlay:Destroy()
 
