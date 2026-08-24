@@ -384,15 +384,20 @@ function KW:CreateWindow(options)
             -- 4. Hold text in center
             task.wait(2.2)
 
-            -- 5. Fade out and slide up KITTY WARE text completely
+            -- 5. Fade out and slide up KITTY WARE text AND clear background blur simultaneously
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            if Blur then
+                Tween(Blur, { Size = 0 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            end
 
             -- 6. Ensure exact 5 seconds have passed since animation started before loading assets
             local elapsed = tick() - animStart
             if elapsed < 5.0 then
                 task.wait(5.0 - elapsed)
             end
+            if Blur then pcall(function() Blur:Destroy() end) end
 
             -- 7. ONLY NOW slide in the top-right loading card and begin loading assets
             Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -440,15 +445,10 @@ function KW:CreateWindow(options)
             LoadTitle.TextColor3 = Theme.AccentBright
             task.wait(0.5)
 
-            -- 9. Outro transition: slide off loading card, fade blur, reveal main GUI
+            -- 9. Outro transition: slide off loading card, reveal main GUI
             Tween(LoadingCard, { Position = UDim2.new(1, 270, 0, 20) }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            if Blur then
-                Tween(Blur, { Size = 0 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            end
-
             task.wait(0.35)
-            if Blur then pcall(function() Blur:Destroy() end) end
+
             IntroOverlay:Destroy()
 
             if onComplete then
