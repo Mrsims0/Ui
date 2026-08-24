@@ -289,27 +289,162 @@ function KW:CreateWindow(options)
         WareLabel.ZIndex = 202
         WareLabel.Parent = CenterContainer
 
+        local LoadingCard = Instance.new("Frame")
+        LoadingCard.Name = "LoadingCard"
+        LoadingCard.Size = UDim2.new(0, 250, 0, 56)
+        LoadingCard.Position = UDim2.new(1, 270, 0, 20)
+        LoadingCard.BackgroundColor3 = Theme.CardBackground
+        LoadingCard.BorderSizePixel = 0
+        LoadingCard.ZIndex = 210
+        LoadingCard.Parent = IntroOverlay
+
+        local LCCorner = Instance.new("UICorner")
+        LCCorner.CornerRadius = UDim.new(0, 8)
+        LCCorner.Parent = LoadingCard
+
+        local LCStroke = Instance.new("UIStroke")
+        LCStroke.Color = Theme.Accent
+        LCStroke.Thickness = 1.5
+        LCStroke.Parent = LoadingCard
+
+        local MiniIcon = Instance.new("ImageLabel")
+        MiniIcon.Name = "MiniIcon"
+        MiniIcon.Size = UDim2.new(0, 16, 0, 16)
+        MiniIcon.Position = UDim2.new(0, 10, 0, 10)
+        MiniIcon.BackgroundTransparency = 1
+        MiniIcon.Image = ResolveIcon("flame")
+        MiniIcon.ImageColor3 = Theme.AccentBright
+        MiniIcon.ScaleType = Enum.ScaleType.Fit
+        MiniIcon.ZIndex = 211
+        MiniIcon.Parent = LoadingCard
+
+        local LoadTitle = Instance.new("TextLabel")
+        LoadTitle.Name = "LoadTitle"
+        LoadTitle.Text = "LOADING ASSETS"
+        LoadTitle.Font = Enum.Font.GothamBold
+        LoadTitle.TextSize = 11
+        LoadTitle.TextColor3 = Theme.TextPrimary
+        LoadTitle.TextXAlignment = Enum.TextXAlignment.Left
+        LoadTitle.Size = UDim2.new(1, -70, 0, 14)
+        LoadTitle.Position = UDim2.new(0, 32, 0, 8)
+        LoadTitle.BackgroundTransparency = 1
+        LoadTitle.ZIndex = 211
+        LoadTitle.Parent = LoadingCard
+
+        local LoadPercent = Instance.new("TextLabel")
+        LoadPercent.Name = "LoadPercent"
+        LoadPercent.Text = "0%"
+        LoadPercent.Font = Enum.Font.GothamBold
+        LoadPercent.TextSize = 10
+        LoadPercent.TextColor3 = Theme.AccentBright
+        LoadPercent.TextXAlignment = Enum.TextXAlignment.Right
+        LoadPercent.Size = UDim2.new(0, 40, 0, 14)
+        LoadPercent.Position = UDim2.new(1, -50, 0, 8)
+        LoadPercent.BackgroundTransparency = 1
+        LoadPercent.ZIndex = 211
+        LoadPercent.Parent = LoadingCard
+
+        local LoadDetail = Instance.new("TextLabel")
+        LoadDetail.Name = "LoadDetail"
+        LoadDetail.Text = "Initializing..."
+        LoadDetail.Font = Enum.Font.GothamMedium
+        LoadDetail.TextSize = 9
+        LoadDetail.TextColor3 = Theme.TextMuted
+        LoadDetail.TextXAlignment = Enum.TextXAlignment.Left
+        LoadDetail.Size = UDim2.new(1, -42, 0, 14)
+        LoadDetail.Position = UDim2.new(0, 32, 0, 23)
+        LoadDetail.BackgroundTransparency = 1
+        LoadDetail.ZIndex = 211
+        LoadDetail.Parent = LoadingCard
+
+        local BarTrack = Instance.new("Frame")
+        BarTrack.Name = "BarTrack"
+        BarTrack.Size = UDim2.new(1, -20, 0, 4)
+        BarTrack.Position = UDim2.new(0, 10, 0, 42)
+        BarTrack.BackgroundColor3 = Theme.ControlBackground
+        BarTrack.BorderSizePixel = 0
+        BarTrack.ZIndex = 211
+        BarTrack.Parent = LoadingCard
+
+        local BTCorner = Instance.new("UICorner")
+        BTCorner.CornerRadius = UDim.new(1, 0)
+        BTCorner.Parent = BarTrack
+
+        local BarFill = Instance.new("Frame")
+        BarFill.Name = "BarFill"
+        BarFill.Size = UDim2.new(0, 0, 1, 0)
+        BarFill.BackgroundColor3 = Theme.AccentBright
+        BarFill.BorderSizePixel = 0
+        BarFill.ZIndex = 212
+        BarFill.Parent = BarTrack
+
+        local BFCorner = Instance.new("UICorner")
+        BFCorner.CornerRadius = UDim.new(1, 0)
+        BFCorner.Parent = BarFill
+
         task.spawn(function()
             Tween(IntroOverlay, { BackgroundTransparency = 0.35 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
                 Tween(Blur, { Size = 24 }, 0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
 
+            -- Slide in loading widget from top-right
+            Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
             task.wait(0.1)
 
-            -- 1. Slide in KITTY from far off-screen left
+            -- Slide in KITTY from off-screen left
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- 2. Wait 1.5 seconds
-            task.wait(0.8)
+            task.wait(0.4)
 
-            -- 3. Slide in WARE from far off-screen right
+            -- Slide in WARE from off-screen right
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- 4. Wait 4.5 seconds
-            task.wait(2.5)
+            -- Dynamic Asset & Hook Loading Routine
+            local totalSteps = #IconList + 3
+            local currentStep = 0
 
-            -- 5. Outro fade and slide up
+            for i, iconFile in ipairs(IconList) do
+                currentStep = currentStep + 1
+                local ratio = currentStep / totalSteps
+                LoadDetail.Text = "Loading " .. iconFile .. " (" .. i .. "/" .. #IconList .. ")"
+                LoadPercent.Text = math.floor(ratio * 100) .. "%"
+                Tween(BarFill, { Size = UDim2.new(ratio, 0, 1, 0) }, 0.1)
+
+                pcall(function()
+                    DownloadIcon(iconFile)
+                    ResolveIcon(iconFile:gsub("%.png", ""))
+                end)
+
+                task.wait(0.08)
+            end
+
+            -- Hook loading steps
+            currentStep = currentStep + 1
+            local rHook1 = currentStep / totalSteps
+            LoadDetail.Text = "Registering input hooks..."
+            LoadPercent.Text = math.floor(rHook1 * 100) .. "%"
+            Tween(BarFill, { Size = UDim2.new(rHook1, 0, 1, 0) }, 0.1)
+            task.wait(0.15)
+
+            currentStep = currentStep + 1
+            local rHook2 = currentStep / totalSteps
+            LoadDetail.Text = "Building render hierarchy..."
+            LoadPercent.Text = math.floor(rHook2 * 100) .. "%"
+            Tween(BarFill, { Size = UDim2.new(rHook2, 0, 1, 0) }, 0.1)
+            task.wait(0.15)
+
+            currentStep = currentStep + 1
+            LoadDetail.Text = "Finalizing UI environment..."
+            LoadPercent.Text = "100%"
+            Tween(BarFill, { Size = UDim2.new(1, 0, 1, 0) }, 0.1)
+            LoadTitle.Text = "ALL ASSETS LOADED"
+            LoadTitle.TextColor3 = Theme.AccentBright
+            task.wait(0.4)
+
+            -- Outro transition: slide off and reveal GUI
+            Tween(LoadingCard, { Position = UDim2.new(1, 270, 0, 20) }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
