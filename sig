@@ -294,8 +294,8 @@ function KW:CreateWindow(options)
         LCCorner.Parent = LoadingCard
 
         local LCStroke = Instance.new("UIStroke")
-        LCStroke.Color = Theme.Accent
-        LCStroke.Thickness = 1.5
+        LCStroke.Color = Theme.Border
+        LCStroke.Thickness = 1
         LCStroke.Parent = LoadingCard
 
         local LoadTitle = Instance.new("TextLabel")
@@ -363,6 +363,8 @@ function KW:CreateWindow(options)
         BFCorner.Parent = BarFill
 
         task.spawn(function()
+            local animStart = tick()
+
             Tween(IntroOverlay, { BackgroundTransparency = 0.35 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
                 Tween(Blur, { Size = 24 }, 0.45, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
@@ -380,14 +382,17 @@ function KW:CreateWindow(options)
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
             -- 4. Hold text in center
-            task.wait(1.0)
+            task.wait(2.2)
 
             -- 5. Fade out and slide up KITTY WARE text completely
             Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
 
-            -- 6. Wait for text to be completely gone
-            task.wait(0.45)
+            -- 6. Ensure exact 5 seconds have passed since animation started before loading assets
+            local elapsed = tick() - animStart
+            if elapsed < 5.0 then
+                task.wait(5.0 - elapsed)
+            end
 
             -- 7. ONLY NOW slide in the top-right loading card and begin loading assets
             Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -840,8 +845,8 @@ function KW:CreateWindow(options)
         PopCorner.Parent = Popup
 
         local PopStroke = Instance.new("UIStroke")
-        PopStroke.Color = Theme.Accent
-        PopStroke.Thickness = 1.5
+        PopStroke.Color = Theme.Border
+        PopStroke.Thickness = 1
         PopStroke.Parent = Popup
 
         local TopRow = Instance.new("Frame")
