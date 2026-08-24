@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local TextService = game:GetService("TextService")
+local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -227,7 +228,145 @@ function KW:CreateWindow(options)
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = false
     MainFrame.ZIndex = 2
+    MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
+
+    local MainScale = Instance.new("UIScale")
+    MainScale.Scale = 0.92
+    MainScale.Parent = MainFrame
+
+    local function PlayIntroAnimation(onComplete)
+        local IntroOverlay = Instance.new("Frame")
+        IntroOverlay.Name = "KW_IntroOverlay"
+        IntroOverlay.Size = UDim2.new(1, 0, 1, 0)
+        IntroOverlay.BackgroundColor3 = Color3.fromRGB(8, 8, 10)
+        IntroOverlay.BackgroundTransparency = 1
+        IntroOverlay.BorderSizePixel = 0
+        IntroOverlay.ZIndex = 200
+        IntroOverlay.Parent = ScreenGui
+
+        local Blur = nil
+        pcall(function()
+            Blur = Instance.new("BlurEffect")
+            Blur.Name = "KW_IntroBlur"
+            Blur.Size = 0
+            Blur.Parent = Lighting
+        end)
+
+        local CenterContainer = Instance.new("Frame")
+        CenterContainer.Name = "CenterContainer"
+        CenterContainer.Size = UDim2.new(0, 420, 0, 120)
+        CenterContainer.Position = UDim2.new(0.5, -210, 0.5, -60)
+        CenterContainer.BackgroundTransparency = 1
+        CenterContainer.ZIndex = 201
+        CenterContainer.Parent = IntroOverlay
+
+        local FlameLogo = Instance.new("ImageLabel")
+        FlameLogo.Name = "FlameLogo"
+        FlameLogo.Size = UDim2.new(0, 34, 0, 34)
+        FlameLogo.Position = UDim2.new(0.5, -17, 0, 4)
+        FlameLogo.BackgroundTransparency = 1
+        FlameLogo.Image = ResolveIcon("flame")
+        FlameLogo.ImageColor3 = Theme.AccentBright
+        FlameLogo.ImageTransparency = 1
+        FlameLogo.ScaleType = Enum.ScaleType.Fit
+        FlameLogo.ZIndex = 202
+        FlameLogo.Parent = CenterContainer
+
+        local KittyLabel = Instance.new("TextLabel")
+        KittyLabel.Name = "KittyLabel"
+        KittyLabel.Text = "KITTY"
+        KittyLabel.Font = Enum.Font.GothamBold
+        KittyLabel.TextSize = 36
+        KittyLabel.TextColor3 = Theme.TextPrimary
+        KittyLabel.TextXAlignment = Enum.TextXAlignment.Right
+        KittyLabel.BackgroundTransparency = 1
+        KittyLabel.Size = UDim2.new(0, 150, 0, 44)
+        KittyLabel.Position = UDim2.new(0.5, -280, 0, 44)
+        KittyLabel.TextTransparency = 1
+        KittyLabel.ZIndex = 202
+        KittyLabel.Parent = CenterContainer
+
+        local WareLabel = Instance.new("TextLabel")
+        WareLabel.Name = "WareLabel"
+        WareLabel.Text = "WARE"
+        WareLabel.Font = Enum.Font.GothamBold
+        WareLabel.TextSize = 36
+        WareLabel.TextColor3 = Theme.AccentBright
+        WareLabel.TextXAlignment = Enum.TextXAlignment.Left
+        WareLabel.BackgroundTransparency = 1
+        WareLabel.Size = UDim2.new(0, 150, 0, 44)
+        WareLabel.Position = UDim2.new(0.5, 130, 0, 44)
+        WareLabel.TextTransparency = 1
+        WareLabel.ZIndex = 202
+        WareLabel.Parent = CenterContainer
+
+        local GlowLine = Instance.new("Frame")
+        GlowLine.Name = "GlowLine"
+        GlowLine.Size = UDim2.new(0, 0, 0, 2)
+        GlowLine.Position = UDim2.new(0.5, 0, 0, 94)
+        GlowLine.BackgroundColor3 = Theme.AccentBright
+        GlowLine.BorderSizePixel = 0
+        GlowLine.BackgroundTransparency = 1
+        GlowLine.ZIndex = 202
+        GlowLine.Parent = CenterContainer
+
+        local GlowLineCorner = Instance.new("UICorner")
+        GlowLineCorner.CornerRadius = UDim.new(1, 0)
+        GlowLineCorner.Parent = GlowLine
+
+        local GlowStroke = Instance.new("UIStroke")
+        GlowStroke.Color = Theme.Accent
+        GlowStroke.Thickness = 1.5
+        GlowStroke.Parent = GlowLine
+
+        task.spawn(function()
+            Tween(IntroOverlay, { BackgroundTransparency = 0.4 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            if Blur then
+                Tween(Blur, { Size = 22 }, 0.42, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            end
+
+            task.wait(0.12)
+
+            Tween(FlameLogo, { ImageTransparency = 0 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -156, 0, 44), TextTransparency = 0 }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 6, 0, 44), TextTransparency = 0 }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+            task.wait(0.35)
+
+            GlowLine.BackgroundTransparency = 0
+            Tween(GlowLine, { Size = UDim2.new(0, 230, 0, 2), Position = UDim2.new(0.5, -115, 0, 94) }, 0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+            task.wait(0.75)
+
+            Tween(FlameLogo, { ImageTransparency = 1, Position = UDim2.new(0.5, -17, 0, -12) }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -156, 0, 24), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 6, 0, 24), TextTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(GlowLine, { Size = UDim2.new(0, 0, 0, 2), Position = UDim2.new(0.5, 0, 0, 94), BackgroundTransparency = 1 }, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            if Blur then
+                Tween(Blur, { Size = 0 }, 0.38, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            end
+
+            task.wait(0.38)
+            if Blur then pcall(function() Blur:Destroy() end) end
+            IntroOverlay:Destroy()
+
+            if onComplete then
+                onComplete()
+            end
+        end)
+    end
+
+    if options.Intro == false then
+        MainFrame.Visible = true
+        MainScale.Scale = 1
+    else
+        PlayIntroAnimation(function()
+            MainFrame.Visible = true
+            Tween(MainScale, { Scale = 1 }, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        end)
+    end
 
     local MainCorner = Instance.new("UICorner")
     MainCorner.CornerRadius = UDim.new(0, 8)
