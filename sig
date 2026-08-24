@@ -379,14 +379,21 @@ function KW:CreateWindow(options)
             -- 3. Slide in WARE from off-screen right
             Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -40), TextTransparency = 0 }, 0.6, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-            -- 4. Wait for text animation to fully settle
-            task.wait(0.8)
+            -- 4. Hold text in center
+            task.wait(1.0)
 
-            -- 5. NOW slide in the top-right loading card and start loading assets
-            Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            -- 5. Fade out and slide up KITTY WARE text completely
+            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+            -- 6. Wait for text to be completely gone
+            task.wait(0.45)
+
+            -- 7. ONLY NOW slide in the top-right loading card and begin loading assets
+            Tween(LoadingCard, { Position = UDim2.new(1, -270, 0, 20) }, 0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
             task.wait(0.2)
 
-            -- 6. Dynamic Asset & Hook Loading Routine
+            -- 8. Dynamic Asset & Hook Loading Routine
             local totalSteps = #IconList + 3
             local currentStep = 0
 
@@ -428,16 +435,14 @@ function KW:CreateWindow(options)
             LoadTitle.TextColor3 = Theme.AccentBright
             task.wait(0.5)
 
-            -- 7. Outro transition: slide off and reveal GUI
-            Tween(LoadingCard, { Position = UDim2.new(1, 270, 0, 20) }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(KittyLabel, { Position = UDim2.new(0.5, -330, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(WareLabel, { Position = UDim2.new(0.5, 10, 0.5, -70), TextTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+            -- 9. Outro transition: slide off loading card, fade blur, reveal main GUI
+            Tween(LoadingCard, { Position = UDim2.new(1, 270, 0, 20) }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            Tween(IntroOverlay, { BackgroundTransparency = 1 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             if Blur then
-                Tween(Blur, { Size = 0 }, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                Tween(Blur, { Size = 0 }, 0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
             end
 
-            task.wait(0.4)
+            task.wait(0.35)
             if Blur then pcall(function() Blur:Destroy() end) end
             IntroOverlay:Destroy()
 
