@@ -7,8 +7,8 @@ local TextService = game:GetService("TextService")
 
 local LocalPlayer = Players.LocalPlayer
 
-local Ignite = {}
-Ignite.__index = Ignite
+local KW = {}
+KW.__index = KW
 
 local GITHUB_ICONS_BASE = "https://raw.githubusercontent.com/Mrsims0/Ui/main/gig/"
 
@@ -206,14 +206,14 @@ local function EnableDragging(frame, dragHandle)
     end)
 end
 
-function Ignite:CreateWindow(options)
+function KW:CreateWindow(options)
     options = options or {}
-    local windowTitle = options.Title or "Ignite"
+    local windowTitle = options.Title or "KW"
     local windowVersion = options.Version or "v1.0.5"
     local toggleKey = options.ToggleKey or Enum.KeyCode.RightShift
 
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "IgniteGUI"
+    ScreenGui.Name = "KWGUI"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.Parent = GetSafeGuiParent()
@@ -2188,4 +2188,4 @@ function Ignite:CreateWindow(options)
     return WindowState
 end
 
-return Ignite
+return KW
