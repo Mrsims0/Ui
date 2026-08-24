@@ -117,12 +117,10 @@ local function ResolveIcon(name)
     local fileName = baseName .. ".png"
     local localPath = "cat/icons/" .. fileName
 
-    DownloadIcon(fileName)
-
-    if getcustomasset then
+    if getcustomasset and isfile and isfile(localPath) then
         local success, asset = pcall(getcustomasset, localPath)
         if success and asset then return asset end
-    elseif getsynasset then
+    elseif getsynasset and isfile and isfile(localPath) then
         local success, asset = pcall(getsynasset, localPath)
         if success and asset then return asset end
     end
@@ -135,13 +133,6 @@ local function ResolveIcon(name)
 
     return localPath
 end
-
-task.spawn(function()
-    SetupDirectories()
-    for _, iconFile in ipairs(IconList) do
-        DownloadIcon(iconFile)
-    end
-end)
 
 local function GetSafeGuiParent()
     local success, parent = pcall(function()
