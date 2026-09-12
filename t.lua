@@ -91,11 +91,27 @@ SendBtn.MouseButton1Click:Connect(function()
     local jsonPayload = HttpService:JSONEncode(payload)
     local encryptedData = encrypt(jsonPayload)
     
+    local exec_request = request or http_request or (http and http.request) or (syn and syn.request)
+    
+    if not exec_request then
+        SendBtn.Text = "Executor not supported"
+        task.wait(2)
+        SendBtn.Text = "Save & Sync Cloud Config"
+        return
+    end
+
     local success, response = pcall(function()
-        return HttpService:PostAsync(API_URL, encryptedData, Enum.HttpContentType.TextPlain)
+        return exec_request({
+            Url = API_URL,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "text/plain"
+            },
+            Body = encryptedData
+        })
     end)
     
-    if success then
+    if success and response and (response.StatusCode == 200 or response.StatusCode == 204) then
         SendBtn.Text = "Synced!"
         task.wait(2)
         SendBtn.Text = "Save & Sync Cloud Config"
