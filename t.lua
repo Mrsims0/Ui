@@ -4,6 +4,7 @@ local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
 
 local SECRET_KEY = "kittyauth_secure_key"
 local API_URL = "http://212.192.28.18:8110/sync"
+local AUTH_KEY = getgenv().KittyKey or ""
 
 local function encrypt(data)
     local result = {}
@@ -20,8 +21,8 @@ KittyUI.Name = "KittyUI"
 KittyUI.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 250)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -125)
+MainFrame.Size = UDim2.new(0, 300, 0, 210)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -105)
 MainFrame.BackgroundColor3 = Color3.fromRGB(255, 105, 180) 
 MainFrame.BorderSizePixel = 0
 MainFrame.Parent = KittyUI
@@ -35,21 +36,9 @@ Title.Font = Enum.Font.Code
 Title.TextSize = 18
 Title.Parent = MainFrame
 
-local KeyBox = Instance.new("TextBox")
-KeyBox.Size = UDim2.new(0, 260, 0, 30)
-KeyBox.Position = UDim2.new(0, 20, 0, 50)
-KeyBox.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
-KeyBox.PlaceholderText = "Auth Key"
-KeyBox.Text = ""
-KeyBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-KeyBox.Font = Enum.Font.Code
-KeyBox.TextSize = 14
-KeyBox.BorderSizePixel = 0
-KeyBox.Parent = MainFrame
-
 local ConfigBox = Instance.new("TextBox")
 ConfigBox.Size = UDim2.new(0, 260, 0, 30)
-ConfigBox.Position = UDim2.new(0, 20, 0, 90)
+ConfigBox.Position = UDim2.new(0, 20, 0, 50)
 ConfigBox.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
 ConfigBox.PlaceholderText = "Config Name"
 ConfigBox.Text = ""
@@ -61,7 +50,7 @@ ConfigBox.Parent = MainFrame
 
 local AimbotToggle = Instance.new("TextButton")
 AimbotToggle.Size = UDim2.new(0, 260, 0, 30)
-AimbotToggle.Position = UDim2.new(0, 20, 0, 130)
+AimbotToggle.Position = UDim2.new(0, 20, 0, 90)
 AimbotToggle.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
 AimbotToggle.Text = "Toggle Aimbot: OFF"
 AimbotToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -72,7 +61,7 @@ AimbotToggle.Parent = MainFrame
 
 local SendBtn = Instance.new("TextButton")
 SendBtn.Size = UDim2.new(0, 260, 0, 30)
-SendBtn.Position = UDim2.new(0, 20, 0, 190)
+SendBtn.Position = UDim2.new(0, 20, 0, 150)
 SendBtn.BackgroundColor3 = Color3.fromRGB(0, 191, 255)
 SendBtn.Text = "Save & Sync Cloud Config"
 SendBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -89,7 +78,7 @@ end)
 
 SendBtn.MouseButton1Click:Connect(function()
     local payload = {
-        key = KeyBox.Text,
+        key = AUTH_KEY,
         hwid = RbxAnalyticsService:GetClientId(),
         roblox_id = Players.LocalPlayer.UserId,
         game_id = game.PlaceId,
