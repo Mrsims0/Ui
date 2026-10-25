@@ -533,6 +533,24 @@ function Library:CreateWindow(config)
             RightLayout.Padding = UDim.new(0, 10)
             RightLayout.Parent = Right
 
+            function SubtabObj:Activate()
+                for _, s in ipairs(TabObj.Subtabs) do
+                    s.Indicator.Visible = false
+                    s.Button.Label.Font = Enum.Font.SourceSans
+                    s.Button.Label.TextColor3 = Library.CurrentTheme.TextDim
+                    s.PageFrame.Visible = false
+                end
+                TabObj.CurrentSubtab = SubtabObj
+                SubtabObj.Indicator.Visible = true
+                SubtabObj.Button.Label.Font = Enum.Font.SourceSansBold
+                SubtabObj.Button.Label.TextColor3 = Library.CurrentTheme.Text
+                SubtabObj.PageFrame.Visible = true
+            end
+
+            SubBtn.MouseButton1Click:Connect(function()
+                SubtabObj:Activate()
+            end)
+
             table.insert(TabObj.Subtabs, SubtabObj)
 
             -- Re-proportionalize subtabs width
@@ -552,24 +570,6 @@ function Library:CreateWindow(config)
                     SubtabObj:Activate()
                 end
             end
-
-            function SubtabObj:Activate()
-                for _, s in ipairs(TabObj.Subtabs) do
-                    s.Indicator.Visible = false
-                    s.Button.Label.Font = Enum.Font.SourceSans
-                    s.Button.Label.TextColor3 = Library.CurrentTheme.TextDim
-                    s.PageFrame.Visible = false
-                end
-                TabObj.CurrentSubtab = SubtabObj
-                SubtabObj.Indicator.Visible = true
-                SubtabObj.Button.Label.Font = Enum.Font.SourceSansBold
-                SubtabObj.Button.Label.TextColor3 = Library.CurrentTheme.Text
-                SubtabObj.PageFrame.Visible = true
-            end
-
-            SubBtn.MouseButton1Click:Connect(function()
-                SubtabObj:Activate()
-            end)
 
             SubBtn.MouseEnter:Connect(function()
                 if TabObj.CurrentSubtab ~= SubtabObj then
