@@ -284,9 +284,11 @@ function Library:CreateWindow(config)
     SubtabsBar.Name = "SubtabsBar"
     SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
     SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
-    SubtabsBar.BackgroundTransparency = 1
+    SubtabsBar.BackgroundColor3 = Library.CurrentTheme.ChildBg
+    SubtabsBar.BackgroundTransparency = 0
     SubtabsBar.BorderSizePixel = 0
-    SubtabsBar.ClipsDescendants = true
+    SubtabsBar.ClipsDescendants = false
+    SubtabsBar.ZIndex = 3
     SubtabsBar.Parent = MainArea
 
     -- Bottom border line under subtabs
@@ -537,6 +539,18 @@ function Library:CreateWindow(config)
             local count = #TabObj.Subtabs
             for _, s in ipairs(TabObj.Subtabs) do
                 s.Button.Size = UDim2.new(1 / count, 0, 1, 0)
+                if WindowObj.CurrentTab == TabObj then
+                    s.Button.Visible = true
+                end
+            end
+
+            if WindowObj.CurrentTab == TabObj then
+                SubtabsBar.Visible = true
+                PageContainer.Size = UDim2.new(1, 0, 1, -28)
+                PageContainer.Position = UDim2.new(0, 0, 0, 28)
+                if #TabObj.Subtabs == 1 or TabObj.CurrentSubtab == nil then
+                    SubtabObj:Activate()
+                end
             end
 
             function SubtabObj:Activate()
