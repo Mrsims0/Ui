@@ -215,10 +215,27 @@ function Library:CreateWindow(config)
     LogoImage.Position = UDim2.new(0, 18, 0, 10)
     LogoImage.BackgroundTransparency = 1
     LogoImage.ScaleType = Enum.ScaleType.Fit
-    if LogoId and LogoId ~= "" then
-        LogoImage.Image = LogoId
+
+    local customLogo = config.Logo or config.LogoId or LogoId
+    if customLogo and customLogo ~= "" then
+        -- Check if it's an asset id or URL / path
+        if string.find(tostring(customLogo), "rbxasset") or string.find(tostring(customLogo), "%d+") or string.find(tostring(customLogo), "http") then
+            LogoImage.Image = tostring(customLogo)
+        else
+            -- Text-based custom logo name
+            local CustomText = Instance.new("TextLabel")
+            CustomText.Text = tostring(customLogo)
+            CustomText.Font = Enum.Font.SourceSansBold
+            CustomText.TextSize = 22
+            CustomText.TextColor3 = Color3.fromRGB(240, 240, 240)
+            CustomText.Size = UDim2.new(1, 0, 1, 0)
+            CustomText.BackgroundTransparency = 1
+            CustomText.TextXAlignment = Enum.TextXAlignment.Left
+            CustomText.TextTruncate = Enum.TextTruncate.AtEnd
+            CustomText.Parent = LogoImage
+        end
     else
-        -- If no asset ID provided, create 1-1 MW$ vector-style typography
+        -- 1-1 MW$ vector-style typography
         local MWText = Instance.new("TextLabel")
         MWText.Text = "MW"
         MWText.Font = Enum.Font.SourceSansBold
@@ -258,17 +275,20 @@ function Library:CreateWindow(config)
     -- Right Main Area (width 574, height 479)
     local MainArea = Instance.new("Frame")
     MainArea.Name = "MainArea"
-    MainArea.Size = UDim2.new(0, 574, 0, 485)
-    MainArea.Position = UDim2.new(0, 143, 0, 3)
+    MainArea.Size = UDim2.new(0, 574, 1, 0)
+    MainArea.Position = UDim2.new(0, 143, 0, 0)
     MainArea.BackgroundTransparency = 1
+    MainArea.ClipsDescendants = false
     MainArea.Parent = ContentHolder
 
     -- Subtabs bar (height 22)
     local SubtabsBar = Instance.new("Frame")
     SubtabsBar.Name = "SubtabsBar"
     SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
+    SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
     SubtabsBar.BackgroundTransparency = 1
     SubtabsBar.BorderSizePixel = 0
+    SubtabsBar.ClipsDescendants = false
     SubtabsBar.Parent = MainArea
 
     local SubtabsLine = Instance.new("Frame")
@@ -380,7 +400,10 @@ function Library:CreateWindow(config)
                 SubtabsBar.Visible = true
                 PageContainer.Size = UDim2.new(1, 0, 1, -26)
                 PageContainer.Position = UDim2.new(0, 0, 0, 26)
+
+                local subCount = #TabObj.Subtabs
                 for _, sub in ipairs(TabObj.Subtabs) do
+                    sub.Button.Size = UDim2.new(1 / subCount, 0, 1, 0)
                     sub.Button.Visible = true
                 end
                 if TabObj.CurrentSubtab then
