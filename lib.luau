@@ -392,10 +392,195 @@ function Library:CreateWindow(config)
         ViewportCamera.Parent = Viewport
 
         local Rig = nil
+        local skeletonVisible = false
+        local skeletonColor = Color3.fromRGB(255, 255, 255)
+        local boneFrames = {}
+
+        local SkeletonFolder = Instance.new("Folder")
+        SkeletonFolder.Name = "SkeletonLines"
+        SkeletonFolder.Parent = Viewport
+
+        local function getOrCreateBoneFrame(i)
+            if not boneFrames[i] then
+                local b = Instance.new("Frame")
+                b.BackgroundColor3 = skeletonColor
+                b.BorderSizePixel = 0
+                b.ZIndex = 6
+                b.Visible = false
+                b.Parent = SkeletonFolder
+                boneFrames[i] = b
+            end
+            return boneFrames[i]
+        end
+
+        local function projectPoint(worldPos)
+            local camCFrame = ViewportCamera.CFrame
+            local pointInCam = camCFrame:PointToObjectSpace(worldPos)
+            if pointInCam.Z >= 0 then return nil end
+
+            local fovRad = math.rad(ViewportCamera.FieldOfView)
+            local h = Viewport.AbsoluteSize.Y
+            local w = Viewport.AbsoluteSize.X
+            if h <= 0 or w <= 0 then return nil end
+
+            local scaleY = (h / 2) / math.tan(fovRad / 2)
+            local scaleX = scaleY
+
+            local x = (w / 2) + (pointInCam.X / -pointInCam.Z) * scaleX
+            local y = (h / 2) - (pointInCam.Y / -pointInCam.Z) * scaleY
+            return Vector2.new(x, y)
+        end
+
+        local BoxOutline = Instance.new("Frame")
+        BoxOutline.Name = "BoxOutline"
+        BoxOutline.BackgroundTransparency = 1
+        BoxOutline.BorderSizePixel = 1
+        BoxOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        BoxOutline.ZIndex = 5
+        BoxOutline.Visible = false
+        BoxOutline.Parent = Viewport
+
+        local BoxMain = Instance.new("Frame")
+        BoxMain.Name = "Box"
+        BoxMain.Size = UDim2.new(1, -2, 1, -2)
+        BoxMain.Position = UDim2.new(0, 1, 0, 1)
+        BoxMain.BackgroundTransparency = 1
+        BoxMain.BorderSizePixel = 1
+        BoxMain.BorderColor3 = Color3.fromRGB(255, 255, 255)
+        BoxMain.ZIndex = 6
+        BoxMain.Parent = BoxOutline
+
+        local NameTag = Instance.new("TextLabel")
+        NameTag.Name = "NameTag"
+        NameTag.Size = UDim2.new(1, 0, 0, 14)
+        NameTag.Position = UDim2.new(0, 0, 0, -15)
+        NameTag.BackgroundTransparency = 1
+        NameTag.Text = (Players.LocalPlayer and Players.LocalPlayer.DisplayName or "LocalPlayer") .. " [0m]"
+        NameTag.Font = Enum.Font.SourceSansBold
+        NameTag.TextSize = 12
+        NameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NameTag.TextStrokeTransparency = 0.3
+        NameTag.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        NameTag.ZIndex = 7
+        NameTag.Visible = false
+        NameTag.Parent = BoxOutline
+
+        local HealthBarBg = Instance.new("Frame")
+        HealthBarBg.Name = "HealthBarBg"
+        HealthBarBg.Size = UDim2.new(0, 2, 1, 0)
+        HealthBarBg.Position = UDim2.new(0, -5, 0, 0)
+        HealthBarBg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        HealthBarBg.BorderSizePixel = 1
+        HealthBarBg.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        HealthBarBg.ZIndex = 6
+        HealthBarBg.Visible = false
+        HealthBarBg.Parent = BoxOutline
+
+        local HealthBarFill = Instance.new("Frame")
+        HealthBarFill.Name = "Fill"
+        HealthBarFill.Size = UDim2.new(1, 0, 1, 0)
+        HealthBarFill.Position = UDim2.new(0, 0, 0, 0)
+        HealthBarFill.BackgroundColor3 = Color3.fromRGB(80, 220, 80)
+        HealthBarFill.BorderSizePixel = 0
+        HealthBarFill.ZIndex = 7
+        HealthBarFill.Parent = HealthBarBg
+
+        local function updateSkeletonAndBox()
+            if not Rig then return end
+            local w = Viewport.AbsoluteSize.X
+            local h = Viewport.AbsoluteSize.Y
+            if w <= 0 or h <= 0 then return end
+
+            local minX, minY = math.huge, math.huge
+            local maxX, maxY = -math.huge, -math.huge
+            local hasPoints = false
+
+            for _, part in ipairs(Rig:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Transparency < 1 then
+                    local p = projectPoint(part.Position)
+                    if p then
+                        hasPoints = true
+                        minX = math.min(minX, p.X)
+                        minY = math.min(minY, p.Y)
+                        maxX = math.max(maxX, p.X)
+                        maxY = math.max(maxY, p.Y)
+                    end
+                end
+            end
+
+            if hasPoints then
+                local padX = 14
+                local padY = 10
+                local bX = math.clamp(minX - padX, 2, w - 10)
+                local bY = math.clamp(minY - padY, 2, h - 10)
+                local bW = math.clamp(maxX - minX + padX * 2, 20, w - bX - 2)
+                local bH = math.clamp(maxY - minY + padY * 2, 30, h - bY - 2)
+
+                BoxOutline.Position = UDim2.new(0, bX, 0, bY)
+                BoxOutline.Size = UDim2.new(0, bW, 0, bH)
+            end
+
+            for _, b in ipairs(boneFrames) do
+                b.Visible = false
+            end
+
+            if not skeletonVisible then return end
+
+            local boneConnections = {}
+            if Rig:FindFirstChild("UpperTorso") then
+                boneConnections = {
+                    { "Head", "UpperTorso" },
+                    { "UpperTorso", "LowerTorso" },
+                    { "UpperTorso", "LeftUpperArm" },
+                    { "LeftUpperArm", "LeftLowerArm" },
+                    { "LeftLowerArm", "LeftHand" },
+                    { "UpperTorso", "RightUpperArm" },
+                    { "RightUpperArm", "RightLowerArm" },
+                    { "RightLowerArm", "RightHand" },
+                    { "LowerTorso", "LeftUpperLeg" },
+                    { "LeftUpperLeg", "LeftLowerLeg" },
+                    { "LeftLowerLeg", "LeftFoot" },
+                    { "LowerTorso", "RightUpperLeg" },
+                    { "RightUpperLeg", "RightLowerLeg" },
+                    { "RightLowerLeg", "RightFoot" },
+                }
+            elseif Rig:FindFirstChild("Torso") then
+                boneConnections = {
+                    { "Head", "Torso" },
+                    { "Torso", "Left Arm" },
+                    { "Torso", "Right Arm" },
+                    { "Torso", "Left Leg" },
+                    { "Torso", "Right Leg" },
+                }
+            end
+
+            local boneIdx = 1
+            for _, pair in ipairs(boneConnections) do
+                local p1Part = Rig:FindFirstChild(pair[1])
+                local p2Part = Rig:FindFirstChild(pair[2])
+                if p1Part and p2Part then
+                    local s1 = projectPoint(p1Part.Position)
+                    local s2 = projectPoint(p2Part.Position)
+                    if s1 and s2 then
+                        local dist = (s2 - s1).Magnitude
+                        local center = (s1 + s2) / 2
+                        local angle = math.deg(math.atan2(s2.Y - s1.Y, s2.X - s1.X))
+                        local bf = getOrCreateBoneFrame(boneIdx)
+                        bf.Size = UDim2.new(0, dist, 0, 1.2)
+                        bf.Position = UDim2.new(0, center.X - dist / 2, 0, center.Y)
+                        bf.Rotation = angle
+                        bf.BackgroundColor3 = skeletonColor
+                        bf.Visible = true
+                        boneIdx = boneIdx + 1
+                    end
+                end
+            end
+        end
+
         local function setupRig()
             if Rig then Rig:Destroy() end
             local localChar = Players.LocalPlayer and Players.LocalPlayer.Character
-            if localChar and localChar:FindFirstChild("HumanoidRootPart") then
+            if localChar then
                 local backupArch = localChar.Archivable
                 localChar.Archivable = true
                 local clone = localChar:Clone()
@@ -409,9 +594,14 @@ function Library:CreateWindow(config)
                     end
                 end
                 clone.Parent = Viewport
-                local hrp = clone:FindFirstChild("HumanoidRootPart")
+                local hrp = clone:FindFirstChild("HumanoidRootPart") or clone:FindFirstChild("Torso") or clone:FindFirstChild("UpperTorso")
                 if hrp then
-                    clone:MoveTo(Vector3.new(0, 0, 0))
+                    local offset = hrp.Position
+                    for _, p in ipairs(clone:GetDescendants()) do
+                        if p:IsA("BasePart") then
+                            p.CFrame = CFrame.new(p.Position - offset)
+                        end
+                    end
                 end
                 Rig = clone
             else
@@ -434,22 +624,27 @@ function Library:CreateWindow(config)
                     return part
                 end
 
-                local root = makeLimb("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(0, 3, 0))
+                local root = makeLimb("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(0, 0, 0))
                 root.Transparency = 1
-                makeLimb("Head", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, 4.6, 0))
-                makeLimb("UpperTorso", Vector3.new(2, 1.6, 1), CFrame.new(0, 3.2, 0))
-                makeLimb("LowerTorso", Vector3.new(1.9, 0.8, 1), CFrame.new(0, 2.0, 0))
-                makeLimb("LeftArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(-1.5, 3.0, 0))
-                makeLimb("RightArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(1.5, 3.0, 0))
-                makeLimb("LeftLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(-0.55, 0.7, 0))
-                makeLimb("RightLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(0.55, 0.7, 0))
+                makeLimb("Head", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, 1.6, 0))
+                makeLimb("UpperTorso", Vector3.new(2, 1.6, 1), CFrame.new(0, 0.2, 0))
+                makeLimb("LowerTorso", Vector3.new(1.9, 0.8, 1), CFrame.new(0, -1.0, 0))
+                makeLimb("LeftUpperArm", Vector3.new(0.9, 1.2, 0.9), CFrame.new(-1.45, 0.4, 0))
+                makeLimb("LeftLowerArm", Vector3.new(0.8, 1.1, 0.8), CFrame.new(-1.45, -0.7, 0))
+                makeLimb("RightUpperArm", Vector3.new(0.9, 1.2, 0.9), CFrame.new(1.45, 0.4, 0))
+                makeLimb("RightLowerArm", Vector3.new(0.8, 1.1, 0.8), CFrame.new(1.45, -0.7, 0))
+                makeLimb("LeftUpperLeg", Vector3.new(0.9, 1.3, 0.9), CFrame.new(-0.55, -2.0, 0))
+                makeLimb("LeftLowerLeg", Vector3.new(0.8, 1.2, 0.8), CFrame.new(-0.55, -3.2, 0))
+                makeLimb("RightUpperLeg", Vector3.new(0.9, 1.3, 0.9), CFrame.new(0.55, -2.0, 0))
+                makeLimb("RightLowerLeg", Vector3.new(0.8, 1.2, 0.8), CFrame.new(0.55, -3.2, 0))
             end
 
             local cf, sz = Rig:GetBoundingBox()
             local maxDim = math.max(sz.X, sz.Y, sz.Z)
             local dist = maxDim * 1.55
-            ViewportCamera.FieldOfView = 50
-            ViewportCamera.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0.1, dist), cf.Position)
+            ViewportCamera.FieldOfView = 48
+            ViewportCamera.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0, dist), cf.Position)
+            task.defer(updateSkeletonAndBox)
         end
 
         setupRig()
@@ -460,125 +655,8 @@ function Library:CreateWindow(config)
             end)
         end
 
-        local ESPContainer = Instance.new("Frame")
-        ESPContainer.Name = "ESPContainer"
-        ESPContainer.Size = UDim2.new(1, 0, 1, 0)
-        ESPContainer.BackgroundTransparency = 1
-        ESPContainer.ZIndex = 5
-        ESPContainer.Parent = Viewport
-
-        local BoxOutline = Instance.new("Frame")
-        BoxOutline.Name = "BoxOutline"
-        BoxOutline.Size = UDim2.new(0.58, 0, 0.82, 0)
-        BoxOutline.Position = UDim2.new(0.21, 0, 0.09, 0)
-        BoxOutline.BackgroundTransparency = 1
-        BoxOutline.BorderSizePixel = 1
-        BoxOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        BoxOutline.Visible = false
-        BoxOutline.Parent = ESPContainer
-
-        local BoxMain = Instance.new("Frame")
-        BoxMain.Name = "Box"
-        BoxMain.Size = UDim2.new(1, -2, 1, -2)
-        BoxMain.Position = UDim2.new(0, 1, 0, 1)
-        BoxMain.BackgroundTransparency = 1
-        BoxMain.BorderSizePixel = 1
-        BoxMain.BorderColor3 = Library.CurrentTheme.Scheme
-        BoxMain.Parent = BoxOutline
-
-        local NameTag = Instance.new("TextLabel")
-        NameTag.Name = "NameTag"
-        NameTag.Size = UDim2.new(1, 0, 0, 14)
-        NameTag.Position = UDim2.new(0, 0, 0, -16)
-        NameTag.BackgroundTransparency = 1
-        NameTag.Text = (Players.LocalPlayer and Players.LocalPlayer.DisplayName or "LocalPlayer") .. " [0m]"
-        NameTag.Font = Enum.Font.SourceSansBold
-        NameTag.TextSize = 12
-        NameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
-        NameTag.TextStrokeTransparency = 0.4
-        NameTag.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        NameTag.Visible = false
-        NameTag.Parent = BoxOutline
-
-        local HealthBarBg = Instance.new("Frame")
-        HealthBarBg.Name = "HealthBarBg"
-        HealthBarBg.Size = UDim2.new(0, 4, 1, 0)
-        HealthBarBg.Position = UDim2.new(0, -7, 0, 0)
-        HealthBarBg.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        HealthBarBg.BorderSizePixel = 1
-        HealthBarBg.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        HealthBarBg.Visible = false
-        HealthBarBg.Parent = BoxOutline
-
-        local HealthBarFill = Instance.new("Frame")
-        HealthBarFill.Name = "Fill"
-        HealthBarFill.Size = UDim2.new(1, 0, 1, 0)
-        HealthBarFill.Position = UDim2.new(0, 0, 0, 0)
-        HealthBarFill.BackgroundColor3 = Color3.fromRGB(80, 220, 80)
-        HealthBarFill.BorderSizePixel = 0
-        HealthBarFill.Parent = HealthBarBg
-
-        local SkeletonFolder = Instance.new("Folder")
-        SkeletonFolder.Name = "SkeletonLines"
-        SkeletonFolder.Parent = ESPContainer
-
-        local function makeBone()
-            local bone = Instance.new("Frame")
-            bone.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            bone.BorderSizePixel = 0
-            bone.ZIndex = 6
-            bone.Visible = false
-            bone.Parent = SkeletonFolder
-            return bone
-        end
-
-        local bones = {
-            makeBone(),
-            makeBone(),
-            makeBone(),
-            makeBone(),
-            makeBone(),
-        }
-
-        local function updateSkeleton()
-            local w = Viewport.AbsoluteSize.X
-            local h = Viewport.AbsoluteSize.Y
-            if w <= 0 or h <= 0 then return end
-
-            local points = {
-                Head = Vector2.new(w * 0.5, h * 0.17),
-                Torso = Vector2.new(w * 0.5, h * 0.41),
-                LeftArm = Vector2.new(w * 0.28, h * 0.44),
-                RightArm = Vector2.new(w * 0.72, h * 0.44),
-                Pelvis = Vector2.new(w * 0.5, h * 0.57),
-                LeftFoot = Vector2.new(w * 0.36, h * 0.88),
-                RightFoot = Vector2.new(w * 0.64, h * 0.88),
-            }
-
-            local pairsList = {
-                { points.Head, points.Torso },
-                { points.Torso, points.LeftArm },
-                { points.Torso, points.RightArm },
-                { points.Pelvis, points.LeftFoot },
-                { points.Pelvis, points.RightFoot },
-            }
-
-            for idx, pair in ipairs(pairsList) do
-                local b = bones[idx]
-                if b then
-                    local p1, p2 = pair[1], pair[2]
-                    local dist = (p2 - p1).Magnitude
-                    local center = (p1 + p2) / 2
-                    local angle = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
-                    b.Size = UDim2.new(0, dist, 0, 1.5)
-                    b.Position = UDim2.new(0, center.X - dist / 2, 0, center.Y)
-                    b.Rotation = angle
-                end
-            end
-        end
-
-        Viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSkeleton)
-        task.delay(0.1, updateSkeleton)
+        Viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSkeletonAndBox)
+        task.delay(0.1, updateSkeletonAndBox)
 
         local function syncPreviewPosition()
             PreviewFrame.Position = UDim2.new(
@@ -611,7 +689,10 @@ function Library:CreateWindow(config)
             BoxOutline.Visible = enabled
             if color then
                 BoxMain.BorderColor3 = color
+            else
+                BoxMain.BorderColor3 = Color3.fromRGB(255, 255, 255)
             end
+            updateSkeletonAndBox()
         end
 
         function PreviewObj:SetName(enabled, text, color)
@@ -631,10 +712,9 @@ function Library:CreateWindow(config)
         end
 
         function PreviewObj:SetSkeleton(enabled, color)
-            for _, b in ipairs(bones) do
-                b.Visible = enabled
-                if color then b.BackgroundColor3 = color end
-            end
+            skeletonVisible = enabled
+            if color then skeletonColor = color end
+            updateSkeletonAndBox()
         end
 
         function PreviewObj:SetChams(enabled, color, material)
