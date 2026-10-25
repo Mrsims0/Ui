@@ -41,13 +41,85 @@ local Library = {
             SubBorder = Color3.fromRGB(30, 30, 30),
             Separator = Color3.fromRGB(255, 255, 255),
             SeparatorTransparency = 0.96,
-        }
+        },
+        Emerald = {
+            Scheme = Color3.fromRGB(46, 204, 113), -- Vivid Emerald
+            Text = Color3.fromRGB(234, 234, 234),
+            TextDim = Color3.fromRGB(160, 160, 160),
+            TextDisabled = Color3.fromRGB(100, 100, 100),
+            MainBg = Color3.fromRGB(14, 15, 14),
+            ChildBg = Color3.fromRGB(16, 18, 16),
+            TabBg = Color3.fromRGB(20, 24, 20),
+            TabHover = Color3.fromRGB(24, 32, 24),
+            WidgetBg = Color3.fromRGB(18, 20, 18),
+            WidgetHover = Color3.fromRGB(25, 30, 25),
+            Border = Color3.fromRGB(0, 0, 0),
+            SubBorder = Color3.fromRGB(25, 35, 25),
+            Separator = Color3.fromRGB(255, 255, 255),
+            SeparatorTransparency = 0.96,
+        },
+        Amethyst = {
+            Scheme = Color3.fromRGB(165, 94, 234), -- Royal Violet/Amethyst
+            Text = Color3.fromRGB(234, 234, 234),
+            TextDim = Color3.fromRGB(160, 160, 160),
+            TextDisabled = Color3.fromRGB(100, 100, 100),
+            MainBg = Color3.fromRGB(15, 14, 17),
+            ChildBg = Color3.fromRGB(18, 16, 20),
+            TabBg = Color3.fromRGB(23, 20, 26),
+            TabHover = Color3.fromRGB(31, 26, 36),
+            WidgetBg = Color3.fromRGB(20, 18, 22),
+            WidgetHover = Color3.fromRGB(28, 25, 32),
+            Border = Color3.fromRGB(0, 0, 0),
+            SubBorder = Color3.fromRGB(35, 28, 40),
+            Separator = Color3.fromRGB(255, 255, 255),
+            SeparatorTransparency = 0.96,
+        },
+        Azure = {
+            Scheme = Color3.fromRGB(59, 130, 246), -- Electric Blue/Azure
+            Text = Color3.fromRGB(234, 234, 234),
+            TextDim = Color3.fromRGB(160, 160, 160),
+            TextDisabled = Color3.fromRGB(100, 100, 100),
+            MainBg = Color3.fromRGB(13, 15, 18),
+            ChildBg = Color3.fromRGB(15, 17, 21),
+            TabBg = Color3.fromRGB(19, 22, 28),
+            TabHover = Color3.fromRGB(24, 29, 38),
+            WidgetBg = Color3.fromRGB(17, 20, 25),
+            WidgetHover = Color3.fromRGB(24, 28, 36),
+            Border = Color3.fromRGB(0, 0, 0),
+            SubBorder = Color3.fromRGB(25, 32, 42),
+            Separator = Color3.fromRGB(255, 255, 255),
+            SeparatorTransparency = 0.96,
+        },
     },
     CurrentTheme = nil,
     ScreenGui = nil,
     Popups = nil,
 }
 Library.CurrentTheme = Library.Themes.Default
+
+function Library:SetTheme(themeName)
+    local theme = Library.Themes[themeName]
+    if not theme then return end
+    Library.CurrentTheme = theme
+
+    if Library.ScreenGui then
+        for _, desc in ipairs(Library.ScreenGui:GetDescendants()) do
+            if desc:IsA("Frame") or desc:IsA("ScrollingFrame") or desc:IsA("TextButton") then
+                if desc.Name == "MainWindow" or desc.Name == "VisualPreviewWindow" or string.find(desc.Name, "_SubGui$") then
+                    desc.BackgroundColor3 = theme.MainBg
+                    desc.BorderColor3 = theme.Border
+                elseif desc.Name == "Content" or desc.Name == "CharacterViewport" or string.find(desc.Name, "_SubtabsBar$") then
+                    desc.BackgroundColor3 = theme.ChildBg
+                    desc.BorderColor3 = theme.Border
+                elseif desc.Name == "Box" and desc.Parent and desc.Parent.Name == "BoxOutline" then
+                    desc.BorderColor3 = theme.Scheme
+                elseif desc.Name == "ActiveIndicator" or (desc.Name == "Fill" and desc.Parent and desc.Parent.Name == "Track") then
+                    desc.BackgroundColor3 = theme.Scheme
+                end
+            end
+        end
+    end
+end
 
 function Library:SetFont(regular, bold)
     Library.Font = regular or Library.Font
@@ -1320,13 +1392,119 @@ function Library:CreateWindow(config)
                             end)
                         end)
 
+                        local currentMode = keyCfg.Mode or "Toggle" -- "Toggle", "Hold", "Always On"
+                        local onModeChanged = keyCfg.ModeCallback or function() end
+
+                        -- Right-click popup for Keybind Mode (Toggle / Hold / Always On)
+                        local ModePopup = Instance.new("Frame")
+                        ModePopup.Name = "KeybindModePopup"
+                        ModePopup.Size = UDim2.new(0, 92, 0, 72)
+                        ModePopup.BackgroundColor3 = Library.CurrentTheme.ChildBg
+                        ModePopup.BorderSizePixel = 1
+                        ModePopup.BorderColor3 = Library.CurrentTheme.Border
+                        ModePopup.ZIndex = 120
+                        ModePopup.Visible = false
+                        ModePopup.Parent = Library.Popups
+
+                        local ModeLayout = Instance.new("UIListLayout")
+                        ModeLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                        ModeLayout.Padding = UDim.new(0, 2)
+                        ModeLayout.Parent = ModePopup
+
+                        local ModePadding = Instance.new("UIPadding")
+                        ModePadding.PaddingLeft = UDim.new(0, 4)
+                        ModePadding.PaddingRight = UDim.new(0, 4)
+                        ModePadding.PaddingTop = UDim.new(0, 4)
+                        ModePadding.PaddingBottom = UDim.new(0, 4)
+                        ModePadding.Parent = ModePopup
+
+                        local modes = { "Toggle", "Hold", "Always On" }
+                        local modeButtons = {}
+
+                        local function updateMode(newMode)
+                            currentMode = newMode
+                            for m, b in pairs(modeButtons) do
+                                if m == currentMode then
+                                    b.TextColor3 = Library.CurrentTheme.Scheme
+                                    b.Font = Library.FontBold
+                                else
+                                    b.TextColor3 = Library.CurrentTheme.TextDim
+                                    b.Font = Library.Font
+                                end
+                            end
+                            onModeChanged(currentMode)
+                        end
+
+                        for _, m in ipairs(modes) do
+                            local mBtn = Instance.new("TextButton")
+                            mBtn.Name = m .. "_Mode"
+                            mBtn.Size = UDim2.new(1, 0, 0, 20)
+                            mBtn.BackgroundTransparency = 1
+                            mBtn.Text = m
+                            mBtn.Font = (m == currentMode) and Library.FontBold or Library.Font
+                            mBtn.TextSize = 11
+                            mBtn.TextColor3 = (m == currentMode) and Library.CurrentTheme.Scheme or Library.CurrentTheme.TextDim
+                            mBtn.TextXAlignment = Enum.TextXAlignment.Left
+                            mBtn.ZIndex = 121
+                            mBtn.Parent = ModePopup
+                            modeButtons[m] = mBtn
+
+                            mBtn.MouseButton1Click:Connect(function()
+                                updateMode(m)
+                                ModePopup.Visible = false
+                            end)
+                        end
+
+                        KeyBtn.MouseButton2Click:Connect(function()
+                            if ModePopup.Visible then
+                                ModePopup.Visible = false
+                            else
+                                for _, p in ipairs(Library.Popups:GetChildren()) do
+                                    p.Visible = false
+                                end
+                                ModePopup.Position = UDim2.new(0, KeyBtn.AbsolutePosition.X, 0, KeyBtn.AbsolutePosition.Y + KeyBtn.AbsoluteSize.Y + 4)
+                                ModePopup.Visible = true
+                            end
+                        end)
+
+                        -- Hook input handling for hold vs toggle vs always on
+                        local holding = false
+                        UserInputService.InputBegan:Connect(function(input, gpe)
+                            if gpe then return end
+                            local matches = (currentKey and (input.KeyCode == currentKey or input.UserInputType == currentKey))
+                            if matches then
+                                if currentMode == "Toggle" then
+                                    toggle()
+                                elseif currentMode == "Hold" then
+                                    holding = true
+                                    update(true)
+                                end
+                            end
+                        end)
+
+                        UserInputService.InputEnded:Connect(function(input, gpe)
+                            local matches = (currentKey and (input.KeyCode == currentKey or input.UserInputType == currentKey))
+                            if matches and currentMode == "Hold" and holding then
+                                holding = false
+                                update(false)
+                            end
+                        end)
+
+                        if currentMode == "Always On" then
+                            update(true)
+                        end
+
                         return {
                             SetKey = function(_, k)
                                 currentKey = k
                                 KeyBtn.Text = " " .. formatKey(currentKey) .. " "
-                                onKeyChanged(currentKey)
+                                onKeyChanged(currentKey, currentMode)
                             end,
-                            GetKey = function(_) return currentKey end
+                            SetMode = function(_, m)
+                                updateMode(m)
+                            end,
+                            GetKey = function(_) return currentKey end,
+                            GetMode = function(_) return currentMode end,
                         }
                     end
 
