@@ -23,6 +23,8 @@ local function getGuiParent()
 end
 
 local Library = {
+    Font = Enum.Font.SourceSans,
+    FontBold = Enum.Font.SourceSansBold,
     Themes = {
         Default = {
             Scheme = Color3.fromRGB(202, 115, 132), -- #CA7384 Rose pink
@@ -46,6 +48,22 @@ local Library = {
     Popups = nil,
 }
 Library.CurrentTheme = Library.Themes.Default
+
+function Library:SetFont(regular, bold)
+    Library.Font = regular or Library.Font
+    Library.FontBold = bold or Library.FontBold
+    if Library.ScreenGui then
+        for _, desc in ipairs(Library.ScreenGui:GetDescendants()) do
+            if desc:IsA("TextLabel") or desc:IsA("TextButton") or desc:IsA("TextBox") then
+                if desc.Font == Enum.Font.SourceSansBold or desc.Font == Library.FontBold then
+                    desc.Font = Library.FontBold
+                else
+                    desc.Font = Library.Font
+                end
+            end
+        end
+    end
+end
 
 local KeyNames = {
     [Enum.UserInputType.MouseButton1] = "M1",
@@ -185,6 +203,51 @@ function Library:CreateWindow(config)
     DragBar.ZIndex = 5
     DragBar.Parent = Main
     makeDraggable(DragBar, Main)
+
+    -- Topbar Search Input
+    local SearchContainer = Instance.new("Frame")
+    SearchContainer.Name = "SearchContainer"
+    SearchContainer.Size = UDim2.new(0, 160, 0, 20)
+    SearchContainer.Position = UDim2.new(1, -170, 0, 5)
+    SearchContainer.BackgroundColor3 = Library.CurrentTheme.WidgetBg
+    SearchContainer.BorderSizePixel = 1
+    SearchContainer.BorderColor3 = Library.CurrentTheme.Border
+    SearchContainer.ZIndex = 6
+    SearchContainer.Parent = Main
+
+    local SearchBox = Instance.new("TextBox")
+    SearchBox.Name = "SearchBox"
+    SearchBox.Size = UDim2.new(1, -12, 1, 0)
+    SearchBox.Position = UDim2.new(0, 6, 0, 0)
+    SearchBox.BackgroundTransparency = 1
+    SearchBox.PlaceholderText = "Search features..."
+    SearchBox.PlaceholderColor3 = Library.CurrentTheme.TextDisabled
+    SearchBox.Text = ""
+    SearchBox.TextColor3 = Library.CurrentTheme.Text
+    SearchBox.Font = Library.Font
+    SearchBox.TextSize = 12
+    SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+    SearchBox.ClearTextOnFocus = false
+    SearchBox.ZIndex = 7
+    SearchBox.Parent = SearchContainer
+
+    local allRegisteredWidgets = {}
+    local function performSearch(query)
+        query = string.lower(query or "")
+        for _, w in ipairs(allRegisteredWidgets) do
+            if w.Frame and w.Name then
+                if query == "" then
+                    w.Frame.Visible = true
+                else
+                    w.Frame.Visible = string.find(string.lower(w.Name), query, 1, true) ~= nil
+                end
+            end
+        end
+    end
+
+    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        performSearch(SearchBox.Text)
+    end)
 
     -- Inner Container: 720 x 491 at (10, 31)
     local ContentHolder = Instance.new("Frame")
@@ -1124,6 +1187,7 @@ function Library:CreateWindow(config)
                     CheckboxFrame.Size = UDim2.new(1, 0, 0, 18)
                     CheckboxFrame.BackgroundTransparency = 1
                     CheckboxFrame.Parent = Content
+                    table.insert(allRegisteredWidgets, { Name = text, Frame = CheckboxFrame })
 
                     local Box = Instance.new("TextButton")
                     Box.Name = "Box"
@@ -1443,6 +1507,7 @@ function Library:CreateWindow(config)
                     SliderFrame.Size = UDim2.new(1, 0, 0, 24)
                     SliderFrame.BackgroundTransparency = 1
                     SliderFrame.Parent = Content
+                    table.insert(allRegisteredWidgets, { Name = text, Frame = SliderFrame })
 
                     local Label = Instance.new("TextLabel")
                     Label.Name = "Label"
@@ -1562,6 +1627,7 @@ function Library:CreateWindow(config)
                     DropdownFrame.Size = UDim2.new(1, 0, 0, 36)
                     DropdownFrame.BackgroundTransparency = 1
                     DropdownFrame.Parent = Content
+                    table.insert(allRegisteredWidgets, { Name = text, Frame = DropdownFrame })
 
                     local Label = Instance.new("TextLabel")
                     Label.Name = "Label"
@@ -1764,6 +1830,7 @@ function Library:CreateWindow(config)
                     InputHolder.Size = UDim2.new(1, 0, 0, 36)
                     InputHolder.BackgroundTransparency = 1
                     InputHolder.Parent = Content
+                    table.insert(allRegisteredWidgets, { Name = text, Frame = InputHolder })
 
                     local Label = Instance.new("TextLabel")
                     Label.Name = "Label"
@@ -1814,6 +1881,290 @@ function Library:CreateWindow(config)
         end
 
         return TabObj
+    end
+
+    local HttpService = game:GetService("HttpService")
+
+    -- 1. Sub GUI / Floating Windows builder (e.g. keybind list, spectator list, watermark, custom panels)
+    function WindowObj:CreateSubGui(subConfig)
+        subConfig = subConfig or {}
+        local title = subConfig.Title or "Window"
+        local size = subConfig.Size or Vector2.new(180, 200)
+        local position = subConfig.Position or UDim2.new(0, 50, 0, 50)
+
+        local SubWindow = Instance.new("Frame")
+        SubWindow.Name = title .. "_SubGui"
+        SubWindow.Size = UDim2.new(0, size.X, 0, size.Y)
+        SubWindow.Position = position
+        SubWindow.BackgroundColor3 = Library.CurrentTheme.MainBg
+        SubWindow.BorderSizePixel = 1
+        SubWindow.BorderColor3 = Library.CurrentTheme.Border
+        SubWindow.Active = true
+        SubWindow.ClipsDescendants = false
+        SubWindow.Visible = subConfig.Visible ~= false
+        SubWindow.Parent = ScreenGui
+
+        local TopShine = Instance.new("Frame")
+        TopShine.Name = "TopShine"
+        TopShine.Size = UDim2.new(1, 0, 0, 20)
+        TopShine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        TopShine.BorderSizePixel = 0
+        TopShine.ZIndex = 2
+        TopShine.Parent = SubWindow
+
+        local Grad = Instance.new("UIGradient")
+        Grad.Rotation = 90
+        Grad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.97),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        Grad.Parent = TopShine
+
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Name = "Title"
+        TitleLabel.Size = UDim2.new(1, -12, 0, 20)
+        TitleLabel.Position = UDim2.new(0, 6, 0, 0)
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Text = title
+        TitleLabel.Font = Library.FontBold
+        TitleLabel.TextSize = 12
+        TitleLabel.TextColor3 = Library.CurrentTheme.TextDim
+        TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TitleLabel.ZIndex = 3
+        TitleLabel.Parent = SubWindow
+
+        local DragHandle = Instance.new("Frame")
+        DragHandle.Name = "DragHandle"
+        DragHandle.Size = UDim2.new(1, 0, 0, 20)
+        DragHandle.BackgroundTransparency = 1
+        DragHandle.ZIndex = 4
+        DragHandle.Parent = SubWindow
+        makeDraggable(DragHandle, SubWindow)
+
+        local SubContent = Instance.new("ScrollingFrame")
+        SubContent.Name = "Content"
+        SubContent.Size = UDim2.new(1, -10, 1, -26)
+        SubContent.Position = UDim2.new(0, 5, 0, 22)
+        SubContent.BackgroundColor3 = Library.CurrentTheme.ChildBg
+        SubContent.BorderSizePixel = 1
+        SubContent.BorderColor3 = Library.CurrentTheme.Border
+        SubContent.ScrollBarThickness = 2
+        SubContent.ScrollBarImageColor3 = Library.CurrentTheme.WidgetHover
+        SubContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        SubContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        SubContent.Parent = SubWindow
+
+        local SubLayout = Instance.new("UIListLayout")
+        SubLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        SubLayout.Padding = UDim.new(0, 4)
+        SubLayout.Parent = SubContent
+
+        local SubPadding = Instance.new("UIPadding")
+        SubPadding.PaddingLeft = UDim.new(0, 6)
+        SubPadding.PaddingRight = UDim.new(0, 6)
+        SubPadding.PaddingTop = UDim.new(0, 6)
+        SubPadding.PaddingBottom = UDim.new(0, 6)
+        SubPadding.Parent = SubContent
+
+        local SubGuiObj = {
+            Window = SubWindow,
+            Content = SubContent,
+            Title = TitleLabel,
+        }
+
+        function SubGuiObj:SetVisible(vis)
+            SubWindow.Visible = vis
+        end
+
+        function SubGuiObj:AddLabel(text)
+            local lbl = Instance.new("TextLabel")
+            lbl.Size = UDim2.new(1, 0, 0, 16)
+            lbl.BackgroundTransparency = 1
+            lbl.Text = text
+            lbl.Font = Library.Font
+            lbl.TextSize = 12
+            lbl.TextColor3 = Library.CurrentTheme.Text
+            lbl.TextXAlignment = Enum.TextXAlignment.Left
+            lbl.Parent = SubContent
+            return {
+                SetText = function(_, t) lbl.Text = t end,
+                SetColor = function(_, c) lbl.TextColor3 = c end,
+                Remove = function() lbl:Destroy() end,
+            }
+        end
+
+        function SubGuiObj:AddRow(leftText, rightText)
+            local row = Instance.new("Frame")
+            row.Size = UDim2.new(1, 0, 0, 16)
+            row.BackgroundTransparency = 1
+            row.Parent = SubContent
+
+            local leftLbl = Instance.new("TextLabel")
+            leftLbl.Size = UDim2.new(0.65, 0, 1, 0)
+            leftLbl.BackgroundTransparency = 1
+            leftLbl.Text = leftText
+            leftLbl.Font = Library.Font
+            leftLbl.TextSize = 12
+            leftLbl.TextColor3 = Library.CurrentTheme.Text
+            leftLbl.TextXAlignment = Enum.TextXAlignment.Left
+            leftLbl.Parent = row
+
+            local rightLbl = Instance.new("TextLabel")
+            rightLbl.Size = UDim2.new(0.35, 0, 1, 0)
+            rightLbl.Position = UDim2.new(0.65, 0, 0, 0)
+            rightLbl.BackgroundTransparency = 1
+            rightLbl.Text = rightText
+            rightLbl.Font = Library.FontBold
+            rightLbl.TextSize = 12
+            rightLbl.TextColor3 = Library.CurrentTheme.Scheme
+            rightLbl.TextXAlignment = Enum.TextXAlignment.Right
+            rightLbl.Parent = row
+
+            return {
+                SetLeft = function(_, t) leftLbl.Text = t end,
+                SetRight = function(_, t) rightLbl.Text = t end,
+                SetColor = function(_, c) rightLbl.TextColor3 = c end,
+                Remove = function() row:Destroy() end,
+            }
+        end
+
+        return SubGuiObj
+    end
+
+    -- 2. Dedicated Keybind List
+    function WindowObj:KeybindList(cfg)
+        cfg = cfg or {}
+        local sub = self:CreateSubGui({
+            Title = cfg.Title or "Keybinds",
+            Size = cfg.Size or Vector2.new(160, 180),
+            Position = cfg.Position or UDim2.new(0, 30, 0.5, -90),
+            Visible = cfg.Visible ~= false,
+        })
+
+        local keybindRows = {}
+
+        local KeybindAPI = {
+            SubGui = sub,
+            Rows = keybindRows,
+        }
+
+        function KeybindAPI:SetVisible(vis)
+            sub:SetVisible(vis)
+        end
+
+        function KeybindAPI:Add(name, key, state)
+            if keybindRows[name] then
+                keybindRows[name]:Remove()
+            end
+            local row = sub:AddRow(name, "[" .. formatKey(key) .. "]")
+            keybindRows[name] = row
+            return row
+        end
+
+        function KeybindAPI:Update(name, state)
+            if keybindRows[name] then
+                keybindRows[name]:SetColor(state and Library.CurrentTheme.Scheme or Library.CurrentTheme.TextDim)
+            end
+        end
+
+        function KeybindAPI:Remove(name)
+            if keybindRows[name] then
+                keybindRows[name]:Remove()
+                keybindRows[name] = nil
+            end
+        end
+
+        return KeybindAPI
+    end
+
+    -- 3. Config System (JSON files saved into workspace/{FolderName}/configs/)
+    function WindowObj:ConfigManager(cfgOptions)
+        cfgOptions = cfgOptions or {}
+        local folderName = cfgOptions.Folder or Title
+        local configDir = folderName .. "/configs"
+
+        local function ensureDir()
+            if typeof(isfolder) == "function" and typeof(makefolder) == "function" then
+                pcall(function()
+                    if not isfolder(folderName) then makefolder(folderName) end
+                    if not isfolder(configDir) then makefolder(configDir) end
+                end)
+            end
+        end
+
+        ensureDir()
+
+        local ConfigAPI = {
+            Folder = folderName,
+            Directory = configDir,
+        }
+
+        function ConfigAPI:Save(name, dataTable)
+            ensureDir()
+            local json = HttpService:JSONEncode(dataTable)
+            local filePath = configDir .. "/" .. name .. ".json"
+            if typeof(writefile) == "function" then
+                writefile(filePath, json)
+                return true, filePath
+            end
+            return false, "writefile not supported"
+        end
+
+        function ConfigAPI:Load(name)
+            ensureDir()
+            local filePath = configDir .. "/" .. name .. ".json"
+            if typeof(readfile) == "function" and typeof(isfile) == "function" then
+                if isfile(filePath) then
+                    local content = readfile(filePath)
+                    local ok, decoded = pcall(function()
+                        return HttpService:JSONDecode(content)
+                    end)
+                    if ok then return decoded end
+                end
+            end
+            return nil
+        end
+
+        function ConfigAPI:List()
+            ensureDir()
+            local configs = {}
+            if typeof(listfiles) == "function" then
+                local ok, files = pcall(function() return listfiles(configDir) end)
+                if ok and files then
+                    for _, path in ipairs(files) do
+                        local fileName = string.match(path, "([^/\\]+)%.json$")
+                        if fileName then
+                            table.insert(configs, fileName)
+                        end
+                    end
+                end
+            end
+            return configs
+        end
+
+        function ConfigAPI:ExportToClipboard(dataTable)
+            local json = HttpService:JSONEncode(dataTable)
+            if typeof(setclipboard) == "function" then
+                setclipboard(json)
+                return true
+            end
+            return false
+        end
+
+        function ConfigAPI:ImportFromClipboard()
+            if typeof(getclipboard) == "function" then
+                local clip = getclipboard()
+                local ok, decoded = pcall(function()
+                    return HttpService:JSONDecode(clip)
+                end)
+                if ok and typeof(decoded) == "table" then
+                    return decoded
+                end
+            end
+            return nil
+        end
+
+        return ConfigAPI
     end
 
     -- Toggle menu key (Insert or RightControl)
