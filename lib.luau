@@ -325,6 +325,302 @@ function Library:CreateWindow(config)
         if newRotation then LogoImage.Rotation = newRotation end
     end
 
+    -- Visuals ESP / Character Preview System (1-1 Slate / Millionware style)
+    function WindowObj:CreatePreview(previewConfig)
+        previewConfig = previewConfig or {}
+        local PreviewSize = previewConfig.Size or Vector2.new(240, 360)
+        local PreviewOffset = previewConfig.Offset or Vector2.new(16, 0)
+
+        local PreviewFrame = Instance.new("Frame")
+        PreviewFrame.Name = "VisualPreviewWindow"
+        PreviewFrame.Size = UDim2.new(0, PreviewSize.X, 0, PreviewSize.Y)
+        PreviewFrame.Position = UDim2.new(0, Main.AbsolutePosition.X + Main.AbsoluteSize.X + PreviewOffset.X, 0, Main.AbsolutePosition.Y + PreviewOffset.Y)
+        PreviewFrame.BackgroundColor3 = Library.CurrentTheme.MainBg
+        PreviewFrame.BorderSizePixel = 1
+        PreviewFrame.BorderColor3 = Library.CurrentTheme.Border
+        PreviewFrame.Active = true
+        PreviewFrame.ClipsDescendants = false
+        PreviewFrame.Visible = previewConfig.Visible ~= false
+        PreviewFrame.Parent = ScreenGui
+
+        -- Top gradient shine
+        local PrevShine = Instance.new("Frame")
+        PrevShine.Name = "TopShine"
+        PrevShine.Size = UDim2.new(1, 0, 0, 24)
+        PrevShine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        PrevShine.BorderSizePixel = 0
+        PrevShine.ZIndex = 2
+        PrevShine.Parent = PreviewFrame
+
+        local PrevGrad = Instance.new("UIGradient")
+        PrevGrad.Rotation = 90
+        PrevGrad.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.97),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        PrevGrad.Parent = PrevShine
+
+        -- Title
+        local PrevTitle = Instance.new("TextLabel")
+        PrevTitle.Name = "Title"
+        PrevTitle.Size = UDim2.new(1, -16, 0, 24)
+        PrevTitle.Position = UDim2.new(0, 8, 0, 0)
+        PrevTitle.BackgroundTransparency = 1
+        PrevTitle.Text = previewConfig.Title or "ESP Preview"
+        PrevTitle.Font = Enum.Font.SourceSansBold
+        PrevTitle.TextSize = 13
+        PrevTitle.TextColor3 = Library.CurrentTheme.TextDim
+        PrevTitle.TextXAlignment = Enum.TextXAlignment.Left
+        PrevTitle.ZIndex = 3
+        PrevTitle.Parent = PreviewFrame
+
+        -- Viewport container
+        local Viewport = Instance.new("ViewportFrame")
+        Viewport.Name = "CharacterViewport"
+        Viewport.Size = UDim2.new(1, -16, 1, -34)
+        Viewport.Position = UDim2.new(0, 8, 0, 26)
+        Viewport.BackgroundColor3 = Library.CurrentTheme.ChildBg
+        Viewport.BorderSizePixel = 1
+        Viewport.BorderColor3 = Library.CurrentTheme.Border
+        Viewport.Ambient = Color3.fromRGB(180, 180, 180)
+        Viewport.LightColor = Color3.fromRGB(255, 255, 255)
+        Viewport.LightDirection = Vector3.new(-1, -1, -1)
+        Viewport.Parent = PreviewFrame
+
+        local ViewportCamera = Instance.new("Camera")
+        Viewport.CurrentCamera = ViewportCamera
+        ViewportCamera.Parent = Viewport
+
+        -- Create a dummy R15/R6 rig for the viewport
+        local Rig = Instance.new("Model")
+        Rig.Name = "DummyRig"
+        Rig.Parent = Viewport
+
+        local function makeLimb(name, size, cframe)
+            local part = Instance.new("Part")
+            part.Name = name
+            part.Size = size
+            part.CFrame = cframe
+            part.Anchored = true
+            part.CanCollide = false
+            part.Material = Enum.Material.SmoothPlastic
+            part.Color = Color3.fromRGB(150, 150, 155)
+            part.TopSurface = Enum.SurfaceType.Smooth
+            part.BottomSurface = Enum.SurfaceType.Smooth
+            part.Parent = Rig
+            return part
+        end
+
+        local root = makeLimb("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(0, 3, 0))
+        root.Transparency = 1
+        local head = makeLimb("Head", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, 4.6, 0))
+        local torso = makeLimb("UpperTorso", Vector3.new(2, 1.6, 1), CFrame.new(0, 3.2, 0))
+        local lowerTorso = makeLimb("LowerTorso", Vector3.new(1.9, 0.8, 1), CFrame.new(0, 2.0, 0))
+        local leftArm = makeLimb("LeftArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(-1.5, 3.0, 0))
+        local rightArm = makeLimb("RightArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(1.5, 3.0, 0))
+        local leftLeg = makeLimb("LeftLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(-0.55, 0.7, 0))
+        local rightLeg = makeLimb("RightLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(0.55, 0.7, 0))
+
+        -- Position camera directly facing the rig
+        ViewportCamera.CFrame = CFrame.new(Vector3.new(0, 3.2, 8.5), Vector3.new(0, 3.0, 0))
+
+        -- 2D ESP Overlays over the Viewport
+        local ESPContainer = Instance.new("Frame")
+        ESPContainer.Name = "ESPContainer"
+        ESPContainer.Size = UDim2.new(1, 0, 1, 0)
+        ESPContainer.BackgroundTransparency = 1
+        ESPContainer.ZIndex = 5
+        ESPContainer.Parent = Viewport
+
+        -- ESP Box (Bounding Box)
+        local BoxOutline = Instance.new("Frame")
+        BoxOutline.Name = "BoxOutline"
+        BoxOutline.Size = UDim2.new(0.68, 0, 0.85, 0)
+        BoxOutline.Position = UDim2.new(0.16, 0, 0.08, 0)
+        BoxOutline.BackgroundTransparency = 1
+        BoxOutline.BorderSizePixel = 1
+        BoxOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        BoxOutline.Visible = false
+        BoxOutline.Parent = ESPContainer
+
+        local BoxMain = Instance.new("Frame")
+        BoxMain.Name = "Box"
+        BoxMain.Size = UDim2.new(1, -2, 1, -2)
+        BoxMain.Position = UDim2.new(0, 1, 0, 1)
+        BoxMain.BackgroundTransparency = 1
+        BoxMain.BorderSizePixel = 1
+        BoxMain.BorderColor3 = Library.CurrentTheme.Scheme
+        BoxMain.Parent = BoxOutline
+
+        -- Name Label
+        local NameTag = Instance.new("TextLabel")
+        NameTag.Name = "NameTag"
+        NameTag.Size = UDim2.new(1, 0, 0, 14)
+        NameTag.Position = UDim2.new(0, 0, 0, -16)
+        NameTag.BackgroundTransparency = 1
+        NameTag.Text = "Drake [100m]"
+        NameTag.Font = Enum.Font.SourceSansBold
+        NameTag.TextSize = 12
+        NameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
+        NameTag.TextStrokeTransparency = 0.4
+        NameTag.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        NameTag.Visible = false
+        NameTag.Parent = BoxOutline
+
+        -- Health Bar
+        local HealthBarBg = Instance.new("Frame")
+        HealthBarBg.Name = "HealthBarBg"
+        HealthBarBg.Size = UDim2.new(0, 4, 1, 0)
+        HealthBarBg.Position = UDim2.new(0, -7, 0, 0)
+        HealthBarBg.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        HealthBarBg.BorderSizePixel = 1
+        HealthBarBg.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        HealthBarBg.Visible = false
+        HealthBarBg.Parent = BoxOutline
+
+        local HealthBarFill = Instance.new("Frame")
+        HealthBarFill.Name = "Fill"
+        HealthBarFill.Size = UDim2.new(1, 0, 1, 0)
+        HealthBarFill.Position = UDim2.new(0, 0, 0, 0)
+        HealthBarFill.BackgroundColor3 = Color3.fromRGB(80, 220, 80)
+        HealthBarFill.BorderSizePixel = 0
+        HealthBarFill.Parent = HealthBarBg
+
+        -- Skeleton lines (Head -> Torso -> Arms & Legs)
+        local SkeletonFolder = Instance.new("Folder")
+        SkeletonFolder.Name = "SkeletonLines"
+        SkeletonFolder.Parent = ESPContainer
+
+        local function makeBone(pos1, pos2)
+            local bone = Instance.new("Frame")
+            bone.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            bone.BorderSizePixel = 0
+            bone.ZIndex = 6
+            bone.Visible = false
+            bone.Parent = SkeletonFolder
+            return bone
+        end
+
+        local bones = {
+            makeBone(), -- Spine / Neck
+            makeBone(), -- Left Shoulder
+            makeBone(), -- Right Shoulder
+            makeBone(), -- Left Hip
+            makeBone(), -- Right Hip
+        }
+
+        local function updateSkeleton()
+            local w = Viewport.AbsoluteSize.X
+            local h = Viewport.AbsoluteSize.Y
+            if w <= 0 or h <= 0 then return end
+
+            local points = {
+                Head = Vector2.new(w * 0.5, h * 0.16),
+                Torso = Vector2.new(w * 0.5, h * 0.42),
+                LeftArm = Vector2.new(w * 0.28, h * 0.45),
+                RightArm = Vector2.new(w * 0.72, h * 0.45),
+                Pelvis = Vector2.new(w * 0.5, h * 0.60),
+                LeftFoot = Vector2.new(w * 0.38, h * 0.88),
+                RightFoot = Vector2.new(w * 0.62, h * 0.88),
+            }
+
+            local pairsList = {
+                { points.Head, points.Torso },
+                { points.Torso, points.LeftArm },
+                { points.Torso, points.RightArm },
+                { points.Pelvis, points.LeftFoot },
+                { points.Pelvis, points.RightFoot },
+            }
+
+            for idx, pair in ipairs(pairsList) do
+                local b = bones[idx]
+                if b then
+                    local p1, p2 = pair[1], pair[2]
+                    local dist = (p2 - p1).Magnitude
+                    local center = (p1 + p2) / 2
+                    local angle = math.deg(math.atan2(p2.Y - p1.Y, p2.X - p1.X))
+                    b.Size = UDim2.new(0, dist, 0, 1.5)
+                    b.Position = UDim2.new(0, center.X - dist / 2, 0, center.Y)
+                    b.Rotation = angle
+                end
+            end
+        end
+
+        Viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSkeleton)
+        task.delay(0.1, updateSkeleton)
+
+        -- Keep preview attached/relative to Main window drag
+        local function syncPreviewPosition()
+            PreviewFrame.Position = UDim2.new(
+                Main.Position.X.Scale,
+                Main.Position.X.Offset + Main.AbsoluteSize.X + PreviewOffset.X,
+                Main.Position.Y.Scale,
+                Main.Position.Y.Offset + PreviewOffset.Y
+            )
+        end
+        Main:GetPropertyChangedSignal("Position"):Connect(syncPreviewPosition)
+        makeDraggable(PrevTitle, PreviewFrame)
+
+        -- Controller object returned to user
+        local PreviewObj = {
+            Frame = PreviewFrame,
+            Viewport = Viewport,
+            Rig = Rig,
+            Box = BoxOutline,
+            BoxColor = BoxMain,
+            NameTag = NameTag,
+            HealthBar = HealthBarBg,
+            HealthFill = HealthBarFill,
+            Skeleton = SkeletonFolder,
+        }
+
+        function PreviewObj:SetVisible(visible)
+            PreviewFrame.Visible = visible
+        end
+
+        function PreviewObj:SetBox(enabled, color)
+            BoxOutline.Visible = enabled
+            if color then
+                BoxMain.BorderColor3 = color
+            end
+        end
+
+        function PreviewObj:SetName(enabled, text, color)
+            NameTag.Visible = enabled
+            if text then NameTag.Text = text end
+            if color then NameTag.TextColor3 = color end
+        end
+
+        function PreviewObj:SetHealth(enabled, percent, color)
+            HealthBarBg.Visible = enabled
+            percent = math.clamp(percent or 1, 0, 1)
+            HealthBarFill.Size = UDim2.new(1, 0, percent, 0)
+            HealthBarFill.Position = UDim2.new(0, 0, 1 - percent, 0)
+            if color then
+                HealthBarFill.BackgroundColor3 = color
+            end
+        end
+
+        function PreviewObj:SetSkeleton(enabled, color)
+            for _, b in ipairs(bones) do
+                b.Visible = enabled
+                if color then b.BackgroundColor3 = color end
+            end
+        end
+
+        function PreviewObj:SetChams(enabled, color, material)
+            for _, part in ipairs(Rig:GetChildren()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.Color = color or Color3.fromRGB(150, 150, 155)
+                    part.Material = material or (enabled and Enum.Material.ForceField or Enum.Material.SmoothPlastic)
+                end
+            end
+        end
+
+        WindowObj.Preview = PreviewObj
+        return PreviewObj
+    end
+
     function WindowObj:Tab(tabName)
         local TabObj = {
             Name = tabName,
@@ -1382,6 +1678,9 @@ function Library:CreateWindow(config)
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and (input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightControl) then
             Main.Visible = not Main.Visible
+            if WindowObj.Preview then
+                WindowObj.Preview:SetVisible(Main.Visible)
+            end
             if not Main.Visible then
                 for _, p in ipairs(Library.Popups:GetChildren()) do
                     p.Visible = false
