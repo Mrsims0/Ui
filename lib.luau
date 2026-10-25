@@ -391,40 +391,75 @@ function Library:CreateWindow(config)
         Viewport.CurrentCamera = ViewportCamera
         ViewportCamera.Parent = Viewport
 
-        -- Create a dummy R15/R6 rig for the viewport
-        local Rig = Instance.new("Model")
-        Rig.Name = "DummyRig"
-        Rig.Parent = Viewport
+        local Rig = nil
+        local function setupRig()
+            if Rig then Rig:Destroy() end
+            local localChar = Players.LocalPlayer and Players.LocalPlayer.Character
+            if localChar and localChar:FindFirstChild("HumanoidRootPart") then
+                local backupArch = localChar.Archivable
+                localChar.Archivable = true
+                local clone = localChar:Clone()
+                localChar.Archivable = backupArch
+                for _, desc in ipairs(clone:GetDescendants()) do
+                    if desc:IsA("Script") or desc:IsA("LocalScript") or desc:IsA("Sound") or desc:IsA("BillboardGui") then
+                        desc:Destroy()
+                    elseif desc:IsA("BasePart") then
+                        desc.Anchored = true
+                        desc.CanCollide = false
+                    end
+                end
+                clone.Parent = Viewport
+                local hrp = clone:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    clone:MoveTo(Vector3.new(0, 0, 0))
+                end
+                Rig = clone
+            else
+                Rig = Instance.new("Model")
+                Rig.Name = "DummyRig"
+                Rig.Parent = Viewport
 
-        local function makeLimb(name, size, cframe)
-            local part = Instance.new("Part")
-            part.Name = name
-            part.Size = size
-            part.CFrame = cframe
-            part.Anchored = true
-            part.CanCollide = false
-            part.Material = Enum.Material.SmoothPlastic
-            part.Color = Color3.fromRGB(150, 150, 155)
-            part.TopSurface = Enum.SurfaceType.Smooth
-            part.BottomSurface = Enum.SurfaceType.Smooth
-            part.Parent = Rig
-            return part
+                local function makeLimb(name, size, cframe)
+                    local part = Instance.new("Part")
+                    part.Name = name
+                    part.Size = size
+                    part.CFrame = cframe
+                    part.Anchored = true
+                    part.CanCollide = false
+                    part.Material = Enum.Material.SmoothPlastic
+                    part.Color = Color3.fromRGB(150, 150, 155)
+                    part.TopSurface = Enum.SurfaceType.Smooth
+                    part.BottomSurface = Enum.SurfaceType.Smooth
+                    part.Parent = Rig
+                    return part
+                end
+
+                local root = makeLimb("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(0, 3, 0))
+                root.Transparency = 1
+                makeLimb("Head", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, 4.6, 0))
+                makeLimb("UpperTorso", Vector3.new(2, 1.6, 1), CFrame.new(0, 3.2, 0))
+                makeLimb("LowerTorso", Vector3.new(1.9, 0.8, 1), CFrame.new(0, 2.0, 0))
+                makeLimb("LeftArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(-1.5, 3.0, 0))
+                makeLimb("RightArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(1.5, 3.0, 0))
+                makeLimb("LeftLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(-0.55, 0.7, 0))
+                makeLimb("RightLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(0.55, 0.7, 0))
+            end
+
+            local cf, sz = Rig:GetBoundingBox()
+            local maxDim = math.max(sz.X, sz.Y, sz.Z)
+            local dist = maxDim * 1.55
+            ViewportCamera.FieldOfView = 50
+            ViewportCamera.CFrame = CFrame.new(cf.Position + Vector3.new(0, 0.1, dist), cf.Position)
         end
 
-        local root = makeLimb("HumanoidRootPart", Vector3.new(2, 2, 1), CFrame.new(0, 3, 0))
-        root.Transparency = 1
-        local head = makeLimb("Head", Vector3.new(1.2, 1.2, 1.2), CFrame.new(0, 4.6, 0))
-        local torso = makeLimb("UpperTorso", Vector3.new(2, 1.6, 1), CFrame.new(0, 3.2, 0))
-        local lowerTorso = makeLimb("LowerTorso", Vector3.new(1.9, 0.8, 1), CFrame.new(0, 2.0, 0))
-        local leftArm = makeLimb("LeftArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(-1.5, 3.0, 0))
-        local rightArm = makeLimb("RightArm", Vector3.new(0.9, 2.2, 0.9), CFrame.new(1.5, 3.0, 0))
-        local leftLeg = makeLimb("LeftLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(-0.55, 0.7, 0))
-        local rightLeg = makeLimb("RightLeg", Vector3.new(0.9, 2.4, 0.9), CFrame.new(0.55, 0.7, 0))
+        setupRig()
+        if Players.LocalPlayer then
+            Players.LocalPlayer.CharacterAdded:Connect(function()
+                task.wait(0.5)
+                setupRig()
+            end)
+        end
 
-        -- Position camera directly facing the rig
-        ViewportCamera.CFrame = CFrame.new(Vector3.new(0, 3.2, 8.5), Vector3.new(0, 3.0, 0))
-
-        -- 2D ESP Overlays over the Viewport
         local ESPContainer = Instance.new("Frame")
         ESPContainer.Name = "ESPContainer"
         ESPContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -432,11 +467,10 @@ function Library:CreateWindow(config)
         ESPContainer.ZIndex = 5
         ESPContainer.Parent = Viewport
 
-        -- ESP Box (Bounding Box)
         local BoxOutline = Instance.new("Frame")
         BoxOutline.Name = "BoxOutline"
-        BoxOutline.Size = UDim2.new(0.68, 0, 0.85, 0)
-        BoxOutline.Position = UDim2.new(0.16, 0, 0.08, 0)
+        BoxOutline.Size = UDim2.new(0.58, 0, 0.82, 0)
+        BoxOutline.Position = UDim2.new(0.21, 0, 0.09, 0)
         BoxOutline.BackgroundTransparency = 1
         BoxOutline.BorderSizePixel = 1
         BoxOutline.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -452,13 +486,12 @@ function Library:CreateWindow(config)
         BoxMain.BorderColor3 = Library.CurrentTheme.Scheme
         BoxMain.Parent = BoxOutline
 
-        -- Name Label
         local NameTag = Instance.new("TextLabel")
         NameTag.Name = "NameTag"
         NameTag.Size = UDim2.new(1, 0, 0, 14)
         NameTag.Position = UDim2.new(0, 0, 0, -16)
         NameTag.BackgroundTransparency = 1
-        NameTag.Text = "Drake [100m]"
+        NameTag.Text = (Players.LocalPlayer and Players.LocalPlayer.DisplayName or "LocalPlayer") .. " [0m]"
         NameTag.Font = Enum.Font.SourceSansBold
         NameTag.TextSize = 12
         NameTag.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -467,7 +500,6 @@ function Library:CreateWindow(config)
         NameTag.Visible = false
         NameTag.Parent = BoxOutline
 
-        -- Health Bar
         local HealthBarBg = Instance.new("Frame")
         HealthBarBg.Name = "HealthBarBg"
         HealthBarBg.Size = UDim2.new(0, 4, 1, 0)
@@ -486,12 +518,11 @@ function Library:CreateWindow(config)
         HealthBarFill.BorderSizePixel = 0
         HealthBarFill.Parent = HealthBarBg
 
-        -- Skeleton lines (Head -> Torso -> Arms & Legs)
         local SkeletonFolder = Instance.new("Folder")
         SkeletonFolder.Name = "SkeletonLines"
         SkeletonFolder.Parent = ESPContainer
 
-        local function makeBone(pos1, pos2)
+        local function makeBone()
             local bone = Instance.new("Frame")
             bone.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             bone.BorderSizePixel = 0
@@ -502,11 +533,11 @@ function Library:CreateWindow(config)
         end
 
         local bones = {
-            makeBone(), -- Spine / Neck
-            makeBone(), -- Left Shoulder
-            makeBone(), -- Right Shoulder
-            makeBone(), -- Left Hip
-            makeBone(), -- Right Hip
+            makeBone(),
+            makeBone(),
+            makeBone(),
+            makeBone(),
+            makeBone(),
         }
 
         local function updateSkeleton()
@@ -515,13 +546,13 @@ function Library:CreateWindow(config)
             if w <= 0 or h <= 0 then return end
 
             local points = {
-                Head = Vector2.new(w * 0.5, h * 0.16),
-                Torso = Vector2.new(w * 0.5, h * 0.42),
-                LeftArm = Vector2.new(w * 0.28, h * 0.45),
-                RightArm = Vector2.new(w * 0.72, h * 0.45),
-                Pelvis = Vector2.new(w * 0.5, h * 0.60),
-                LeftFoot = Vector2.new(w * 0.38, h * 0.88),
-                RightFoot = Vector2.new(w * 0.62, h * 0.88),
+                Head = Vector2.new(w * 0.5, h * 0.17),
+                Torso = Vector2.new(w * 0.5, h * 0.41),
+                LeftArm = Vector2.new(w * 0.28, h * 0.44),
+                RightArm = Vector2.new(w * 0.72, h * 0.44),
+                Pelvis = Vector2.new(w * 0.5, h * 0.57),
+                LeftFoot = Vector2.new(w * 0.36, h * 0.88),
+                RightFoot = Vector2.new(w * 0.64, h * 0.88),
             }
 
             local pairsList = {
@@ -549,7 +580,6 @@ function Library:CreateWindow(config)
         Viewport:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateSkeleton)
         task.delay(0.1, updateSkeleton)
 
-        -- Keep preview attached/relative to Main window drag
         local function syncPreviewPosition()
             PreviewFrame.Position = UDim2.new(
                 Main.Position.X.Scale,
@@ -561,7 +591,6 @@ function Library:CreateWindow(config)
         Main:GetPropertyChangedSignal("Position"):Connect(syncPreviewPosition)
         makeDraggable(PrevTitle, PreviewFrame)
 
-        -- Controller object returned to user
         local PreviewObj = {
             Frame = PreviewFrame,
             Viewport = Viewport,
@@ -609,7 +638,8 @@ function Library:CreateWindow(config)
         end
 
         function PreviewObj:SetChams(enabled, color, material)
-            for _, part in ipairs(Rig:GetChildren()) do
+            if not Rig then return end
+            for _, part in ipairs(Rig:GetDescendants()) do
                 if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
                     part.Color = color or Color3.fromRGB(150, 150, 155)
                     part.Material = material or (enabled and Enum.Material.ForceField or Enum.Material.SmoothPlastic)
@@ -1402,6 +1432,18 @@ function Library:CreateWindow(config)
                         Set = function(_, v) update(v, true) end,
                         Get = function(_) return value end
                     }
+                end
+
+                function SectionObj:SliderInt(cfg)
+                    cfg = cfg or {}
+                    cfg.Float = false
+                    return self:Slider(cfg)
+                end
+
+                function SectionObj:SliderFloat(cfg)
+                    cfg = cfg or {}
+                    cfg.Float = true
+                    return self:Slider(cfg)
                 end
 
                 -- Dropdown / Combo Widget (34px total height, arrow on right, popup below)
