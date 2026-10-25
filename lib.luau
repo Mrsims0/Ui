@@ -148,7 +148,7 @@ function Library:CreateWindow(config)
     Popups.Parent = ScreenGui
     Library.Popups = Popups
 
-    -- Main Container Window (740x532 exact)
+    -- Main Container Window (740x532 exact)https://127.0.0.1:56283/static/artifacts/3c1aa325-0e0b-4511-bf47-b18badca1dc6/.user_uploaded/media_1792905838744.png?csrf=f3d542ed-fe1a-4e4d-8f87-f472e09a5ca7
     local Main = Instance.new("Frame")
     Main.Name = "MainWindow"
     Main.Size = UDim2.new(0, Size.X, 0, Size.Y)
@@ -279,41 +279,7 @@ function Library:CreateWindow(config)
     MainArea.ClipsDescendants = false
     MainArea.Parent = ContentHolder
 
-    -- Subtabs bar (22px high, sits directly at the top of MainArea)
-    local SubtabsBar = Instance.new("Frame")
-    SubtabsBar.Name = "SubtabsBar"
-    SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
-    SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
-    SubtabsBar.BackgroundColor3 = Library.CurrentTheme.ChildBg
-    SubtabsBar.BackgroundTransparency = 0
-    SubtabsBar.BorderSizePixel = 0
-    SubtabsBar.ClipsDescendants = false
-    SubtabsBar.ZIndex = 3
-    SubtabsBar.Parent = MainArea
-
-    -- Bottom border line under subtabs
-    local SubtabsLine = Instance.new("Frame")
-    SubtabsLine.Name = "BottomLine"
-    SubtabsLine.Size = UDim2.new(1, 0, 0, 1)
-    SubtabsLine.Position = UDim2.new(0, 0, 1, -1)
-    SubtabsLine.BackgroundColor3 = Library.CurrentTheme.Border
-    SubtabsLine.BorderSizePixel = 0
-    SubtabsLine.ZIndex = 4
-    SubtabsLine.Parent = SubtabsBar
-
-    local SubtabsLayout = Instance.new("UIListLayout")
-    SubtabsLayout.FillDirection = Enum.FillDirection.Horizontal
-    SubtabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    SubtabsLayout.Parent = SubtabsBar
-
-    -- Page Container (sits right below the Subtabs bar)
-    local PageContainer = Instance.new("Frame")
-    PageContainer.Name = "PageContainer"
-    PageContainer.Size = UDim2.new(1, 0, 1, -28)
-    PageContainer.Position = UDim2.new(0, 0, 0, 28)
-    PageContainer.BackgroundTransparency = 1
-    PageContainer.ClipsDescendants = false
-    PageContainer.Parent = MainArea
+    -- PageContainer and Subtabs are created per TabObj inside Tab()
 
     local WindowObj = {
         Tabs = {},
@@ -378,6 +344,41 @@ function Library:CreateWindow(config)
             end
         end)
 
+        -- Each Tab gets its own dedicated SubtabsBar and PageContainer inside MainArea
+        local SubtabsBar = Instance.new("Frame")
+        SubtabsBar.Name = tabName .. "_SubtabsBar"
+        SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
+        SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
+        SubtabsBar.BackgroundColor3 = Library.CurrentTheme.ChildBg
+        SubtabsBar.BorderSizePixel = 0
+        SubtabsBar.ZIndex = 3
+        SubtabsBar.Visible = false
+        SubtabsBar.Parent = MainArea
+        TabObj.SubtabsBar = SubtabsBar
+
+        local SubtabsLine = Instance.new("Frame")
+        SubtabsLine.Name = "BottomLine"
+        SubtabsLine.Size = UDim2.new(1, 0, 0, 1)
+        SubtabsLine.Position = UDim2.new(0, 0, 1, -1)
+        SubtabsLine.BackgroundColor3 = Library.CurrentTheme.Border
+        SubtabsLine.BorderSizePixel = 0
+        SubtabsLine.ZIndex = 4
+        SubtabsLine.Parent = SubtabsBar
+
+        local SubtabsLayout = Instance.new("UIListLayout")
+        SubtabsLayout.FillDirection = Enum.FillDirection.Horizontal
+        SubtabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        SubtabsLayout.Parent = SubtabsBar
+
+        local PageContainer = Instance.new("Frame")
+        PageContainer.Name = tabName .. "_PageContainer"
+        PageContainer.Size = UDim2.new(1, 0, 1, 0)
+        PageContainer.Position = UDim2.new(0, 0, 0, 0)
+        PageContainer.BackgroundTransparency = 1
+        PageContainer.Visible = false
+        PageContainer.Parent = MainArea
+        TabObj.PageContainer = PageContainer
+
         function TabObj:Activate()
             for _, otherTab in ipairs(WindowObj.Tabs) do
                 otherTab.Button.BackgroundTransparency = 1
@@ -385,10 +386,8 @@ function Library:CreateWindow(config)
                 otherTab.Indicator.Visible = false
                 otherTab.Button.Label.Font = Enum.Font.SourceSans
                 otherTab.Button.Label.TextColor3 = Library.CurrentTheme.TextDim
-                for _, sub in ipairs(otherTab.Subtabs) do
-                    sub.Button.Visible = false
-                    sub.PageFrame.Visible = false
-                end
+                otherTab.SubtabsBar.Visible = false
+                otherTab.PageContainer.Visible = false
             end
 
             WindowObj.CurrentTab = TabObj
@@ -397,6 +396,8 @@ function Library:CreateWindow(config)
             TabIndicator.Visible = true
             TabLabel.Font = Enum.Font.SourceSansBold
             TabLabel.TextColor3 = Library.CurrentTheme.Text
+
+            TabObj.PageContainer.Visible = true
 
             local subCount = #TabObj.Subtabs
             if subCount > 0 then
@@ -435,11 +436,9 @@ function Library:CreateWindow(config)
                 RightColumn = nil,
             }
 
-            local subIndex = #TabObj.Subtabs + 1
-
             local SubBtn = Instance.new("TextButton")
             SubBtn.Name = subtabName .. "_Subtab"
-            SubBtn.Size = UDim2.new(1 / math.max(subIndex, 1), 0, 1, 0)
+            SubBtn.Size = UDim2.new(1, 0, 1, 0)
             SubBtn.BackgroundTransparency = 1
             SubBtn.BorderSizePixel = 0
             SubBtn.Text = ""
