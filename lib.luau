@@ -148,7 +148,7 @@ function Library:CreateWindow(config)
     Popups.Parent = ScreenGui
     Library.Popups = Popups
 
-    -- Main Container Window (740x532 exact)https://127.0.0.1:56283/static/artifacts/3c1aa325-0e0b-4511-bf47-b18badca1dc6/.user_uploaded/media_1792905838744.png?csrf=f3d542ed-fe1a-4e4d-8f87-f472e09a5ca7
+    -- Main Container Window (740x532 exact)
     local Main = Instance.new("Frame")
     Main.Name = "MainWindow"
     Main.Size = UDim2.new(0, Size.X, 0, Size.Y)
@@ -194,10 +194,17 @@ function Library:CreateWindow(config)
     ContentHolder.BackgroundTransparency = 1
     ContentHolder.Parent = Main
 
-    -- Left Sidebar (width 140)
+    local SidebarWidth = config.SidebarWidth or 140
+    local SubtabsHeight = config.SubtabsHeight or 22
+    local SubtabsOffset = config.SubtabsOffset or Vector2.new(0, 0)
+    local MainAreaOffset = config.MainAreaOffset or Vector2.new(143, 0)
+    local LogoPosition = config.LogoPosition or UDim2.new(0, 18, 0, 8)
+    local LogoRotation = config.LogoRotation or 0
+
+    -- Left Sidebar (width 140 or configured)
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
-    Sidebar.Size = UDim2.new(0, 140, 1, 0)
+    Sidebar.Size = UDim2.new(0, SidebarWidth, 1, 0)
     Sidebar.BackgroundColor3 = Library.CurrentTheme.MainBg
     Sidebar.BorderSizePixel = 0
     Sidebar.Parent = ContentHolder
@@ -211,8 +218,9 @@ function Library:CreateWindow(config)
 
     local LogoImage = Instance.new("ImageLabel")
     LogoImage.Name = "Logo"
-    LogoImage.Size = UDim2.new(0, 104, 0, 48)
-    LogoImage.Position = UDim2.new(0, 18, 0, 8)
+    LogoImage.Size = config.LogoSize or UDim2.new(0, 104, 0, 48)
+    LogoImage.Position = LogoPosition
+    LogoImage.Rotation = LogoRotation
     LogoImage.BackgroundTransparency = 1
     LogoImage.ScaleType = Enum.ScaleType.Fit
 
@@ -260,7 +268,7 @@ function Library:CreateWindow(config)
     -- Sidebar Tabs list
     local TabList = Instance.new("Frame")
     TabList.Name = "TabList"
-    TabList.Size = UDim2.new(0, 134, 1, -74)
+    TabList.Size = UDim2.new(0, SidebarWidth - 6, 1, -74)
     TabList.Position = UDim2.new(0, 3, 0, 74)
     TabList.BackgroundTransparency = 1
     TabList.Parent = Sidebar
@@ -270,21 +278,41 @@ function Library:CreateWindow(config)
     TabListLayout.Padding = UDim.new(0, 3)
     TabListLayout.Parent = TabList
 
-    -- Right Main Area (width: 574, height: ContentHolder height)
+    -- Right Main Area (width: Size.X - SidebarWidth - 26, height: ContentHolder height)
     local MainArea = Instance.new("Frame")
     MainArea.Name = "MainArea"
-    MainArea.Size = UDim2.new(0, 574, 1, 0)
-    MainArea.Position = UDim2.new(0, 143, 0, 0)
+    MainArea.Size = UDim2.new(1, -SidebarWidth - 3, 1, 0)
+    MainArea.Position = UDim2.new(0, MainAreaOffset.X, 0, MainAreaOffset.Y)
     MainArea.BackgroundTransparency = 1
     MainArea.ClipsDescendants = false
     MainArea.Parent = ContentHolder
 
-    -- PageContainer and Subtabs are created per TabObj inside Tab()
-
     local WindowObj = {
         Tabs = {},
         CurrentTab = nil,
+        Main = Main,
+        ContentHolder = ContentHolder,
+        Sidebar = Sidebar,
+        MainArea = MainArea,
+        Logo = LogoImage,
+        Config = config,
+        SubtabsOffset = SubtabsOffset,
+        SubtabsHeight = SubtabsHeight,
     }
+
+    function WindowObj:SetSize(newSize)
+        Main.Size = UDim2.new(0, newSize.X, 0, newSize.Y)
+        ContentHolder.Size = UDim2.new(0, newSize.X - 20, 0, newSize.Y - 41)
+    end
+
+    function WindowObj:SetPosition(newPos)
+        Main.Position = newPos
+    end
+
+    function WindowObj:SetLogoPosition(newPos, newRotation)
+        LogoImage.Position = newPos
+        if newRotation then LogoImage.Rotation = newRotation end
+    end
 
     function WindowObj:Tab(tabName)
         local TabObj = {
@@ -347,8 +375,8 @@ function Library:CreateWindow(config)
         -- Each Tab gets its own dedicated SubtabsBar and PageContainer inside MainArea
         local SubtabsBar = Instance.new("Frame")
         SubtabsBar.Name = tabName .. "_SubtabsBar"
-        SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
-        SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
+        SubtabsBar.Size = UDim2.new(1, 0, 0, SubtabsHeight)
+        SubtabsBar.Position = UDim2.new(0, SubtabsOffset.X, 0, SubtabsOffset.Y)
         SubtabsBar.BackgroundColor3 = Library.CurrentTheme.ChildBg
         SubtabsBar.BorderSizePixel = 0
         SubtabsBar.ZIndex = 3
@@ -402,8 +430,9 @@ function Library:CreateWindow(config)
             local subCount = #TabObj.Subtabs
             if subCount > 0 then
                 SubtabsBar.Visible = true
-                PageContainer.Size = UDim2.new(1, 0, 1, -28)
-                PageContainer.Position = UDim2.new(0, 0, 0, 28)
+                local topOffset = SubtabsHeight + 6
+                PageContainer.Size = UDim2.new(1, 0, 1, -topOffset)
+                PageContainer.Position = UDim2.new(0, 0, 0, topOffset)
 
                 for _, sub in ipairs(TabObj.Subtabs) do
                     sub.Button.Size = UDim2.new(1 / subCount, 0, 1, 0)
