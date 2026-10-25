@@ -225,12 +225,23 @@ function Library:CreateWindow(config)
     LogoImage.ScaleType = Enum.ScaleType.Fit
 
     if Logo and Logo ~= "" then
-        -- Supports asset ID, URL, or custom text
-        if string.find(tostring(Logo), "rbxasset") or string.find(tostring(Logo), "%d+") or string.find(tostring(Logo), "http") then
-            LogoImage.Image = tostring(Logo)
+        local logoStr = tostring(Logo)
+        -- Support executor filesystem workspace PNG/images (e.g. "millionware.png" or "workspace/millionware.png")
+        if typeof(getcustomasset) == "function" and (string.find(logoStr:lower(), "%.png$") or string.find(logoStr:lower(), "%.jpg$") or string.find(logoStr:lower(), "%.jpeg$")) then
+            local customAsset
+            pcall(function()
+                customAsset = getcustomasset(logoStr)
+            end)
+            if customAsset then
+                LogoImage.Image = customAsset
+            else
+                LogoImage.Image = logoStr
+            end
+        elseif string.find(logoStr, "rbxasset") or string.find(logoStr, "%d+") or string.find(logoStr, "http") then
+            LogoImage.Image = logoStr
         else
             local LogoText = Instance.new("TextLabel")
-            LogoText.Text = tostring(Logo)
+            LogoText.Text = logoStr
             LogoText.Font = Enum.Font.SourceSansBold
             LogoText.TextSize = 22
             LogoText.TextColor3 = Color3.fromRGB(240, 240, 240)
@@ -385,13 +396,15 @@ function Library:CreateWindow(config)
         TabObj.SubtabsBar = SubtabsBar
 
         local SubtabsLine = Instance.new("Frame")
-        SubtabsLine.Name = "BottomLine"
+        SubtabsLine.Name = tabName .. "_BottomLine"
         SubtabsLine.Size = UDim2.new(1, 0, 0, 1)
-        SubtabsLine.Position = UDim2.new(0, 0, 1, -1)
+        SubtabsLine.Position = UDim2.new(0, SubtabsOffset.X, 0, SubtabsOffset.Y + SubtabsHeight - 1)
         SubtabsLine.BackgroundColor3 = Library.CurrentTheme.Border
         SubtabsLine.BorderSizePixel = 0
         SubtabsLine.ZIndex = 4
-        SubtabsLine.Parent = SubtabsBar
+        SubtabsLine.Visible = false
+        SubtabsLine.Parent = MainArea
+        TabObj.SubtabsLine = SubtabsLine
 
         local SubtabsLayout = Instance.new("UIListLayout")
         SubtabsLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -415,6 +428,7 @@ function Library:CreateWindow(config)
                 otherTab.Button.Label.Font = Enum.Font.SourceSans
                 otherTab.Button.Label.TextColor3 = Library.CurrentTheme.TextDim
                 otherTab.SubtabsBar.Visible = false
+                if otherTab.SubtabsLine then otherTab.SubtabsLine.Visible = false end
                 otherTab.PageContainer.Visible = false
             end
 
@@ -430,6 +444,7 @@ function Library:CreateWindow(config)
             local subCount = #TabObj.Subtabs
             if subCount > 0 then
                 SubtabsBar.Visible = true
+                if TabObj.SubtabsLine then TabObj.SubtabsLine.Visible = true end
                 local topOffset = SubtabsHeight + 6
                 PageContainer.Size = UDim2.new(1, 0, 1, -topOffset)
                 PageContainer.Position = UDim2.new(0, 0, 0, topOffset)
@@ -446,6 +461,7 @@ function Library:CreateWindow(config)
                 end
             else
                 SubtabsBar.Visible = false
+                if TabObj.SubtabsLine then TabObj.SubtabsLine.Visible = false end
                 PageContainer.Size = UDim2.new(1, 0, 1, 0)
                 PageContainer.Position = UDim2.new(0, 0, 0, 0)
             end
@@ -592,8 +608,10 @@ function Library:CreateWindow(config)
 
             if WindowObj.CurrentTab == TabObj then
                 SubtabsBar.Visible = true
-                PageContainer.Size = UDim2.new(1, 0, 1, -28)
-                PageContainer.Position = UDim2.new(0, 0, 0, 28)
+                if TabObj.SubtabsLine then TabObj.SubtabsLine.Visible = true end
+                local topOffset = SubtabsHeight + 6
+                PageContainer.Size = UDim2.new(1, 0, 1, -topOffset)
+                PageContainer.Position = UDim2.new(0, 0, 0, topOffset)
                 if #TabObj.Subtabs == 1 or TabObj.CurrentSubtab == nil then
                     SubtabObj:Activate()
                 end
