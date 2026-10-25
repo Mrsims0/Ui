@@ -1,6 +1,7 @@
 --[[
     Millionware UI Library for Roblox (Luau)
     1:1 Port from C++ ImGui / Slate Implementation
+    Supports Roblox GUI + Drawing API environment
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -10,7 +11,6 @@ local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer and LocalPlayer:GetMouse() or nil
 
 local function getGuiParent()
     local success, core = pcall(function()
@@ -124,10 +124,10 @@ end
 function Library:CreateWindow(config)
     config = config or {}
     local Title = config.Title or "millionware"
-    local LogoId = config.LogoId or ""
+    local Logo = config.Logo or config.LogoId or ""
     local Size = config.Size or Vector2.new(740, 532)
 
-    -- Cleanup existing if any with same name
+    -- Cleanup existing if any
     if Library.ScreenGui then
         Library.ScreenGui:Destroy()
     end
@@ -139,12 +139,12 @@ function Library:CreateWindow(config)
     ScreenGui.Parent = getGuiParent()
     Library.ScreenGui = ScreenGui
 
-    -- Popups holder to guarantee highest ZIndex over everything
+    -- Popups holder for dropdowns and colorpickers (Top ZIndex)
     local Popups = Instance.new("Frame")
     Popups.Name = "Popups"
     Popups.BackgroundTransparency = 1
     Popups.Size = UDim2.new(1, 0, 1, 0)
-    Popups.ZIndex = 50
+    Popups.ZIndex = 100
     Popups.Parent = ScreenGui
     Library.Popups = Popups
 
@@ -160,7 +160,7 @@ function Library:CreateWindow(config)
     Main.ClipsDescendants = false
     Main.Parent = ScreenGui
 
-    -- Subtle Top Window Gradient (from C++: 31px high gradient, alpha 0.03 to 0.00)
+    -- Top 31px gradient shine (1:1 from C++)
     local WindowGradient = Instance.new("Frame")
     WindowGradient.Name = "TopShine"
     WindowGradient.Size = UDim2.new(1, 0, 0, 31)
@@ -177,24 +177,24 @@ function Library:CreateWindow(config)
     })
     UIGrad.Parent = WindowGradient
 
-    -- Drag Top Handle
+    -- Drag Handle on topbar
     local DragBar = Instance.new("Frame")
     DragBar.Name = "DragBar"
     DragBar.Size = UDim2.new(1, 0, 0, 31)
     DragBar.BackgroundTransparency = 1
-    DragBar.ZIndex = 3
+    DragBar.ZIndex = 5
     DragBar.Parent = Main
     makeDraggable(DragBar, Main)
 
     -- Inner Container: 720 x 491 at (10, 31)
     local ContentHolder = Instance.new("Frame")
     ContentHolder.Name = "ContentHolder"
-    ContentHolder.Size = UDim2.new(0, 720, 0, 491)
+    ContentHolder.Size = UDim2.new(0, Size.X - 20, 0, Size.Y - 41)
     ContentHolder.Position = UDim2.new(0, 10, 0, 31)
     ContentHolder.BackgroundTransparency = 1
     ContentHolder.Parent = Main
 
-    -- Left Sidebar: width 140
+    -- Left Sidebar (width 140)
     local Sidebar = Instance.new("Frame")
     Sidebar.Name = "Sidebar"
     Sidebar.Size = UDim2.new(0, 140, 1, 0)
@@ -211,28 +211,26 @@ function Library:CreateWindow(config)
 
     local LogoImage = Instance.new("ImageLabel")
     LogoImage.Name = "Logo"
-    LogoImage.Size = UDim2.new(0, 101, 0, 45)
-    LogoImage.Position = UDim2.new(0, 18, 0, 10)
+    LogoImage.Size = UDim2.new(0, 104, 0, 48)
+    LogoImage.Position = UDim2.new(0, 18, 0, 8)
     LogoImage.BackgroundTransparency = 1
     LogoImage.ScaleType = Enum.ScaleType.Fit
 
-    local customLogo = config.Logo or config.LogoId or LogoId
-    if customLogo and customLogo ~= "" then
-        -- Check if it's an asset id or URL / path
-        if string.find(tostring(customLogo), "rbxasset") or string.find(tostring(customLogo), "%d+") or string.find(tostring(customLogo), "http") then
-            LogoImage.Image = tostring(customLogo)
+    if Logo and Logo ~= "" then
+        -- Supports asset ID, URL, or custom text
+        if string.find(tostring(Logo), "rbxasset") or string.find(tostring(Logo), "%d+") or string.find(tostring(Logo), "http") then
+            LogoImage.Image = tostring(Logo)
         else
-            -- Text-based custom logo name
-            local CustomText = Instance.new("TextLabel")
-            CustomText.Text = tostring(customLogo)
-            CustomText.Font = Enum.Font.SourceSansBold
-            CustomText.TextSize = 22
-            CustomText.TextColor3 = Color3.fromRGB(240, 240, 240)
-            CustomText.Size = UDim2.new(1, 0, 1, 0)
-            CustomText.BackgroundTransparency = 1
-            CustomText.TextXAlignment = Enum.TextXAlignment.Left
-            CustomText.TextTruncate = Enum.TextTruncate.AtEnd
-            CustomText.Parent = LogoImage
+            local LogoText = Instance.new("TextLabel")
+            LogoText.Text = tostring(Logo)
+            LogoText.Font = Enum.Font.SourceSansBold
+            LogoText.TextSize = 22
+            LogoText.TextColor3 = Color3.fromRGB(240, 240, 240)
+            LogoText.Size = UDim2.new(1, 0, 1, 0)
+            LogoText.BackgroundTransparency = 1
+            LogoText.TextXAlignment = Enum.TextXAlignment.Left
+            LogoText.TextTruncate = Enum.TextTruncate.AtEnd
+            LogoText.Parent = LogoImage
         end
     else
         -- 1-1 MW$ vector-style typography
@@ -259,7 +257,7 @@ function Library:CreateWindow(config)
     end
     LogoImage.Parent = LogoHolder
 
-    -- Tabs Container in Sidebar
+    -- Sidebar Tabs list
     local TabList = Instance.new("Frame")
     TabList.Name = "TabList"
     TabList.Size = UDim2.new(0, 134, 1, -74)
@@ -272,7 +270,7 @@ function Library:CreateWindow(config)
     TabListLayout.Padding = UDim.new(0, 3)
     TabListLayout.Parent = TabList
 
-    -- Right Main Area (width 574, height 479)
+    -- Right Main Area (width: 574, height: ContentHolder height)
     local MainArea = Instance.new("Frame")
     MainArea.Name = "MainArea"
     MainArea.Size = UDim2.new(0, 574, 1, 0)
@@ -281,23 +279,24 @@ function Library:CreateWindow(config)
     MainArea.ClipsDescendants = false
     MainArea.Parent = ContentHolder
 
-    -- Subtabs bar (height 22)
+    -- Subtabs bar (22px high, sits directly at the top of MainArea)
     local SubtabsBar = Instance.new("Frame")
     SubtabsBar.Name = "SubtabsBar"
     SubtabsBar.Size = UDim2.new(1, 0, 0, 22)
     SubtabsBar.Position = UDim2.new(0, 0, 0, 0)
     SubtabsBar.BackgroundTransparency = 1
     SubtabsBar.BorderSizePixel = 0
-    SubtabsBar.ClipsDescendants = false
+    SubtabsBar.ClipsDescendants = true
     SubtabsBar.Parent = MainArea
 
+    -- Bottom border line under subtabs
     local SubtabsLine = Instance.new("Frame")
     SubtabsLine.Name = "BottomLine"
     SubtabsLine.Size = UDim2.new(1, 0, 0, 1)
     SubtabsLine.Position = UDim2.new(0, 0, 1, -1)
     SubtabsLine.BackgroundColor3 = Library.CurrentTheme.Border
     SubtabsLine.BorderSizePixel = 0
-    SubtabsLine.ZIndex = 2
+    SubtabsLine.ZIndex = 4
     SubtabsLine.Parent = SubtabsBar
 
     local SubtabsLayout = Instance.new("UIListLayout")
@@ -305,12 +304,13 @@ function Library:CreateWindow(config)
     SubtabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
     SubtabsLayout.Parent = SubtabsBar
 
-    -- Page Container
+    -- Page Container (sits right below the Subtabs bar)
     local PageContainer = Instance.new("Frame")
     PageContainer.Name = "PageContainer"
-    PageContainer.Size = UDim2.new(1, 0, 1, -26)
-    PageContainer.Position = UDim2.new(0, 0, 0, 26)
+    PageContainer.Size = UDim2.new(1, 0, 1, -28)
+    PageContainer.Position = UDim2.new(0, 0, 0, 28)
     PageContainer.BackgroundTransparency = 1
+    PageContainer.ClipsDescendants = false
     PageContainer.Parent = MainArea
 
     local WindowObj = {
@@ -396,16 +396,17 @@ function Library:CreateWindow(config)
             TabLabel.Font = Enum.Font.SourceSansBold
             TabLabel.TextColor3 = Library.CurrentTheme.Text
 
-            if #TabObj.Subtabs > 0 then
+            local subCount = #TabObj.Subtabs
+            if subCount > 0 then
                 SubtabsBar.Visible = true
-                PageContainer.Size = UDim2.new(1, 0, 1, -26)
-                PageContainer.Position = UDim2.new(0, 0, 0, 26)
+                PageContainer.Size = UDim2.new(1, 0, 1, -28)
+                PageContainer.Position = UDim2.new(0, 0, 0, 28)
 
-                local subCount = #TabObj.Subtabs
                 for _, sub in ipairs(TabObj.Subtabs) do
                     sub.Button.Size = UDim2.new(1 / subCount, 0, 1, 0)
                     sub.Button.Visible = true
                 end
+
                 if TabObj.CurrentSubtab then
                     TabObj.CurrentSubtab:Activate()
                 else
@@ -432,9 +433,11 @@ function Library:CreateWindow(config)
                 RightColumn = nil,
             }
 
+            local subIndex = #TabObj.Subtabs + 1
+
             local SubBtn = Instance.new("TextButton")
             SubBtn.Name = subtabName .. "_Subtab"
-            SubBtn.Size = UDim2.new(0, 100, 1, 0)
+            SubBtn.Size = UDim2.new(1 / math.max(subIndex, 1), 0, 1, 0)
             SubBtn.BackgroundTransparency = 1
             SubBtn.BorderSizePixel = 0
             SubBtn.Text = ""
@@ -477,7 +480,7 @@ function Library:CreateWindow(config)
             SubIndicator.BackgroundColor3 = Library.CurrentTheme.Scheme
             SubIndicator.BorderSizePixel = 0
             SubIndicator.Visible = false
-            SubIndicator.ZIndex = 3
+            SubIndicator.ZIndex = 5
             SubIndicator.Parent = SubBtn
             SubtabObj.Indicator = SubIndicator
 
@@ -530,7 +533,7 @@ function Library:CreateWindow(config)
 
             table.insert(TabObj.Subtabs, SubtabObj)
 
-            -- Recalculate subtab widths dynamically (1 / count of subtabs)
+            -- Re-proportionalize subtabs width
             local count = #TabObj.Subtabs
             for _, s in ipairs(TabObj.Subtabs) do
                 s.Button.Size = UDim2.new(1 / count, 0, 1, 0)
@@ -581,7 +584,6 @@ function Library:CreateWindow(config)
                 SectionFrame.BorderColor3 = Library.CurrentTheme.Border
                 SectionFrame.Parent = parentCol
 
-                -- Title label at top (-10 offset in ImGui style)
                 local TitleHolder = Instance.new("Frame")
                 TitleHolder.Name = "TitleHolder"
                 TitleHolder.Size = UDim2.new(1, 0, 0, 24)
@@ -600,7 +602,6 @@ function Library:CreateWindow(config)
                 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
                 TitleLabel.Parent = TitleHolder
 
-                -- Content Container (11px horizontal padding, 6px spacing)
                 local Content = Instance.new("Frame")
                 Content.Name = "Elements"
                 Content.Size = UDim2.new(1, 0, 0, 0)
@@ -662,7 +663,6 @@ function Library:CreateWindow(config)
                     Label.AutoButtonColor = false
                     Label.Parent = CheckboxFrame
 
-                    -- Extras frame on the far right (for Keybind or Colorpicker)
                     local Extras = Instance.new("Frame")
                     Extras.Name = "Extras"
                     Extras.Size = UDim2.new(0, 0, 1, 0)
@@ -698,7 +698,6 @@ function Library:CreateWindow(config)
                     Box.MouseButton1Click:Connect(toggle)
                     Label.MouseButton1Click:Connect(toggle)
 
-                    -- Keybind attached to Checkbox
                     local CheckboxAPI = {
                         Set = function(_, v) update(v) end,
                         Get = function(_) return state end,
@@ -784,7 +783,6 @@ function Library:CreateWindow(config)
                         CPBtn.AutoButtonColor = false
                         CPBtn.Parent = Extras
 
-                        -- Colorpicker popup window
                         local open = false
                         local CPPopup = Instance.new("Frame")
                         CPPopup.Name = "CPPopup"
@@ -793,7 +791,7 @@ function Library:CreateWindow(config)
                         CPPopup.BorderSizePixel = 1
                         CPPopup.BorderColor3 = Library.CurrentTheme.Border
                         CPPopup.Visible = false
-                        CPPopup.ZIndex = 60
+                        CPPopup.ZIndex = 110
                         CPPopup.Parent = Library.Popups
 
                         local CPInnerPad = Instance.new("UIPadding")
@@ -803,16 +801,15 @@ function Library:CreateWindow(config)
                         CPInnerPad.PaddingBottom = UDim.new(0, 8)
                         CPInnerPad.Parent = CPPopup
 
-                        -- Saturation / Value square (193 x 115)
                         local SVMap = Instance.new("ImageButton")
                         SVMap.Name = "SVMap"
                         SVMap.Size = UDim2.new(0, 193, 0, 110)
-                        SVMap.Image = "rbxassetid://4155801252" -- Standard Roblox HSV Saturation/Value gradient
+                        SVMap.Image = "rbxassetid://4155801252"
                         SVMap.BackgroundColor3 = curCol
                         SVMap.BorderSizePixel = 1
                         SVMap.BorderColor3 = Library.CurrentTheme.Border
                         SVMap.AutoButtonColor = false
-                        SVMap.ZIndex = 61
+                        SVMap.ZIndex = 111
                         SVMap.Parent = CPPopup
 
                         local PickerCircle = Instance.new("Frame")
@@ -822,19 +819,18 @@ function Library:CreateWindow(config)
                         PickerCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                         PickerCircle.BorderSizePixel = 1
                         PickerCircle.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                        PickerCircle.ZIndex = 62
+                        PickerCircle.ZIndex = 112
                         PickerCircle.Parent = SVMap
 
-                        -- Hue Bar below SVMap
                         local HueBar = Instance.new("ImageButton")
                         HueBar.Name = "HueBar"
                         HueBar.Size = UDim2.new(0, 193, 0, 10)
                         HueBar.Position = UDim2.new(0, 0, 0, 116)
-                        HueBar.Image = "rbxassetid://3641079629" -- Horizontal Hue gradient
+                        HueBar.Image = "rbxassetid://3641079629"
                         HueBar.BorderSizePixel = 1
                         HueBar.BorderColor3 = Library.CurrentTheme.Border
                         HueBar.AutoButtonColor = false
-                        HueBar.ZIndex = 61
+                        HueBar.ZIndex = 111
                         HueBar.Parent = CPPopup
 
                         local HuePicker = Instance.new("Frame")
@@ -844,10 +840,9 @@ function Library:CreateWindow(config)
                         HuePicker.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                         HuePicker.BorderSizePixel = 1
                         HuePicker.BorderColor3 = Color3.fromRGB(0, 0, 0)
-                        HuePicker.ZIndex = 62
+                        HuePicker.ZIndex = 112
                         HuePicker.Parent = HueBar
 
-                        -- Hex / Text status
                         local HexLabel = Instance.new("TextLabel")
                         HexLabel.Name = "HexLabel"
                         HexLabel.Size = UDim2.new(1, 0, 0, 20)
@@ -857,7 +852,7 @@ function Library:CreateWindow(config)
                         HexLabel.TextSize = 12
                         HexLabel.TextColor3 = Library.CurrentTheme.TextDim
                         HexLabel.Text = "#" .. curCol:ToHex():upper()
-                        HexLabel.ZIndex = 61
+                        HexLabel.ZIndex = 111
                         HexLabel.Parent = CPPopup
 
                         local curH, curS, curV = curCol:ToHSV()
@@ -870,7 +865,6 @@ function Library:CreateWindow(config)
                             onColChanged(finalCol)
                         end
 
-                        -- Drag SV Map
                         local svDown = false
                         SVMap.InputBegan:Connect(function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -884,7 +878,6 @@ function Library:CreateWindow(config)
                             end
                         end)
 
-                        -- Drag Hue Bar
                         local hueDown = false
                         HueBar.InputBegan:Connect(function(input)
                             if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -987,7 +980,6 @@ function Library:CreateWindow(config)
                     ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
                     ValueLabel.Parent = SliderFrame
 
-                    -- Track (6px high, positioned at bottom)
                     local Track = Instance.new("TextButton")
                     Track.Name = "Track"
                     Track.Size = UDim2.new(1, 0, 0, 6)
@@ -1095,7 +1087,6 @@ function Library:CreateWindow(config)
                     DropBox.AutoButtonColor = false
                     DropBox.Parent = DropdownFrame
 
-                    -- Subtle shine inside combo box
                     local DropShine = Instance.new("Frame")
                     DropShine.Name = "Shine"
                     DropShine.Size = UDim2.new(1, 0, 1, 0)
@@ -1136,7 +1127,6 @@ function Library:CreateWindow(config)
                     Arrow.ZIndex = 2
                     Arrow.Parent = DropBox
 
-                    -- Popup list
                     local DropList = Instance.new("ScrollingFrame")
                     DropList.Name = text .. "_Popup"
                     DropList.Size = UDim2.new(0, 100, 0, 0)
@@ -1146,7 +1136,7 @@ function Library:CreateWindow(config)
                     DropList.ScrollBarThickness = 2
                     DropList.ScrollBarImageColor3 = Library.CurrentTheme.Scheme
                     DropList.Visible = false
-                    DropList.ZIndex = 70
+                    DropList.ZIndex = 120
                     DropList.Parent = Library.Popups
 
                     local DropListLayout = Instance.new("UIListLayout")
@@ -1172,7 +1162,7 @@ function Library:CreateWindow(config)
                             ItemBtn.TextSize = 13
                             ItemBtn.TextColor3 = (item == selected) and Library.CurrentTheme.Scheme or Library.CurrentTheme.TextDim
                             ItemBtn.TextXAlignment = Enum.TextXAlignment.Left
-                            ItemBtn.ZIndex = 71
+                            ItemBtn.ZIndex = 121
                             ItemBtn.Parent = DropList
 
                             ItemBtn.MouseButton1Click:Connect(function()
@@ -1328,7 +1318,7 @@ function Library:CreateWindow(config)
         return TabObj
     end
 
-    -- Toggle menu key (Insert or Delete like classic cheats)
+    -- Toggle menu key (Insert or RightControl)
     UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and (input.KeyCode == Enum.KeyCode.Insert or input.KeyCode == Enum.KeyCode.RightControl) then
             Main.Visible = not Main.Visible
