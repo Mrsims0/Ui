@@ -233,13 +233,25 @@ function Library:CreateWindow(config)
 
     local allRegisteredWidgets = {}
     local function performSearch(query)
-        query = string.lower(query or "")
+        query = string.lower(string.gsub(query or "", "^%s*(.-)%s*$", "%1"))
         for _, w in ipairs(allRegisteredWidgets) do
             if w.Frame and w.Name then
                 if query == "" then
                     w.Frame.Visible = true
                 else
-                    w.Frame.Visible = string.find(string.lower(w.Name), query, 1, true) ~= nil
+                    local wName = string.lower(w.Name)
+                    -- Matches items that start with the query, or any word within the title starting with query
+                    local startsWith = string.sub(wName, 1, #query) == query
+                    if not startsWith then
+                        -- Check each word start (e.g. "per weapon settings" matching "weapon")
+                        for word in string.gmatch(wName, "%S+") do
+                            if string.sub(word, 1, #query) == query then
+                                startsWith = true
+                                break
+                            end
+                        end
+                    end
+                    w.Frame.Visible = startsWith
                 end
             end
         end
@@ -2031,17 +2043,38 @@ function Library:CreateWindow(config)
         return SubGuiObj
     end
 
-    -- 2. Dedicated Keybind List
+    -- 2. Dedicated Keybind List (dynamic auto-sizing, hidden until binds exist)
     function WindowObj:KeybindList(cfg)
         cfg = cfg or {}
         local sub = self:CreateSubGui({
             Title = cfg.Title or "Keybinds",
-            Size = cfg.Size or Vector2.new(160, 180),
+            Size = cfg.Size or Vector2.new(165, 32),
             Position = cfg.Position or UDim2.new(0, 30, 0.5, -90),
-            Visible = cfg.Visible ~= false,
+            Visible = false,
         })
 
         local keybindRows = {}
+        local count = 0
+
+        local function refreshSize()
+            local currentCount = 0
+            for _ in pairs(keybindRows) do
+                currentCount = currentCount + 1
+            end
+            count = currentCount
+
+            if count == 0 then
+                sub.Window.Visible = false
+            else
+                sub.Window.Visible = true
+                local rowHeight = 18
+                local topHeight = 24
+                local padding = 12
+                local totalHeight = topHeight + (count * rowHeight) + padding
+                sub.Window.Size = UDim2.new(0, 165, 0, totalHeight)
+                sub.Content.Size = UDim2.new(1, -10, 0, count * rowHeight + padding)
+            end
+        end
 
         local KeybindAPI = {
             SubGui = sub,
@@ -2049,7 +2082,11 @@ function Library:CreateWindow(config)
         }
 
         function KeybindAPI:SetVisible(vis)
-            sub:SetVisible(vis)
+            if vis then
+                if count > 0 then sub.Window.Visible = true end
+            else
+                sub.Window.Visible = false
+            end
         end
 
         function KeybindAPI:Add(name, key, state)
@@ -2058,6 +2095,7 @@ function Library:CreateWindow(config)
             end
             local row = sub:AddRow(name, "[" .. formatKey(key) .. "]")
             keybindRows[name] = row
+            refreshSize()
             return row
         end
 
@@ -2071,6 +2109,7 @@ function Library:CreateWindow(config)
             if keybindRows[name] then
                 keybindRows[name]:Remove()
                 keybindRows[name] = nil
+                refreshSize()
             end
         end
 
